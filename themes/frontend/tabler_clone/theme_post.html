@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>{{ if .Post.MetaTitle }}{{ .Post.MetaTitle }}{{ else }}{{ .Post.Title }} - {{ .Settings.site_title }}{{ end }}</title>
+    {{ if .Post.MetaDescription }}<meta name="description" content="{{ .Post.MetaDescription }}"/>{{ end }}
+    <!-- CSS files -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet"/>
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      :root {
+      	--tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+      	--tblr-primary: {{ if .BrandColor }}{{ .BrandColor }}{{ else }}#206bc4{{ end }};
+      }
+      body {
+      	font-feature-settings: "cv03", "cv04", "cv11";
+        background-color: #f6f8fb;
+      }
+      .markdown > p {
+         line-height: 1.8;
+         color: #4b5563;
+         font-size: 1.1rem;
+      }
+    </style>
+    <script>
+      function toggleTheme(theme) {
+        document.body.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('tablerTheme', theme);
+      }
+      let savedTheme = localStorage.getItem('tablerTheme');
+      if (savedTheme) { document.addEventListener('DOMContentLoaded', () => document.body.setAttribute('data-bs-theme', savedTheme)); }
+    </script>
+    {{ if .Settings.site_favicon_url }}
+    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+    <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+    {{ end }}
+  </head>
+  <body class="d-flex flex-column" data-bs-theme="light">
+    <div class="page">
+      <!-- Navbar -->
+      <header class="navbar navbar-expand-md d-print-none sticky-top bg-white border-bottom shadow-sm">
+        <div class="container-xl">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+            <a href="/">
+              <div class="d-flex align-items-center">
+                  <span class="bg-primary text-white p-2 rounded-3 me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-wifi" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 18l.01 0" /><path d="M9.172 15.172a4 4 0 0 1 5.656 0" /><path d="M6.343 12.343a8 8 0 0 1 11.314 0" /><path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 16.97 0" /></svg>
+                  </span>
+                  <span class="fw-bold fs-2 tracking-tight">{{ .Settings.site_title }}</span>
+              </div>
+            </a>
+          </h1>
+          <div class="navbar-nav flex-row order-md-last gap-2">
+            <div class="nav-item align-self-center pe-2">
+               <a href="#" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom" onclick="toggleTheme('dark')">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+               </a>
+               <a href="#" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom" onclick="toggleTheme('light')">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sun" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+               </a>
+            </div>
+            <div class="nav-item">
+              <a href="/profile" class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4">
+                My Profile
+              </a>
+            </div>
+            <div class="nav-item d-none d-md-flex">
+              <a href="/admin" class="btn btn-primary fw-bold shadow-sm rounded-pill px-4">
+                Operations Gateway
+              </a>
+            </div>
+          </div>
+          <div class="collapse navbar-collapse" id="navbar-menu">
+            <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
+              <ul class="navbar-nav ms-md-4 gap-2">
+                <li class="nav-item">
+                  <a class="nav-link fw-bold text-dark fs-3" href="/" >
+                    <span class="nav-link-title">Dashboard</span>
+                  </a>
+                </li>
+                {{ range .MenuItems }}
+                {{ if .Children }}
+                <li class="nav-item dropdown {{ if eq $.RawPath .URL }}active{{ end }}">
+                  <a class="nav-link dropdown-toggle fw-bold text-dark fs-3" href="#navbar-dropdown-{{ .ID }}" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                    <span class="nav-link-title">{{ .Label }}</span>
+                  </a>
+                  <div class="dropdown-menu">
+                    {{ if ne .URL "#" }}<a class="dropdown-item fw-bold" href="{{ .URL }}">{{ .Label }}</a>{{ end }}
+                    {{ range .Children }}
+                    <a class="dropdown-item" href="{{ .URL }}">{{ .Label }}</a>
+                    {{ end }}
+                  </div>
+                </li>
+                {{ else }}
+                <li class="nav-item {{ if eq $.RawPath .URL }}active{{ end }}">
+                  <a class="nav-link fw-bold text-dark fs-3" href="{{ .URL }}" >
+                    <span class="nav-link-title">{{ .Label }}</span>
+                  </a>
+                </li>
+                {{ end }}
+                {{ end }}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Page Wrapper -->
+      <div class="page-wrapper">
+        <!-- Main body -->
+        <div class="page-body">
+          <div class="container-xl max-w-screen-md">
+             
+             <!-- Dynamic Hero Header -->
+             <div class="mb-5 text-center mt-4">
+                <a href="/" class="badge bg-primary-lt text-uppercase tracking-wide mb-3 px-3 py-2 rounded-pill shadow-sm">Platform Article</a>
+                <h1 class="display-4 fw-bold text-dark tracking-tight mb-4">{{ .Post.Title }}</h1>
+                <div class="d-flex justify-content-center align-items-center mb-5">
+                   <span class="avatar avatar-sm rounded-circle shadow-sm" style="background-image: url(https://api.dicebear.com/9.x/avataaars/svg?seed={{ .Post.Author }})"></span>
+                   <div class="ms-3 text-start">
+                      <div class="text-dark fw-bold">{{ .Post.Author }}</div>
+                      <div class="text-muted small">{{ .Post.CreatedAt.Format "Jan 02, 2006" }} &middot; Officially Published</div>
+                   </div>
+                </div>
+             </div>
+             
+             <!-- Article Main Block -->
+             <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-5">
+                 <!-- Standard Feature Image Hook -->
+                 <div class="bg-dark text-white ratio ratio-21x9">
+                      <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" class="object-cover opacity-75" alt="Post Cover">
+                 </div>
+                 
+                 <div class="card-body p-5">
+                     <article class="markdown">
+                         {{ .Post.Content }}
+                     </article>
+                 </div>
+                 
+                 <!-- Footer -->
+                 <div class="card-footer bg-light p-4 d-flex justify-content-between align-items-center">
+                     <div class="fw-bold text-secondary">Did you enjoy this architectural insight?</div>
+                     <div class="d-flex gap-2">
+                         <a href="#" class="btn btn-outline-primary btn-icon rounded-circle shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c0 -.249 1.51 -2.772 1.818 -4.013z" /></svg></a>
+                         <a href="#" class="btn btn-outline-primary btn-icon rounded-circle shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-linkedin" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M8 11l0 5" /><path d="M8 8l0 .01" /><path d="M12 16l0 -5" /><path d="M16 16v-3a2 2 0 0 0 -4 0" /></svg></a>
+                     </div>
+                 </div>
+             </div>
+          </div>
+        </div>
+        
+        <footer class="footer footer-transparent d-print-none mt-auto">
+          <div class="container-xl">
+            <div class="row text-center align-items-center flex-row-reverse">
+              <div class="col-lg-auto ms-lg-auto">
+                <ul class="list-inline list-inline-dots mb-0">
+                  <li class="list-inline-item"><a href="/profile" class="link-secondary">Terms of Service</a></li>
+                  <li class="list-inline-item"><a href="/profile" class="link-secondary">Acceptable Use Policy</a></li>
+                </ul>
+              </div>
+              <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                <ul class="list-inline list-inline-dots mb-0 text-secondary">
+                  <li class="list-inline-item">
+                    Copyright &copy; 2026 {{ .Settings.site_title }}. All rights reserved.
+                  </li>
+                  <li class="list-inline-item">Network Operations Platform</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+    <!-- Libs JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,70 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Comment Moderation</h3>
+    <div class="card-actions">
+      <div class="btn-group">
+        <a href="/admin/comments" class="btn btn-sm {{ if not .CurrentStatus }}btn-primary{{ else }}btn-outline-secondary{{ end }}">All</a>
+        <a href="/admin/comments?status=pending" class="btn btn-sm {{ if eq .CurrentStatus "pending" }}btn-warning{{ else }}btn-outline-secondary{{ end }}">Pending</a>
+        <a href="/admin/comments?status=approved" class="btn btn-sm {{ if eq .CurrentStatus "approved" }}btn-success{{ else }}btn-outline-secondary{{ end }}">Approved</a>
+        <a href="/admin/comments?status=spam" class="btn btn-sm {{ if eq .CurrentStatus "spam" }}btn-danger{{ else }}btn-outline-secondary{{ end }}">Spam</a>
+      </div>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr>
+          <th>Author</th>
+          <th>Comment</th>
+          <th>Post</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th class="w-1">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Comments }}
+        <tr>
+          <td>
+            <div>
+              <strong>{{ .AuthorName }}</strong>
+              {{ if .AuthorEmail }}<br><small class="text-muted">{{ .AuthorEmail }}</small>{{ end }}
+            </div>
+          </td>
+          <td class="text-wrap" style="max-width: 300px;">{{ .Content }}</td>
+          <td><a href="/admin/posts" class="text-muted">{{ .PostTitle }}</a></td>
+          <td>
+            {{ if eq .Status "approved" }}<span class="badge bg-success">Approved</span>
+            {{ else if eq .Status "pending" }}<span class="badge bg-warning">Pending</span>
+            {{ else if eq .Status "spam" }}<span class="badge bg-danger">Spam</span>
+            {{ else }}<span class="badge bg-secondary">{{ .Status }}</span>
+            {{ end }}
+          </td>
+          <td class="text-muted">{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+          <td>
+            <div class="d-flex gap-1 flex-nowrap">
+              {{ if ne .Status "approved" }}
+              <form method="POST" action="/admin/comments/approve/{{ .ID }}">
+                <button type="submit" class="btn btn-sm btn-outline-success" title="Approve">✓</button>
+              </form>
+              {{ end }}
+              {{ if ne .Status "spam" }}
+              <form method="POST" action="/admin/comments/spam/{{ .ID }}">
+                <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark Spam">⚠</button>
+              </form>
+              {{ end }}
+              <form method="POST" action="/admin/comments/delete/{{ .ID }}" onsubmit="return confirm('Delete this comment permanently?')">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">✕</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">No comments {{ if .CurrentStatus }}with status "{{ .CurrentStatus }}"{{ end }}.</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</div>

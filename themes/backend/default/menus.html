@@ -1,0 +1,275 @@
+<div class="row row-cards">
+
+  <!-- Active Menu Items List -->
+  <div class="col-12">
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
+          <li class="nav-item">
+            <a href="#tabs-header" class="nav-link active fw-bold" data-bs-toggle="tab">Header Navigation</a>
+          </li>
+          <li class="nav-item">
+            <a href="#tabs-footer1" class="nav-link fw-bold" data-bs-toggle="tab">Footer Col 1</a>
+          </li>
+          <li class="nav-item">
+            <a href="#tabs-footer2" class="nav-link fw-bold" data-bs-toggle="tab">Footer Col 2</a>
+          </li>
+          <li class="nav-item">
+            <a href="#tabs-footer3" class="nav-link fw-bold" data-bs-toggle="tab">Footer Col 3</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body bg-light p-4">
+        <div class="tab-content">
+          
+          <!-- Header Tab -->
+          <div class="tab-pane active show" id="tabs-header">
+            <div class="dd nestable-block" id="nestable-header">
+              <ol class="dd-list">
+                <li class="dd-item dd3-item bg-light mb-2 border rounded" data-id="0">
+                  <div class="dd-handle dd3-handle text-muted d-flex align-items-center justify-content-center" style="width: 40px; border-right: 1px solid #e6e8eb; background: #f8f9fa;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-lock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" /></svg>
+                  </div>
+                  <div class="dd3-content p-2 d-flex align-items-center gap-2 bg-light" style="margin-left: 40px;">
+                    <strong class="me-auto">Home</strong>
+                    <span class="text-muted mx-3">/</span>
+                    <span class="text-end text-muted"><em>Locked</em></span>
+                  </div>
+                </li>
+                {{ range .MenuItems }}
+                {{ if or (eq .Location "header") (eq .Location "") }}
+                <li class="dd-item dd3-item mb-2 border rounded bg-white shadow-sm" data-id="{{ .ID }}">
+                  <div class="dd-handle dd3-handle text-muted d-flex align-items-center justify-content-center cursor-move" style="width: 40px; border-right: 1px solid #e6e8eb; background: #f8f9fa;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-grip-vertical" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                  </div>
+                  <div class="dd3-content p-2 d-flex align-items-center gap-2" style="margin-left: 40px;">
+                    <strong class="me-auto">{{ .Label }}</strong>
+                    <a href="{{ .URL }}" target="_blank" class="mx-3 text-muted">{{ .URL }}</a>
+                    <button type="button" class="btn btn-sm btn-ghost-danger" onclick="if(confirm('Remove this menu item?')) { const f = document.createElement('form'); f.method='POST'; f.action='/admin/menus/delete/{{ .ID }}'; document.body.appendChild(f); f.submit(); }">Remove</button>
+                  </div>
+                  {{ if .Children }}
+                  <ol class="dd-list">
+                      {{ range .Children }}
+                      <li class="dd-item dd3-item mb-2 border rounded bg-white shadow-sm" data-id="{{ .ID }}">
+                          <div class="dd-handle dd3-handle text-muted d-flex align-items-center justify-content-center cursor-move" style="width: 40px; border-right: 1px solid #e6e8eb; background: #f8f9fa;">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-grip-vertical" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                          </div>
+                          <div class="dd3-content p-2 d-flex align-items-center gap-2" style="margin-left: 40px;">
+                            <strong class="me-auto">{{ .Label }}</strong>
+                            <a href="{{ .URL }}" target="_blank" class="mx-3 text-muted">{{ .URL }}</a>
+                            <button type="button" class="btn btn-sm btn-ghost-danger" onclick="if(confirm('Remove this menu item?')) { const f = document.createElement('form'); f.method='POST'; f.action='/admin/menus/delete/{{ .ID }}'; document.body.appendChild(f); f.submit(); }">Remove</button>
+                          </div>
+                      </li>
+                      {{ end }}
+                  </ol>
+                  {{ end }}
+                </li>
+                {{ end }}
+                {{ end }}
+              </ol>
+            </div>
+          </div>
+
+          <!-- Footer Tabs Macros -->
+          <div class="tab-pane" id="tabs-footer1">
+            <div class="dd nestable-block" id="nestable-footer1">
+              <ol class="dd-list">
+                {{ $hasItems1 := false }}
+                {{ range .MenuItems }}
+                {{ if eq .Location "footer_1" }}
+                {{ $hasItems1 = true }}
+                <li class="dd-item dd3-item mb-2 border rounded bg-white shadow-sm" data-id="{{ .ID }}">
+                  <div class="dd-handle dd3-handle text-muted d-flex align-items-center justify-content-center cursor-move" style="width: 40px; border-right: 1px solid #e6e8eb; background: #f8f9fa;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-grip-vertical" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 5m-1 0a1 1 0 1 0 2 0" /></svg>
+                  </div>
+                  <div class="dd3-content p-2 d-flex align-items-center gap-2" style="margin-left: 40px;">
+                    <strong class="me-auto">{{ .Label }}</strong>
+                    <a href="{{ .URL }}" target="_blank" class="mx-3 text-muted">{{ .URL }}</a>
+                    <button type="button" class="btn btn-sm btn-ghost-danger" onclick="if(confirm('Remove this menu item?')) { const f = document.createElement('form'); f.method='POST'; f.action='/admin/menus/delete/{{ .ID }}'; document.body.appendChild(f); f.submit(); }">Remove</button>
+                  </div>
+                </li>
+                {{ end }}
+                {{ end }}
+              </ol>
+              {{ if not $hasItems1 }}
+              <div class="text-center text-secondary py-4 list-unstyled">No custom menu items configured in this slot yet. Drag or add items here.</div>
+              {{ end }}
+            </div>
+          </div>
+
+          <div class="tab-pane" id="tabs-footer2">
+            <div class="dd nestable-block" id="nestable-footer2">
+              <ol class="dd-list">
+                {{ $hasItems2 := false }}
+                {{ range .MenuItems }}
+                {{ if eq .Location "footer_2" }}
+                {{ $hasItems2 = true }}
+                <li class="dd-item dd3-item mb-2 border rounded bg-white shadow-sm" data-id="{{ .ID }}">
+                  <div class="dd-handle dd3-handle text-muted d-flex align-items-center justify-content-center cursor-move" style="width: 40px; border-right: 1px solid #e6e8eb; background: #f8f9fa;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-grip-vertical" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 5m-1 0a1 1 0 1 0 2 0" /></svg>
+                  </div>
+                  <div class="dd3-content p-2 d-flex align-items-center gap-2" style="margin-left: 40px;">
+                    <strong class="me-auto">{{ .Label }}</strong>
+                    <a href="{{ .URL }}" target="_blank" class="mx-3 text-muted">{{ .URL }}</a>
+                    <button type="button" class="btn btn-sm btn-ghost-danger" onclick="if(confirm('Remove this menu item?')) { const f = document.createElement('form'); f.method='POST'; f.action='/admin/menus/delete/{{ .ID }}'; document.body.appendChild(f); f.submit(); }">Remove</button>
+                  </div>
+                </li>
+                {{ end }}
+                {{ end }}
+              </ol>
+              {{ if not $hasItems2 }}
+              <div class="text-center text-secondary py-4 list-unstyled">No custom menu items configured in this slot yet. Drag or add items here.</div>
+              {{ end }}
+            </div>
+          </div>
+
+          <div class="tab-pane" id="tabs-footer3">
+            <div class="dd nestable-block" id="nestable-footer3">
+              <ol class="dd-list">
+                {{ $hasItems3 := false }}
+                {{ range .MenuItems }}
+                {{ if eq .Location "footer_3" }}
+                {{ $hasItems3 = true }}
+                <li class="dd-item dd3-item mb-2 border rounded bg-white shadow-sm" data-id="{{ .ID }}">
+                  <div class="dd-handle dd3-handle text-muted d-flex align-items-center justify-content-center cursor-move" style="width: 40px; border-right: 1px solid #e6e8eb; background: #f8f9fa;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-grip-vertical" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 5m-1 0a1 1 0 1 0 2 0" /></svg>
+                  </div>
+                  <div class="dd3-content p-2 d-flex align-items-center gap-2" style="margin-left: 40px;">
+                    <strong class="me-auto">{{ .Label }}</strong>
+                    <a href="{{ .URL }}" target="_blank" class="mx-3 text-muted">{{ .URL }}</a>
+                    <button type="button" class="btn btn-sm btn-ghost-danger" onclick="if(confirm('Remove this menu item?')) { const f = document.createElement('form'); f.method='POST'; f.action='/admin/menus/delete/{{ .ID }}'; document.body.appendChild(f); f.submit(); }">Remove</button>
+                  </div>
+                </li>
+                {{ end }}
+                {{ end }}
+              </ol>
+              {{ if not $hasItems3 }}
+              <div class="text-center text-secondary py-4 list-unstyled">No custom menu items configured in this slot yet. Drag or add items here.</div>
+              {{ end }}
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="card-footer bg-white border-top text-end rounded-bottom-4 py-3">
+        <button type="button" class="btn btn-success fw-bold shadow-sm px-4 rounded-pill" onclick="saveMenuLayout()">Save All Menu Locations</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Nestable/2012-10-15/jquery.nestable.min.js"></script>
+  <script>
+    $('.nestable-block').nestable({ maxDepth: 2 }); // Allow nested children
+    // Disable nesting in footers effectively gracefully strictly explicitly
+    $('#nestable-footer1, #nestable-footer2, #nestable-footer3').nestable({ maxDepth: 1 });
+    
+    function saveMenuLayout() {
+        const lists = [
+            { id: '#nestable-header', loc: 'header' },
+            { id: '#nestable-footer1', loc: 'footer_1' },
+            { id: '#nestable-footer2', loc: 'footer_2' },
+            { id: '#nestable-footer3', loc: 'footer_3' }
+        ];
+        
+        let raw = [];
+        lists.forEach(l => {
+            const group = $(l.id).nestable('serialize');
+            group.forEach(i => {
+                if(i.id !== 0) {
+                    i.location = l.loc;
+                    if(i.children) {
+                        i.children.forEach(c => c.location = l.loc);
+                    }
+                    raw.push(i);
+                }
+            });
+        });
+        
+        fetch('/admin/menus/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(raw)
+        }).then(() => {
+            window.location.reload();
+        });
+    }
+  </script>
+
+  <!-- Add New Menu Options -->
+  <div class="col-md-6 mt-4">
+    <form class="card border-0 shadow-sm rounded-4" action="/admin/menus/add_page" method="POST">
+      <div class="card-header bg-white border-bottom">
+        <h3 class="card-title fw-bold">Add Page to Menu</h3>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label required fw-bold">Select Page</label>
+          <select class="form-select" name="page_id" required>
+            {{ range .Pages }}
+            <option value="{{ .ID }}">{{ .Title }} ({{ .Slug }})</option>
+            {{ end }}
+          </select>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label required fw-bold">Target Location</label>
+            <select class="form-select" name="location" required>
+              <option value="header">Header Navigation</option>
+              <option value="footer_1">Footer Column 1</option>
+              <option value="footer_2">Footer Column 2</option>
+              <option value="footer_3">Footer Column 3</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label required fw-bold">Menu Order</label>
+            <input type="number" class="form-control" name="menu_order" value="1" required>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer bg-light text-end rounded-bottom-4">
+        <button type="submit" class="btn btn-primary fw-bold shadow-sm rounded-3">Add Page Configuration</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-md-6 mt-4">
+    <form class="card border-0 shadow-sm rounded-4" action="/admin/menus/add_link" method="POST">
+      <div class="card-header bg-white border-bottom">
+        <h3 class="card-title fw-bold">Add Custom Link</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+           <div class="col-md-6 mb-3">
+             <label class="form-label required fw-bold">Link Label Text</label>
+             <input type="text" class="form-control" name="label" placeholder="e.g. Documentation" required>
+           </div>
+           <div class="col-md-6 mb-3">
+             <label class="form-label required fw-bold">Destination URL</label>
+             <input type="text" class="form-control" name="url" placeholder="https://..." required>
+           </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label required fw-bold">Target Location</label>
+            <select class="form-select" name="location" required>
+              <option value="header">Header Navigation</option>
+              <option value="footer_1">Footer Column 1</option>
+              <option value="footer_2">Footer Column 2</option>
+              <option value="footer_3">Footer Column 3</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label required fw-bold">Menu Order</label>
+            <input type="number" class="form-control" name="menu_order" value="2" required>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer bg-light text-end rounded-bottom-4">
+        <button type="submit" class="btn btn-primary fw-bold shadow-sm rounded-3">Bind External Origin Link</button>
+      </div>
+    </form>
+  </div>
+
+</div>

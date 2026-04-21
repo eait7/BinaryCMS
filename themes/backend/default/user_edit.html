@@ -1,0 +1,271 @@
+{{ if .Success }}
+<div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+  <strong>Success!</strong> User details have been updated.
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{{ end }}
+
+<div class="row gx-4">
+  <!-- Left Sidebar -->
+  <div class="col-md-3">
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      {{ if .User }}
+      <div class="card-body text-center py-4">
+        <span class="avatar avatar-xl rounded-circle mb-3" style="background-image: url(https://api.dicebear.com/9.x/avataaars/svg?seed={{ .User.Username }})"></span>
+        <h3 class="mb-1">{{ if .User.Name }}{{ .User.Name }}{{ else }}{{ .User.Username }}{{ end }}</h3>
+        <div class="text-muted small mb-2">@{{ .User.Username }}</div>
+        {{ if eq .User.Role "admin" }}
+          <span class="badge bg-purple text-purple-fg text-uppercase fw-bold">{{ .User.Role }}</span>
+        {{ else if eq .User.Role "support" }}
+          <span class="badge bg-orange text-orange-fg text-uppercase fw-bold">{{ .User.Role }}</span>
+        {{ else }}
+          <span class="badge bg-blue-lt text-uppercase fw-bold">{{ .User.Role }}</span>
+        {{ end }}
+
+        {{ if eq .User.Status "suspended" }}
+          <span class="badge bg-danger-lt text-danger fw-bold ms-1">Suspended</span>
+        {{ else }}
+          <span class="badge bg-success-lt text-success fw-bold ms-1">Active</span>
+        {{ end }}
+      </div>
+      {{ end }}
+
+      <div class="list-group list-group-flush rounded-bottom" data-bs-toggle="tabs">
+        <a class="list-group-item list-group-item-action active fw-bold border-0" data-bs-toggle="tab" href="#tabs-profile">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+          Profile
+        </a>
+        {{ if .User }}
+        <a class="list-group-item list-group-item-action fw-bold border-0" data-bs-toggle="tab" href="#tabs-security">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-warning" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /></svg>
+          Security
+        </a>
+        <a class="list-group-item list-group-item-action fw-bold border-0" data-bs-toggle="tab" href="#tabs-meta">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-cyan" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12v9" /><path d="M12 12l-8 -4.5" /></svg>
+          Plugin Meta
+        </a>
+        {{ range .PluginTabs }}
+        <a class="list-group-item list-group-item-action fw-bold border-0" data-bs-toggle="tab" href="#tabs-plugin-extra">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-info" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 7l8 -4l8 4v10l-8 4l-8 -4z" /></svg>
+          Plugin
+        </a>
+        {{ end }}
+        {{ end }}
+      </div>
+    </div>
+
+    {{ if .User }}
+    <a href="/admin/users" class="btn btn-outline-secondary w-100 fw-bold">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+      Back to Users
+    </a>
+    {{ end }}
+  </div>
+
+  <!-- Right Content -->
+  <div class="col-md-9">
+    <div class="tab-content">
+
+      <!-- Profile Tab -->
+      <div class="tab-pane active show" id="tabs-profile">
+        <div class="card shadow-sm border-0 rounded-3">
+          <form action="{{ if .User }}/admin/users/edit/{{ .User.ID }}{{ else }}/admin/users/new{{ end }}" method="POST">
+            {{ if .User }}<input type="hidden" name="target" value="profile">{{ end }}
+            <div class="card-header bg-white border-bottom py-3">
+              <h3 class="card-title fw-bold mb-0">{{ if .User }}Edit Profile{{ else }}Create New User{{ end }}</h3>
+            </div>
+            <div class="card-body">
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold {{ if .IsNew }}required{{ end }}">Username</label>
+                  <input type="text" name="username" class="form-control" value="{{ if .User }}{{ .User.Username }}{{ end }}" {{ if .User }}disabled{{ end }} {{ if .IsNew }}required{{ end }} placeholder="Enter username">
+                  {{ if .User }}<small class="form-hint">Username cannot be changed.</small>{{ end }}
+                </div>
+                {{ if .IsNew }}
+                <div class="col-md-6">
+                  <label class="form-label fw-bold required">Password</label>
+                  <input type="password" name="password" class="form-control" required placeholder="Min 8 characters">
+                </div>
+                {{ end }}
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input type="text" name="name" class="form-control" value="{{ if .User }}{{ .User.Name }}{{ end }}" placeholder="John Doe">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Email Address</label>
+                  <input type="email" name="email" class="form-control" value="{{ if .User }}{{ .User.Email }}{{ end }}" placeholder="user@example.com">
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Phone</label>
+                  <input type="text" name="phone" class="form-control" value="{{ if .User }}{{ .User.Phone }}{{ end }}" placeholder="+27 12 345 6789">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">System Role</label>
+                  <select name="role" class="form-select">
+                    <option value="subscriber" {{ if .User }}{{ if eq .User.Role "subscriber" }}selected{{ end }}{{ end }}>Subscriber</option>
+                    <option value="reseller" {{ if .User }}{{ if eq .User.Role "reseller" }}selected{{ end }}{{ end }}>Reseller</option>
+                    <option value="support" {{ if .User }}{{ if eq .User.Role "support" }}selected{{ end }}{{ end }}>Support</option>
+                    <option value="accounts" {{ if .User }}{{ if eq .User.Role "accounts" }}selected{{ end }}{{ end }}>Accounts</option>
+                    <option value="admin" {{ if .User }}{{ if eq .User.Role "admin" }}selected{{ end }}{{ end }}>Administrator</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">Biography</label>
+                <textarea name="bio" class="form-control" rows="3" placeholder="A short bio...">{{ if .User }}{{ .User.Bio }}{{ end }}</textarea>
+              </div>
+            </div>
+            <div class="card-footer bg-light text-end rounded-bottom-3 py-3">
+              <a href="/admin/users" class="btn btn-link text-secondary fw-bold text-decoration-none me-2">Cancel</a>
+              <button type="submit" class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm">{{ if .User }}Save Changes{{ else }}Create User{{ end }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {{ if .User }}
+      <!-- Security Tab -->
+      <div class="tab-pane" id="tabs-security">
+        <div class="card shadow-sm border-0 rounded-3">
+          <form action="/admin/users/edit/{{ .User.ID }}" method="POST">
+            <input type="hidden" name="target" value="security">
+            <div class="card-header bg-white border-bottom py-3">
+              <h3 class="card-title fw-bold mb-0 text-warning">Security & Password</h3>
+            </div>
+            <div class="card-body">
+              <div class="mb-4">
+                <label class="form-label fw-bold">New Password</label>
+                <input type="password" name="new_password" class="form-control form-control-lg" placeholder="Enter new password (min 8 characters)">
+                <small class="form-hint mt-2">Leave blank to keep existing password unchanged.</small>
+              </div>
+
+              <div class="mb-4 p-3 bg-light rounded border">
+                <h4 class="mb-2">Account Status</h4>
+                <div class="d-flex align-items-center gap-3">
+                  {{ if eq .User.Status "suspended" }}
+                    <span class="badge bg-danger-lt text-danger fs-5 px-3 py-2">Suspended</span>
+                    <form action="/admin/users/toggle-status/{{ .User.ID }}" method="POST" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-success fw-bold">Activate Account</button>
+                    </form>
+                  {{ else }}
+                    <span class="badge bg-success-lt text-success fs-5 px-3 py-2">Active</span>
+                    {{ if ne .User.Username "admin" }}
+                    <form action="/admin/users/toggle-status/{{ .User.ID }}" method="POST" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-warning fw-bold">Suspend Account</button>
+                    </form>
+                    {{ end }}
+                  {{ end }}
+                </div>
+              </div>
+
+              <div class="text-muted small">
+                <strong>Last Login:</strong> {{ if .User.LastLogin }}{{ .User.LastLogin }}{{ else }}Never{{ end }}<br>
+                <strong>Account Created:</strong> {{ .User.CreatedAt }}
+              </div>
+            </div>
+            <div class="card-footer bg-light text-end rounded-bottom-3 py-3">
+              <button type="submit" class="btn btn-warning fw-bold px-4 rounded-pill shadow-sm">Update Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Plugin Meta Tab -->
+      <div class="tab-pane" id="tabs-meta">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-white border-bottom py-3">
+            <h3 class="card-title fw-bold mb-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-cyan" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9l8 -4.5" /></svg>
+              Plugin Extension Data (user_meta)
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="text-muted mb-3">This table shows all key-value metadata stored for this user by plugins. Plugins use the <code>user_meta</code> table to store per-user data without modifying the core schema.</p>
+
+            {{ if .UserMeta }}
+            <div class="table-responsive mb-4">
+              <table class="table table-vcenter table-bordered">
+                <thead>
+                  <tr><th>Meta Key</th><th>Meta Value</th><th class="text-end" style="width:100px">Action</th></tr>
+                </thead>
+                <tbody>
+                  {{ range $key, $value := .UserMeta }}
+                  <tr>
+                    <td><code class="fw-bold">{{ $key }}</code></td>
+                    <td>{{ $value }}</td>
+                    <td class="text-end">
+                      <form action="/admin/users/edit/{{ $.User.ID }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this meta entry?');">
+                        <input type="hidden" name="target" value="delete_meta">
+                        <input type="hidden" name="meta_key" value="{{ $key }}">
+                        <button type="submit" class="btn btn-sm btn-ghost-danger">Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {{ end }}
+                </tbody>
+              </table>
+            </div>
+            {{ else }}
+            <div class="text-center text-muted py-4 mb-4">
+              <p class="mb-1">No plugin meta data stored for this user yet.</p>
+              <small>Plugins will automatically populate this table using <code>SetUserMeta()</code>.</small>
+            </div>
+            {{ end }}
+
+            <!-- Manual Add -->
+            <div class="border-top pt-4">
+              <h4 class="mb-3">Add Custom Meta Entry</h4>
+              <form action="/admin/users/edit/{{ .User.ID }}" method="POST">
+                <input type="hidden" name="target" value="meta">
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <input type="text" name="meta_key" class="form-control" placeholder="meta_key (e.g., shop_tier)" required>
+                  </div>
+                  <div class="col-md-6">
+                    <input type="text" name="meta_value" class="form-control" placeholder="meta_value">
+                  </div>
+                  <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary w-100 fw-bold">Add</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plugin-injected tabs -->
+      {{ range .PluginTabs }}
+      <div class="tab-pane" id="tabs-plugin-extra">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            {{ . }}
+          </div>
+        </div>
+      </div>
+      {{ end }}
+      {{ end }}
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switching (same as profile.html)
+  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+    tab.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.querySelectorAll('[data-bs-toggle="tab"]').forEach(t => t.classList.remove('active', 'text-primary'));
+      this.classList.add('active', 'text-primary');
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active', 'show'));
+      document.querySelector(this.getAttribute('href')).classList.add('active', 'show');
+    });
+  });
+</script>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <title>{{ if .Title }}{{ .Title }} - {{ end }}{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
+    <!-- CSS files -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      body { font-family: 'Inter Var', sans-serif; }
+      :root {
+        --tblr-primary: {{ .BrandColor }};
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <div class="page">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+      <div class="container-xl">
+        <a class="navbar-brand font-weight-bold text-decoration-none" href="/">
+          {{ if .Settings.site_logo_url }}
+            <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; max-height: none !important; width: auto !important;" alt="{{ .Settings.site_title }}">
+          {{ else }}
+            🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+          {{ end }}
+        </a>
+        <div class="navbar-nav flex-row">
+            <a href="/" class="nav-link mx-2">Home</a>
+            {{ range .MenuItems }}
+            <a href="{{ .URL }}" class="nav-link mx-2">{{ .Label }}</a>
+            {{ end }}
+        </div>
+      </div>
+    </nav>
+    <div class="page-wrapper">
+      <div class="page-body">
+        <div class="container-tight py-4">
+          {{ if .Settings.site_tagline }}
+            <div class="text-center text-secondary mb-4">{{ .Settings.site_tagline }}</div>
+          {{ end }}
+        
+        <div class="mb-4">
+         <h1 class="text-center">Latest Posts</h1>
+        </div>
+
+        {{ range .Posts }}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3 class="card-title"><a href="/post/{{ .Post.Slug }}">{{ .Post.Title }}</a></h3>
+            <div class="text-secondary">{{ .Content }}</div>
+            <div class="text-muted small mt-2">Published: {{ .Post.CreatedAt }}</div>
+          </div>
+        </div>
+        {{ else }}
+        <div class="card">
+          <div class="card-body text-center">
+             No posts available yet!
+          </div>
+        </div>
+        {{ end }}
+
+
+        <div class="mt-5 border-top pt-5">
+           <div class="container-xl">
+              <div class="row text-center text-md-start">
+                 <div class="col-12 col-md-4 mb-4">
+                     <a class="navbar-brand font-weight-bold text-decoration-none h3 mb-3 d-inline-block" href="/">
+                       {{ if .Settings.site_logo_url }}
+                         <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: 32px;" alt="{{ .Settings.site_title }}">
+                       {{ else }}
+                         🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+                       {{ end }}
+                     </a>
+                     <p class="text-secondary small pe-md-5">{{ .Settings.footer_brand_text }}</p>
+                 </div>
+                 
+                 <div class="col-6 col-md-2 mb-4">
+                     <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Information{{ end }}</h6>
+                     <ul class="list-unstyled mt-3">
+                         {{ range .FooterMenu1 }}
+                         <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
+                         {{ end }}
+                     </ul>
+                 </div>
+
+                 <div class="col-6 col-md-3 mb-4">
+                     <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
+                     <ul class="list-unstyled mt-3">
+                         {{ range .FooterMenu2 }}
+                         <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
+                         {{ end }}
+                     </ul>
+                 </div>
+
+                 <div class="col-6 col-md-3 mb-4">
+                     <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
+                     <ul class="list-unstyled mt-3">
+                         {{ range .FooterMenu3 }}
+                         <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
+                         {{ end }}
+                     </ul>
+                 </div>
+              </div>
+              
+              <div class="border-top py-4 mt-3 d-flex flex-column flex-md-row align-items-center justify-content-between">
+                 <div class="text-muted small">{{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. All rights reserved.{{ end }}</div>
+                 <a href="/admin" class="text-muted small mt-2 mt-md-0 d-flex align-items-center text-decoration-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg> Admin Access</a>
+              </div>
+           </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </body>
+</html>

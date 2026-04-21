@@ -1,0 +1,135 @@
+	<div class="row gx-4">
+		<!-- Left Menu Column -->
+		<div class="col-md-3">
+			<div class="card shadow-sm">
+				<div class="list-group list-group-flush" data-bs-toggle="tabs">
+					<a class="list-group-item list-group-item-action active fw-bold border-0" data-bs-toggle="tab" href="#tabs-profile">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+						My Account
+					</a>
+					<a class="list-group-item list-group-item-action fw-bold border-0" data-bs-toggle="tab" href="#tabs-security">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-warning" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /><path d="M12 11m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 12l0 2.5" /></svg>
+						Security & 2FA
+					</a>
+					<a class="list-group-item list-group-item-action fw-bold border-0" data-bs-toggle="tab" href="#tabs-notifications">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-secondary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
+						Notifications
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<!-- Right Content Column -->
+		<div class="col-md-9">
+			<div class="card shadow-sm tab-content border-0">
+				
+				<!-- Profile Tab -->
+				<div class="tab-pane active show" id="tabs-profile">
+				<form action="/admin/profile" method="POST">
+					<input type="hidden" name="target" value="profile">
+					<div class="card-header border-bottom-0 pb-0">
+						<h3 class="card-title text-primary fs-2">Profile Information</h3>
+					</div>
+					<div class="card-body">
+						<div class="row mb-5 align-items-center">
+							<div class="col-auto">
+								<span class="avatar avatar-xl rounded" style="background-image: url(https://api.dicebear.com/9.x/avataaars/svg?seed={{ .User.Username }})"></span>
+							</div>
+							<div class="col">
+								<h3 class="mb-1 fs-3">{{ if .User.Name }}{{ .User.Name }}{{ else }}{{ .User.Username }}{{ end }}</h3>
+								<div class="text-muted opacity-75">{{ if .User.Email }}{{ .User.Email }}{{ else }}Root Access{{ end }}</div>
+							</div>
+							<div class="col-auto">
+								<a href="#" class="btn btn-outline-primary shadow-sm">Change Avatar</a>
+							</div>
+						</div>
+						
+						<div class="mb-4">
+							<label class="form-label fs-4">Full Legal Name</label>
+							<input type="text" class="form-control form-control-lg" name="name" value="{{ .User.Name }}">
+						</div>
+						<div class="mb-4">
+							<label class="form-label fs-4">Contact Email</label>
+							<input type="email" class="form-control form-control-lg" name="email" value="{{ .User.Email }}">
+						</div>
+						<div class="mb-4">
+							<label class="form-label fs-4">Biography</label>
+							<textarea class="form-control" name="bio" rows="5">{{ .User.Bio }}</textarea>
+						</div>
+					</div>
+					<div class="card-footer bg-transparent text-end border-top-0 pt-0">
+						<button type="submit" class="btn btn-primary btn-lg shadow">Save Profile Changes</button>
+					</div>
+				</form>
+				</div>
+
+				<!-- Security Tab -->
+				<div class="tab-pane" id="tabs-security">
+				<form action="/admin/profile" method="POST">
+					<input type="hidden" name="target" value="security">
+					<div class="card-header border-bottom-0 pb-0">
+						<h3 class="card-title text-warning fs-2">Account Security</h3>
+					</div>
+					<div class="card-body mt-3">
+						<div class="mb-4">
+							<label class="form-label required fs-4">Current Password</label>
+							<input type="password" name="current_password" class="form-control form-control-lg" placeholder="••••••••">
+						</div>
+						<div class="mb-4">
+							<label class="form-label required fs-4">New Password</label>
+							<input type="password" name="new_password" class="form-control form-control-lg">
+							<small class="form-hint mt-2">Must be at least 12 characters securely hashed.</small>
+						</div>
+						
+						<div class="mt-4 text-end">
+							<button type="submit" class="btn btn-warning shadow">Update Password</button>
+						</div>
+
+						<hr class="my-5">
+						<h3 class="card-title text-warning fs-2">Two-Factor Authentication (2FA)</h3>
+						<p class="text-muted fs-4">Secure your administrator account globally through Authenticator generation.</p>
+						<button type="button" class="btn btn-outline-warning mt-2 shadow-sm">Enable 2FA Protection</button>
+					</div>
+				</form>
+				</div>
+
+				<!-- Notifications Tab -->
+				<div class="tab-pane" id="tabs-notifications">
+					<div class="card-body text-center py-5 my-5">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-bell-slash text-muted mb-4 opacity-50" width="64" height="64" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9.346 5.353c.21 -.129 .428 -.246 .654 -.353" /><path d="M12 3a7 7 0 0 1 7 7v3l.894 1.789a2 2 0 0 1 -.752 2.659m-2.822 1.155a2 2 0 0 1 -1.32 .397h-12a4 4 0 0 0 2 -3v-3a6.98 6.98 0 0 1 .494 -2.607" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /><path d="M3 3l18 18" /></svg>
+						<h3 class="text-muted fs-2">No external email webhooks configured</h3>
+						<p class="text-muted opacity-50 fs-4">Please bind your SMTP connection logic to receive native alerts.</p>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Native Javascript tab injection engine since Tabler script binding might mismatch without reload
+		document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+			tab.addEventListener('click', function(e) {
+				e.preventDefault();
+				document.querySelectorAll('[data-bs-toggle="tab"]').forEach(t => t.classList.remove('active', 'text-primary'));
+				this.classList.add('active', 'text-primary');
+				
+				document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active', 'show'));
+				document.querySelector(this.getAttribute('href')).classList.add('active', 'show');
+				
+				// Optional: Set URL parameter transparently
+				const url = new URL(window.location);
+				url.searchParams.set('tab', this.getAttribute('href').replace('#tabs-', ''));
+				window.history.pushState({}, '', url);
+			});
+		});
+
+		// Auto-load tab from URL
+		window.addEventListener('DOMContentLoaded', () => {
+			const urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.has('tab')) {
+				const activeTab = document.querySelector(`[href="#tabs-${urlParams.get('tab')}"]`);
+				if(activeTab) activeTab.click();
+			}
+		});
+	</script>

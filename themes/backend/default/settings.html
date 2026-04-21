@@ -1,0 +1,142 @@
+<form action="/admin/settings" method="POST">
+  <div class="card mb-3">
+    <div class="card-header">
+      <h3 class="card-title">Site Identity</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label required">Site Title</label>
+          <input type="text" name="site_title" class="form-control" value="{{ .Settings.site_title }}" placeholder="e.g. My Go Blog">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label required">Tagline / Description</label>
+          <input type="text" name="site_tagline" class="form-control" value="{{ .Settings.site_tagline }}" placeholder="A few words about this site">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Site URL <span class="form-label-description">Primary Domain</span></label>
+          <input type="url" name="site_url" class="form-control" value="{{ .Settings.site_url }}" placeholder="https://example.com">
+        </div>
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Brand Logo URL <span class="form-label-description">Optional</span></label>
+          <input type="text" name="site_logo_url" class="form-control" value="{{ .Settings.site_logo_url }}" placeholder="e.g. /uploads/logo.png">
+          <small class="form-hint">Paste an image URL to replace the text "Go CMS" logo in the administrative sidebar natively.</small>
+        </div>
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Favicon URL <span class="form-label-description">Optional</span></label>
+          <input type="text" name="site_favicon_url" class="form-control" value="{{ .Settings.site_favicon_url }}" placeholder="e.g. /uploads/favicon.png">
+          <small class="form-hint">Paste an image URL for the site Favicon. Essential for Google Search and Facebook URLs sharing visibility.</small>
+        </div>
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Logo Size <span class="form-label-description">Adjust height</span></label>
+          <input type="range" class="form-range" name="logo_size" min="16" max="150" step="1" value="{{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}" oninput="document.getElementById('logo-size-val').innerText = this.value + 'px'">
+          <div class="text-secondary"><small>Current size: <span id="logo-size-val">{{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px</span></small></div>
+        </div>
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-layout-bottombar me-2 text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M4 15l16 0" /></svg> Footer Configuration</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Footer Brand Text <span class="form-label-description">Displays under your logo</span></label>
+          <input type="text" name="footer_brand_text" class="form-control" value="{{ .Settings.footer_brand_text }}" placeholder="Brief description of your brand">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Column 1 Title</label>
+          <input type="text" name="footer_col1_title" class="form-control" value="{{ .Settings.footer_col1_title }}" placeholder="e.g. PRODUCT">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Column 2 Title</label>
+          <input type="text" name="footer_col2_title" class="form-control" value="{{ .Settings.footer_col2_title }}" placeholder="e.g. DEVELOPERS">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Column 3 Title</label>
+          <input type="text" name="footer_col3_title" class="form-control" value="{{ .Settings.footer_col3_title }}" placeholder="e.g. COMPANY">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Bottom Copyright Strip <span class="form-label-description">Bottom edge</span></label>
+          <input type="text" name="custom_footer" class="form-control" value="{{ .Settings.custom_footer }}" placeholder="&copy; 2026 My Domain. All rights reserved.">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title">Homepage Configuration</h3>
+    </div>
+    <div class="card-body">
+      <div class="mb-4">
+        <div class="form-label required">Your homepage displays</div>
+        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+          
+          <label class="form-selectgroup-item flex-fill">
+            <input type="radio" name="homepage_type" value="posts" class="form-selectgroup-input" {{ if eq .CurrentType "posts" }}checked{{ end }}>
+            <div class="form-selectgroup-label d-flex align-items-center p-3">
+              <div class="me-3">
+                <span class="form-selectgroup-check"></span>
+              </div>
+              <div class="form-selectgroup-label-content">
+                <strong>Your latest posts</strong>
+                <div class="text-secondary mt-1">Displays the chronological blog timeline on the root URL.</div>
+              </div>
+            </div>
+          </label>
+          
+          <label class="form-selectgroup-item flex-fill mt-3">
+            <input type="radio" name="homepage_type" value="page" class="form-selectgroup-input" {{ if eq .CurrentType "page" }}checked{{ end }}>
+            <div class="form-selectgroup-label d-flex align-items-center p-3">
+              <div class="me-3">
+                <span class="form-selectgroup-check"></span>
+              </div>
+              <div class="form-selectgroup-label-content w-100">
+                <strong>A static page</strong>
+                <div class="text-secondary mt-1 mb-2">Select a specifically authored page to act as the homepage landing.</div>
+                <select name="homepage_page_id" class="form-select">
+                  <option value="0">-- Select a Page --</option>
+                  {{ range .Pages }}
+                  <option value="{{ .ID }}" {{ if eq $.CurrentPageID (print .ID) }}selected{{ end }}>{{ .Title }}</option>
+                  {{ end }}
+                </select>
+              </div>
+            </div>
+          </label>
+          
+        </div>
+      </div>
+    </div>
+    <div class="card-footer text-end border-top-0 pt-0">
+      <button type="submit" class="btn btn-primary">Save All Settings</button>
+    </div>
+  </div>
+
+  <div class="card mt-3 border-primary border-opacity-50">
+    <div class="card-header bg-primary-lt">
+      <h3 class="card-title text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield-lock me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /><path d="M12 11m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 12l0 2.5" /></svg> Automated SSL Certificate Orchestration</h3>
+    </div>
+    <div class="card-body">
+      <p class="text-secondary">Bind a public domain and automatically generate a secure HTTPS Let's Encrypt SSL certificate by executing the Nginx certbot configurator explicitly inside this Go layer.</p>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Public Domain Name</label>
+            <input type="text" name="ssl_domain" class="form-control" value="{{ .Settings.ssl_domain }}" placeholder="e.g. example.com or www.example.com">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">SSL Administrator Email <span class="form-label-description">Required by Let's Encrypt</span></label>
+            <input type="email" name="ssl_email" class="form-control" value="{{ .Settings.ssl_email }}" placeholder="admin@example.com">
+        </div>
+      </div>
+      
+      {{ if .SSLLog }}
+      <div class="alert alert-info mt-3 mb-0">
+        <h4 class="alert-title">Orchestration Log</h4>
+        <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.8rem;">{{ .SSLLog }}</pre>
+      </div>
+      {{ end }}
+    </div>
+    <div class="card-footer bg-transparent text-end">
+        <button type="submit" name="generate_ssl" value="1" class="btn btn-warning shadow-sm">Deploy Secure SSL Certificate & Bind Domain</button>
+    </div>
+  </div>
+</form>

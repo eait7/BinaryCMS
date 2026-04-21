@@ -1,0 +1,19 @@
+{
+  "name": "BinaryCMS Quantum Light",
+  "id": "binarycms_quantum_light",
+  "version": "1.0.0",
+  "author": "BinaryCMS Team",
+  "description": "The official BinaryCMS light marketing theme. Clean, professional, and blazing fast — a bright, modern SaaS aesthetic inspired by the world's best product websites.",
+  "screenshot": "/uploads/theme_screenshot_binarycms_quantum_light.png",
+  "install_pages": [
+    {"title": "Features", "slug": "features", "status": "published"},
+    {"title": "Pricing", "slug": "pricing", "status": "published"},
+    {"title": "Blog", "slug": "blog", "status": "published"},
+    {"title": "About BinaryCMS", "slug": "about", "status": "published"},
+    {"title": "Contact", "slug": "contact", "status": "published"},
+    {"title": "Download Free", "slug": "download", "status": "published"},
+    {"title": "Plugin Marketplace", "slug": "plugins", "status": "published"},
+    {"title": "Documentation", "slug": "docs", "status": "published"},
+    {"title": "Changelog", "slug": "changelog", "status": "published"}
+  ]
+}

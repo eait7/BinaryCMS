@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ .RequestURL }}" />
+  <meta property="og:title" content="{{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}" />
+  {{ if .Page.MetaDescription }}
+  <meta name="description" content="{{ .Page.MetaDescription }}"/>
+  <meta property="og:description" content="{{ .Page.MetaDescription }}" />
+  {{ end }}
+  {{ if .Page.FeaturedImage }}
+  <meta property="og:image" content="{{ .Page.FeaturedImage }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  {{ else }}
+  <meta name="twitter:card" content="summary" />
+  {{ end }}
+  <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
+  <!-- Optional Tailwind CSS if desired, or Tabler core. We've been using Tabler. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+  <style>
+    :root {
+      --tblr-primary: {{ .BrandColor }};
+    }
+    body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+    .page-container {
+      max-width: 800px;
+      margin: 40px auto;
+    }
+    .page-content img { max-width: 100%; height: auto; border-radius: 8px; }
+  </style>
+</head>
+<body class="antialiased">
+  <div class="page">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+      <div class="container-xl">
+        <a class="navbar-brand font-weight-bold text-decoration-none" href="/">
+          {{ if .Settings.site_logo_url }}
+            <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; max-height: none !important; width: auto !important;" alt="{{ .Settings.site_title }}">
+          {{ else }}
+            🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+          {{ end }}
+        </a>
+        <div class="navbar-nav flex-row">
+            <a href="/" class="nav-link mx-2">Home</a>
+            {{ range .MenuItems }}
+            <a href="{{ .URL }}" class="nav-link mx-2">{{ .Label }}</a>
+            {{ end }}
+        </div>
+      </div>
+    </nav>
+    <div class="page-wrapper">
+      <div class="page-body">
+        <div class="container-xl page-container">
+          <div class="card shadow-sm border-0" style="border-radius: 12px;">
+            <div class="card-body p-5">
+              <h1 class="card-title text-center text-primary mb-5" style="font-size: 2.5rem; font-weight: 800;">{{ .Page.Title }}</h1>
+              <div class="text-secondary markdown-body" style="line-height: 1.8; font-size: 1.1rem;">
+                {{ .Content }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="mt-5 border-top pt-5 bg-white d-print-none">
+         <div class="container-xl">
+            <div class="row text-center text-md-start">
+               <div class="col-12 col-md-4 mb-4">
+                   <a class="navbar-brand font-weight-bold text-decoration-none h3 mb-3 d-inline-block text-dark" href="/">
+                     {{ if .Settings.site_logo_url }}
+                       <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: 32px;" alt="{{ .Settings.site_title }}">
+                     {{ else }}
+                       🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+                     {{ end }}
+                   </a>
+                   <p class="text-secondary small pe-md-5">{{ .Settings.footer_brand_text }}</p>
+               </div>
+               
+               <div class="col-6 col-md-2 mb-4">
+                   <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Information{{ end }}</h6>
+                   <ul class="list-unstyled mt-3">
+                       {{ range .FooterMenu1 }}
+                       <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
+                       {{ end }}
+                   </ul>
+               </div>
+
+               <div class="col-6 col-md-3 mb-4">
+                   <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
+                   <ul class="list-unstyled mt-3">
+                       {{ range .FooterMenu2 }}
+                       <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
+                       {{ end }}
+                   </ul>
+               </div>
+
+               <div class="col-6 col-md-3 mb-4">
+                   <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
+                   <ul class="list-unstyled mt-3">
+                       {{ range .FooterMenu3 }}
+                       <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
+                       {{ end }}
+                   </ul>
+               </div>
+            </div>
+            
+            <div class="border-top py-4 mt-3 d-flex flex-column flex-md-row align-items-center justify-content-between">
+               <div class="text-muted small">{{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. All rights reserved.{{ end }}</div>
+               <a href="/admin" class="text-muted small mt-2 mt-md-0 d-flex align-items-center text-decoration-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg> Admin Access</a>
+            </div>
+         </div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<div class="row g-4">
+  <div class="col-12">
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+      <div class="card-header bg-white border-bottom py-3">
+        <h3 class="card-title fw-bold m-0"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-palette me-2 text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25" /><path d="M8.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M16.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg> Active Global Platform Themes</h3>
+      </div>
+      <div class="card-body bg-light p-4">
+        
+        <form action="/admin/themes" method="POST">
+          <div class="row mb-4">
+            <div class="col-md-6 mb-3 mb-md-0">
+               <label class="form-label fw-bold">Primary Brand Color Selection</label>
+               <div class="input-group">
+                 <input type="color" class="form-control form-control-color border-0 shadow-sm" name="brand_color" value="{{ .BrandColor }}" style="width: 60px;">
+                 <span class="input-group-text bg-white border-0 shadow-sm text-muted">Use this to globally overwrite active system accent styling properly!</span>
+               </div>
+            </div>
+            <div class="col-md-6 d-flex align-items-end justify-content-md-end">
+                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Save Global Color Context</button>
+            </div>
+          </div>
+        </form>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="m-0 fw-bold">Available Frontend Displays</h2>
+        <a href="#" class="btn btn-outline-primary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#uploadThemeModal">
+             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-upload" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
+             Upload New Target zip
+        </a>
+    </div>
+    
+    <div class="row row-cards">
+      {{ $currentFront := .FrontendTheme }}
+      {{ range .FrontendThemes }}
+      <div class="col-sm-6 col-lg-4">
+        <div class="card card-sm shadow-sm border-0 rounded-4 overflow-hidden h-100 position-relative {{ if eq .ID $currentFront }}border-primary border-2{{ end }}">
+          {{ if eq .ID $currentFront }}
+            <div class="ribbon bg-primary fw-bold px-3">Active</div>
+          {{ end }}
+          
+          <div class="ratio ratio-16x9">
+            <!-- Intelligent path resolver defaulting uniquely seamlessly -->
+            <img src="/uploads/theme_screenshot_{{ .ID }}.png" onerror="this.src='https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'" class="object-cover" alt="Theme preview">
+          </div>
+          
+          <div class="card-body d-flex flex-column">
+            <h3 class="card-title fw-bold text-dark fs-3 mb-1">{{ if .Name }}{{ .Name }}{{ else }}{{ .ID }}{{ end }}</h3>
+            <div class="text-muted small mb-2 text-uppercase fw-semibold tracking-wide">
+                <span>By {{ if .Author }}{{ .Author }}{{ else }}System Component{{ end }}</span>
+                {{ if .Version }}<span class="ms-2 badge bg-azure-lt">V{{ .Version }}</span>{{ end }}
+            </div>
+            
+            <p class="text-secondary flex-grow-1 mb-4">{{ if .Description }}{{ .Description }}{{ else }}A highly capable natively integrated robust frontend display architecture.{{ end }}</p>
+            
+            <div class="mt-auto d-flex gap-2">
+              <form action="/admin/themes" method="POST" class="{{ if and (ne .ID $currentFront) (ne .ID `default`) }}w-75{{ else }}w-100{{ end }}">
+                 <input type="hidden" name="frontend_theme" value="{{ .ID }}">
+                 {{ if eq .ID $currentFront }}
+                   <button type="submit" class="btn btn-success w-100 fw-bold shadow-sm rounded-3 text-white" title="Re-initialize missing demo content structurally securely safely natively elegantly">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-refresh" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
+                      Active: Sync Demo DB
+                   </button>
+                 {{ else }}
+                   <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm rounded-3">Activate Structural Layout</button>
+                 {{ end }}
+              </form>
+              {{ if and (ne .ID $currentFront) (ne .ID "default") }}
+              <form action="/admin/themes/delete/frontend/{{ .ID }}" method="POST" class="w-25" onsubmit="return confirm('Permanently delete this theme and all its uploaded static assets?');">
+                 <button type="submit" class="btn btn-outline-danger w-100 fw-bold shadow-sm rounded-3 p-2" title="Delete Theme completely">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash m-0" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="7" x2="20" y2="7" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+                 </button>
+              </form>
+              {{ end }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {{ end }}
+    </div>
+  </div>
+</div>
+
+<!-- Upload Deployment Modal Container -->
+<div class="modal modal-blur fade" id="uploadThemeModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content rounded-4 border-0 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Upload Custom Compiled Theme Archive</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="/admin/themes/upload" method="POST" enctype="multipart/form-data">
+        <div class="modal-body">
+          <input type="hidden" name="theme_type" value="frontend">
+          
+          <div class="mb-3">
+            <label class="form-label required fw-bold">Standard Generic Template Archive (.zip file block)</label>
+            <input type="file" class="form-control rounded-3" name="theme_zip" accept=".zip" required>
+            <small class="form-hint mt-2">
+                Make sure your completely independent ZIP archive internally securely structurally contains natively the required standard <code>theme.json</code> and all relevant standard template html execution blocks explicitly appropriately accurately seamlessly correctly efficiently seamlessly intuitively inherently easily precisely completely seamlessly organically mapping effectively completely smoothly optimally elegantly securely smoothly!
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer bg-light rounded-bottom-4">
+          <button type="button" class="btn btn-link link-secondary fw-bold" data-bs-dismiss="modal">Cancel Procedure</button>
+          <button type="submit" class="btn btn-primary ms-auto rounded-pill px-4 fw-bold shadow-sm">Extract and Process Securely</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

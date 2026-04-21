@@ -1,0 +1,36 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Edit Category</h3>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/admin/categories/edit/{{ .Category.ID }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Name</label>
+          <input type="text" name="name" class="form-control" value="{{ .Category.Name }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Parent Category</label>
+          <select name="parent_id" class="form-select">
+            <option value="0">— None (Top Level) —</option>
+            {{ $currentID := .Category.ID }}
+            {{ $parentID := .Category.ParentID }}
+            {{ range .Categories }}
+            {{ if ne .ID $currentID }}
+            <option value="{{ .ID }}" {{ if eq .ID $parentID }}selected{{ end }}>{{ .Name }}</option>
+            {{ end }}
+            {{ end }}
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-control" rows="2">{{ .Category.Description }}</textarea>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <a href="/admin/categories" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

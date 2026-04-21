@@ -1,0 +1,206 @@
+<!-- Stats Bar -->
+<div class="row row-deck row-cards mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card card-sm shadow-sm border-0 rounded-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <span class="bg-primary text-white avatar rounded-circle me-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
+          </span>
+          <div>
+            <div class="fw-bold text-muted small text-uppercase">Total Users</div>
+            <div class="fs-2 fw-bold">{{ .TotalUsers }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card card-sm shadow-sm border-0 rounded-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <span class="bg-success text-white avatar rounded-circle me-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M5 12l5 5l10 -10" /></svg>
+          </span>
+          <div>
+            <div class="fw-bold text-muted small text-uppercase">Active</div>
+            <div class="fs-2 fw-bold">{{ if .StatusCounts.active }}{{ .StatusCounts.active }}{{ else }}0{{ end }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card card-sm shadow-sm border-0 rounded-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <span class="bg-danger text-white avatar rounded-circle me-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+          </span>
+          <div>
+            <div class="fw-bold text-muted small text-uppercase">Suspended</div>
+            <div class="fs-2 fw-bold">{{ if .StatusCounts.suspended }}{{ .StatusCounts.suspended }}{{ else }}0{{ end }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card card-sm shadow-sm border-0 rounded-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <span class="bg-purple text-white avatar rounded-circle me-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /></svg>
+          </span>
+          <div>
+            <div class="fw-bold text-muted small text-uppercase">Admins</div>
+            <div class="fs-2 fw-bold">{{ if .RoleCounts.admin }}{{ .RoleCounts.admin }}{{ else }}0{{ end }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+  <div class="card-body py-3">
+    <form method="GET" action="/admin/users" class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <div class="input-icon">
+          <span class="input-icon-addon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+          </span>
+          <input type="text" name="q" class="form-control" placeholder="Search by name, email, or username..." value="{{ .Query }}">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="role" class="form-select">
+          <option value="">All Roles</option>
+          <option value="admin" {{ if eq .RoleFilter "admin" }}selected{{ end }}>Admin</option>
+          <option value="support" {{ if eq .RoleFilter "support" }}selected{{ end }}>Support</option>
+          <option value="reseller" {{ if eq .RoleFilter "reseller" }}selected{{ end }}>Reseller</option>
+          <option value="subscriber" {{ if eq .RoleFilter "subscriber" }}selected{{ end }}>Subscriber</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All Status</option>
+          <option value="active" {{ if eq .StatusFilter "active" }}selected{{ end }}>Active</option>
+          <option value="suspended" {{ if eq .StatusFilter "suspended" }}selected{{ end }}>Suspended</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill fw-bold">Filter</button>
+        <a href="/admin/users" class="btn btn-outline-secondary" title="Clear"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Users Table -->
+<div class="card shadow-sm border-0 rounded-3">
+  <div class="card-header bg-white border-bottom py-3">
+    <h3 class="card-title fw-bold mb-0">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
+      User Management
+    </h3>
+    <div class="card-actions">
+      <span class="text-muted small">{{ .TotalResults }} result{{ if ne .TotalResults 1 }}s{{ end }}</span>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table card-table table-vcenter text-nowrap table-hover">
+      <thead>
+        <tr>
+          <th style="width:3rem"></th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th>Joined</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Users }}
+        <tr>
+          <td>
+            <span class="avatar avatar-sm rounded-circle" style="background-image: url(https://api.dicebear.com/9.x/avataaars/svg?seed={{ .Username }})"></span>
+          </td>
+          <td>
+            <div class="fw-bold">{{ if .Name }}{{ .Name }}{{ else }}{{ .Username }}{{ end }}</div>
+            <div class="text-muted small">@{{ .Username }}</div>
+          </td>
+          <td class="text-muted">{{ .Email }}</td>
+          <td>
+            {{ if eq .Role "admin" }}
+              <span class="badge bg-purple text-purple-fg text-uppercase fw-bold">{{ .Role }}</span>
+            {{ else if eq .Role "support" }}
+              <span class="badge bg-orange text-orange-fg text-uppercase fw-bold">{{ .Role }}</span>
+            {{ else if eq .Role "reseller" }}
+              <span class="badge bg-cyan text-cyan-fg text-uppercase fw-bold">{{ .Role }}</span>
+            {{ else }}
+              <span class="badge bg-blue-lt text-uppercase fw-bold">{{ .Role }}</span>
+            {{ end }}
+          </td>
+          <td>
+            {{ if eq .Status "suspended" }}
+              <span class="badge bg-danger-lt text-danger fw-bold">Suspended</span>
+            {{ else if eq .Status "pending" }}
+              <span class="badge bg-warning-lt text-warning fw-bold">Pending</span>
+            {{ else }}
+              <span class="badge bg-success-lt text-success fw-bold">Active</span>
+            {{ end }}
+          </td>
+          <td class="text-muted small">{{ if .LastLogin }}{{ .LastLogin }}{{ else }}Never{{ end }}</td>
+          <td class="text-muted small">{{ .CreatedAt }}</td>
+          <td class="text-end">
+            <a href="/admin/users/edit/{{ .ID }}" class="btn btn-sm btn-ghost-primary me-1" title="Edit User">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /></svg>
+              Edit
+            </a>
+            {{ if ne .Username "admin" }}
+            <form action="/admin/users/toggle-status/{{ .ID }}" method="POST" style="display:inline;">
+              {{ if eq .Status "suspended" }}
+              <button type="submit" class="btn btn-sm btn-ghost-success" title="Activate">Activate</button>
+              {{ else }}
+              <button type="submit" class="btn btn-sm btn-ghost-warning" title="Suspend">Suspend</button>
+              {{ end }}
+            </form>
+            <form action="/admin/users/delete/{{ .ID }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to permanently delete this user? This cannot be undone.');">
+              <button type="submit" class="btn btn-sm btn-ghost-danger" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+              </button>
+            </form>
+            {{ end }}
+          </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="8" class="text-center text-secondary py-5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg mb-2 text-muted" width="40" height="40" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+            <div class="mt-1">No users found matching your criteria.</div>
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {{ if gt .TotalPages 1 }}
+  <div class="card-footer d-flex align-items-center justify-content-between bg-white">
+    <p class="m-0 text-muted small">Showing page <strong>{{ .CurrentPage }}</strong> of <strong>{{ .TotalPages }}</strong></p>
+    <ul class="pagination m-0">
+      {{ if .HasPrev }}
+      <li class="page-item"><a class="page-link" href="/admin/users?page={{ .PrevPage }}&q={{ .Query }}&role={{ .RoleFilter }}&status={{ .StatusFilter }}">Previous</a></li>
+      {{ end }}
+      {{ if .HasNext }}
+      <li class="page-item"><a class="page-link" href="/admin/users?page={{ .NextPage }}&q={{ .Query }}&role={{ .RoleFilter }}&status={{ .StatusFilter }}">Next</a></li>
+      {{ end }}
+    </ul>
+  </div>
+  {{ end }}
+</div>
