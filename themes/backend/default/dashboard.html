@@ -1,0 +1,395 @@
+<style>
+  .stat-card-wrap { transition: all 0.3s ease; }
+  .stat-card-wrap:hover { transform: translateY(-3px); }
+  .stat-icon-box {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .widget-frame {
+    border: none; width: 100%; border-radius: 0 0 8px 8px;
+    background: #fff; min-height: 280px;
+  }
+  .widget-card {
+    border: none; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease; height: 100%;
+  }
+  .widget-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+  .widget-card .card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0; padding: 12px 16px;
+  }
+  .widget-card .card-header h3 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #475569; margin: 0;
+  }
+  .quick-action-btn {
+    border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;
+    text-align: center; text-decoration: none; color: #475569;
+    transition: all 0.2s ease; display: block; background: #fff;
+  }
+  .quick-action-btn:hover {
+    border-color: var(--tblr-primary); color: var(--tblr-primary);
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(32,107,196,0.15);
+  }
+  .quick-action-btn .icon-box {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;
+  }
+  .welcome-gradient {
+    background: linear-gradient(135deg, #1e3a5f 0%, #206bc4 50%, #4299e1 100%);
+    border-radius: 16px; color: white; padding: 28px 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .welcome-gradient::after {
+    content: ''; position: absolute; top: -50%; right: -20%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  /* ===== Edit Mode Styles ===== */
+  .dashboard-block { transition: all 0.3s ease; position: relative; }
+  .dashboard-block .block-drag-handle {
+    display: none; position: absolute; top: 8px; left: 8px; z-index: 10;
+    background: rgba(32,107,196,0.9); color: white; border-radius: 8px;
+    padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: grab;
+    text-transform: uppercase; letter-spacing: 0.5px; user-select: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .dashboard-block .block-drag-handle:active { cursor: grabbing; }
+
+  body.edit-mode .dashboard-block {
+    outline: 2px dashed rgba(32,107,196,0.3); outline-offset: 4px;
+    border-radius: 12px;
+  }
+  body.edit-mode .dashboard-block:hover {
+    outline-color: var(--tblr-primary);
+  }
+  body.edit-mode .dashboard-block .block-drag-handle { display: flex; align-items: center; gap: 4px; }
+  body.edit-mode .dashboard-block.sortable-ghost {
+    opacity: 0.2; outline: 2px dashed var(--tblr-primary);
+  }
+  body.edit-mode .dashboard-block.sortable-chosen {
+    outline-color: var(--tblr-primary);
+    box-shadow: 0 8px 30px rgba(32,107,196,0.2);
+  }
+
+  body.edit-mode #edit-layout-btn { background: #ef4444 !important; border-color: #ef4444 !important; color: white !important; }
+  body.edit-mode #save-layout-btn { display: inline-flex !important; }
+
+  .toast-float {
+    position: fixed; top: 80px; right: 24px; z-index: 9999;
+    opacity: 0; transform: translateY(-20px); transition: all 0.3s ease;
+    min-width: 280px;
+  }
+  .toast-float.show { opacity: 1; transform: translateY(0); }
+</style>
+
+<!-- Welcome Banner (always first, not draggable) -->
+<div class="welcome-gradient">
+  <div class="row align-items-center">
+    <div class="col">
+      <h2 class="fw-bold mb-1" style="font-size: 24px;">Welcome back! 👋</h2>
+      <p class="mb-0 opacity-75">Here's an overview of your content management system.</p>
+    </div>
+    <div class="col-auto d-none d-md-block">
+      <div class="d-flex gap-2">
+        <a href="/admin/posts/new" class="btn btn-light fw-bold shadow-sm">✏️ New Post</a>
+        <a href="/admin/widgets" class="btn btn-outline-light fw-bold">⚙️ Manage Widgets</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sortable Dashboard Container -->
+<div id="dashboard-blocks">
+
+  <!-- BLOCK: Stats -->
+  <div class="dashboard-block mb-4" data-block-id="stats">
+    <div class="block-drag-handle">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>
+      Stats Overview
+    </div>
+    <div class="row g-3">
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 stat-card-wrap">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-3">
+              <div class="stat-icon-box" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#2563eb" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
+              </div>
+              <div>
+                <div class="text-muted small fw-bold text-uppercase" style="font-size:11px;letter-spacing:0.5px;">Posts</div>
+                <div class="fw-bold" style="font-size:28px;line-height:1;">{{ .PostCount }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 stat-card-wrap">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-3">
+              <div class="stat-icon-box" style="background: linear-gradient(135deg, #dcfce7, #bbf7d0);">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#16a34a" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /></svg>
+              </div>
+              <div>
+                <div class="text-muted small fw-bold text-uppercase" style="font-size:11px;letter-spacing:0.5px;">Pages</div>
+                <div class="fw-bold" style="font-size:28px;line-height:1;">{{ .PageCount }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 stat-card-wrap">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-3">
+              <div class="stat-icon-box" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10" /><path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" /></svg>
+              </div>
+              <div>
+                <div class="text-muted small fw-bold text-uppercase" style="font-size:11px;letter-spacing:0.5px;">Pending</div>
+                <div class="fw-bold" style="font-size:28px;line-height:1;">{{ .PendingComments }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 stat-card-wrap">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-3">
+              <div class="stat-icon-box" style="background: linear-gradient(135deg, #ede9fe, #ddd6fe);">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#7c3aed" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
+              </div>
+              <div>
+                <div class="text-muted small fw-bold text-uppercase" style="font-size:11px;letter-spacing:0.5px;">Subscribers</div>
+                <div class="fw-bold" style="font-size:28px;line-height:1;">{{ .SubscriberCount }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCK: Quick Actions -->
+  <div class="dashboard-block mb-4" data-block-id="quick-actions">
+    <div class="block-drag-handle">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>
+      Quick Actions
+    </div>
+    <div class="row g-3">
+      <div class="col-12"><h3 class="fw-bold mb-0" style="font-size:16px;">Quick Actions</h3></div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="/admin/posts/new" class="quick-action-btn">
+          <div class="icon-box" style="background: #dbeafe;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#2563eb" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg></div>
+          <div class="fw-bold small">New Post</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="/admin/pages/new" class="quick-action-btn">
+          <div class="icon-box" style="background: #dcfce7;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#16a34a" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg></div>
+          <div class="fw-bold small">New Page</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="/admin/media" class="quick-action-btn">
+          <div class="icon-box" style="background: #fef3c7;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg></div>
+          <div class="fw-bold small">Media</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="/admin/comments" class="quick-action-btn">
+          <div class="icon-box" style="background: #ede9fe;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#7c3aed" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10" /><path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" /></svg></div>
+          <div class="fw-bold small">Comments</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="/admin/settings" class="quick-action-btn">
+          <div class="icon-box" style="background: #fce7f3;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#db2777" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg></div>
+          <div class="fw-bold small">Settings</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="/admin/arrange-menus" class="quick-action-btn">
+          <div class="icon-box" style="background: #e0f2fe;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#0284c7" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 6l16 0" /><path d="M4 12l16 0" /><path d="M4 18l16 0" /></svg></div>
+          <div class="fw-bold small">Menus</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCK: Each Database Widget -->
+  {{ range .Widgets }}
+  <div class="dashboard-block mb-3" data-block-id="widget-{{ .ID }}" data-col-span="{{ .ColSpan }}">
+    <div class="block-drag-handle">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>
+      {{ .Title }}
+    </div>
+    <div class="widget-card card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h3>{{ .Title }}</h3>
+        <a href="/admin/widgets/edit/{{ .ID }}" class="btn btn-sm btn-ghost-secondary" title="Edit Widget">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /></svg>
+        </a>
+      </div>
+      {{ if eq .WidgetType "iframe" }}
+      <iframe src="{{ .SourceURL }}" class="widget-frame" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+      {{ else if eq .WidgetType "builtin" }}
+      <iframe src="{{ .SourceURL }}" class="widget-frame" loading="lazy"></iframe>
+      {{ end }}
+    </div>
+  </div>
+  {{ end }}
+
+  <!-- BLOCK: Plugin Widgets -->
+  {{ range $i, $w := .PluginWidgets }}
+  <div class="dashboard-block mb-3" data-block-id="plugin-{{ $i }}">
+    <div class="block-drag-handle">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>
+      Plugin Widget
+    </div>
+    <div class="widget-card card">
+      <div class="card-body">{{ $w }}</div>
+    </div>
+  </div>
+  {{ end }}
+
+  {{ if and (not .Widgets) (not .PluginWidgets) }}
+  <!-- BLOCK: Empty State -->
+  <div class="dashboard-block mb-3" data-block-id="empty-state">
+    <div class="block-drag-handle">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>
+      Widget Placeholder
+    </div>
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body text-center py-5">
+        <div class="mb-3" style="font-size: 48px;">📊</div>
+        <h3 class="fw-bold mb-2">No Dashboard Widgets</h3>
+        <p class="text-muted mb-3">Add widgets to display live data from any page, plugin, or built-in monitor.</p>
+        <a href="/admin/widgets" class="btn btn-primary fw-bold">Manage Widgets</a>
+      </div>
+    </div>
+  </div>
+  {{ end }}
+
+</div>
+
+
+
+<!-- Toast -->
+<div class="toast-float" id="dash-toast">
+  <div class="alert alert-success alert-dismissible shadow-lg border-0" role="alert">
+    <div class="d-flex"><div id="dash-toast-msg"></div></div>
+    <a class="btn-close" onclick="document.getElementById('dash-toast').classList.remove('show')"></a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script>
+(function() {
+  let isEditing = false;
+  let sortableInstance = null;
+  const container = document.getElementById('dashboard-blocks');
+
+  // Load saved layout order on init
+  loadLayout();
+
+  function loadLayout() {
+    fetch('/admin/api/dashboard-layout')
+      .then(r => r.json())
+      .then(data => {
+        if (data.order && Array.isArray(data.order) && data.order.length > 0) {
+          applyOrder(data.order);
+        }
+      })
+      .catch(() => {});
+  }
+
+  function applyOrder(order) {
+    const blocks = {};
+    // Index all current blocks
+    container.querySelectorAll('.dashboard-block').forEach(el => {
+      blocks[el.dataset.blockId] = el;
+    });
+    // Reorder
+    order.forEach(id => {
+      if (blocks[id]) {
+        container.appendChild(blocks[id]);
+        delete blocks[id];
+      }
+    });
+    // Append any blocks not in the saved order (new widgets)
+    Object.values(blocks).forEach(el => container.appendChild(el));
+  }
+
+  window.toggleEditMode = function() {
+    isEditing = !isEditing;
+    document.body.classList.toggle('edit-mode', isEditing);
+    const label = document.querySelector('.edit-label');
+    const saveBtn = document.getElementById('save-layout-btn');
+    const editBtn = document.getElementById('edit-layout-btn');
+
+    if (isEditing) {
+      label.textContent = 'Done Editing';
+      if (saveBtn) saveBtn.style.display = 'inline-flex';
+      if (editBtn) { editBtn.classList.remove('btn-outline-primary'); editBtn.classList.add('btn-danger'); }
+      // Initialize SortableJS
+      sortableInstance = new Sortable(container, {
+        animation: 250,
+        handle: '.block-drag-handle',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        forceFallback: true,
+        onEnd: function() {}
+      });
+      showToast('Drag blocks to rearrange. Click "Save" when done.', 'info');
+    } else {
+      label.textContent = 'Edit Layout';
+      if (saveBtn) saveBtn.style.display = 'none';
+      if (editBtn) { editBtn.classList.add('btn-outline-primary'); editBtn.classList.remove('btn-danger'); }
+      if (sortableInstance) {
+        sortableInstance.destroy();
+        sortableInstance = null;
+      }
+    }
+  };
+
+  window.saveLayout = async function() {
+    const order = [];
+    container.querySelectorAll('.dashboard-block').forEach(el => {
+      order.push(el.dataset.blockId);
+    });
+
+    try {
+      const resp = await fetch('/admin/api/dashboard-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: order })
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        showToast('Dashboard layout saved!', 'success');
+        // Exit edit mode
+        if (isEditing) toggleEditMode();
+      } else {
+        showToast('Error: ' + (data.error || 'Unknown'), 'danger');
+      }
+    } catch(e) {
+      showToast('Network error: ' + e.message, 'danger');
+    }
+  };
+
+  function showToast(msg, type) {
+    const toast = document.getElementById('dash-toast');
+    const alert = toast.querySelector('.alert');
+    alert.className = 'alert alert-' + type + ' alert-dismissible shadow-lg border-0';
+    document.getElementById('dash-toast-msg').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4000);
+  }
+})();
+</script>

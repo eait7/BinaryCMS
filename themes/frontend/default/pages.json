@@ -1,0 +1,9 @@
+[
+  {
+    "Title": "Home",
+    "Slug": "home",
+    "MetaTitle": "BinaryCMS Homepage",
+    "MetaDescription": "Welcome to BinaryCMS.",
+    "Content": "<div style=\"padding: 50px 0; text-align: center; background: #f8f9fa;\">\n  <h1 style=\"font-size: 3rem; font-weight: bold; color: #206bc4;\">Welcome to BinaryCMS</h1>\n  <p style=\"font-size: 1.25rem; color: #6c757d; margin-top: 15px;\">Your fast, dynamic Go Content Management System.</p>\n  <a href=\"/admin\" style=\"display: inline-block; padding: 10px 20px; background: #206bc4; color: white; border-radius: 4px; text-decoration: none; margin-top: 20px;\">Enter Administration</a>\n</div>\n\n<div style=\"padding: 50px; max-width: 800px; margin: 0 auto;\">\n  <h2>Drag & Drop Elements</h2>\n  <p>You can seamlessly edit this page natively using the Visual Builder! Simply click on any text to modify it, or drag new standard library Tabler elements directly onto the canvas natively.</p>\n</div>"
+  }
+]

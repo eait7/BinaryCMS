@@ -1,0 +1,202 @@
+<div class="row row-cards">
+
+
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Installed Plugins</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table card-table table-vcenter text-nowrap">
+          <thead>
+            <tr>
+              <th>Plugin Binary</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Plugins }}
+            <tr>
+              <td><strong>{{ .Name }}</strong></td>
+              <td>
+                {{ if .Active }}
+                <span class="badge bg-green text-green-fg">Active</span>
+                {{ else }}
+                <span class="badge bg-secondary text-secondary-fg">Inactive</span>
+                {{ end }}
+              </td>
+              <td class="text-end">
+                <div class="btn-list flex-nowrap justify-content-end">
+                    {{ if .Active }}
+                    <form action="/admin/plugins/deactivate/{{ .Filename }}" method="POST" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-ghost-warning">Deactivate</button>
+                    </form>
+                    {{ else }}
+                    <form action="/admin/plugins/activate/{{ .Filename }}" method="POST" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-ghost-success">Activate</button>
+                    </form>
+                    {{ end }}
+                    <form action="/admin/plugins/delete/{{ .Filename }}" method="POST" style="display:inline;" onsubmit="return confirm('Permanently delete this plugin binary?');">
+                      <button type="submit" class="btn btn-sm btn-ghost-danger">Delete</button>
+                    </form>
+                </div>
+              </td>
+            </tr>
+            {{ else }}
+            <tr>
+              <td colspan="4" class="text-center text-secondary py-4">No compiled plugins loaded.</td>
+            </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <form action="/admin/plugins/upload" method="POST" enctype="multipart/form-data" id="pluginUploadForm">
+      <div class="card-header">
+        <h3 class="card-title">Upload New Plugin</h3>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label required">Plugin Executable Binary</label>
+          <input type="file" class="form-control" name="plugin_binary" id="pluginBinaryInput" required>
+          <small class="form-hint">Upload a compiled HashiCorp go-plugin extension (Linux x86/ARM binary). Uploads flawlessly integrate organically via real-time hot-reloading architecture.</small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label required">Admin Password</label>
+          <input type="password" class="form-control" name="admin_password" placeholder="Verify password to install executable" required>
+        </div>
+        
+        <!-- Progress Bar Container (Hidden by default) -->
+        <div id="uploadProgressContainer" class="mt-3" style="display: none;">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-secondary" id="uploadStatusText">Uploading...</span>
+            <span class="text-secondary fw-bold" id="uploadPercentage">0%</span>
+          </div>
+          <div class="progress">
+            <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="card-footer text-end">
+        <button type="submit" id="uploadSubmitBtn" class="btn btn-primary">Upload and Install</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-12 mt-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Developer Guide: Building Plugins</h3>
+      </div>
+      <div class="card-body">
+        <p>This CMS actively utilizes the enterprise-grade <code>hashicorp/go-plugin</code> structural architecture entirely. Every single plugin is a separate compiled Linux binary executing natively over local RPC memory pipelines securely!</p>
+        <strong>1. Implement the Go Interface:</strong>
+        <pre class="bg-dark text-white p-3 rounded mt-2"><code>package main
+
+import "github.com/ez8/gocms/pkg/plugin"
+
+type MyPlugin struct{}
+
+func (p *MyPlugin) PluginName() string { return "MyTool" }
+func (p *MyPlugin) HookBeforeFrontPageRender(c string) string { return c }
+func (p *MyPlugin) HookAdminMenu() []plugin.MenuItem { return nil }
+func (p *MyPlugin) HookAdminRoute(route string) string { return "&lt;b&gt;Simple Dashboard Route&lt;/b&gt;" }
+func (p *MyPlugin) HookDashboardWidget() string { return "&lt;h1&gt;Widget&lt;/h1&gt;" }
+func (p *MyPlugin) HookAdminTopRightWidget() string { return "" }
+
+func main() {
+	plugin.ServePlugin(&MyPlugin{})
+}</code></pre>
+        <strong>2. Compile & Upload constraint:</strong>
+        <p>Because these are raw <code>sys.Exec</code> binaries gracefully deployed seamlessly internally natively via <strong>hot-reloading structures</strong>, you must specifically dynamically compile them matching the destination server architecture! Example: <code>env GOOS=linux GOARCH=amd64 go build -o awesome_plugin .</code></p>
+        <p class="text-secondary"><small><i class="ti ti-bolt text-warning"></i> <strong>Hot Reloading Active:</strong> Deleting, enabling, or injecting components natively spins interfaces dynamically within 50 milliseconds intrinsically overriding active OS bounds smoothly globally.</small></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('upload') && urlParams.get('upload') === 'success') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (urlParams.has('action') && urlParams.get('action') === 'success') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (urlParams.has('action') && urlParams.get('action') === 'error') {
+      alert('Operation Failed: ' + urlParams.get('msg'));
+      window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  // Intercept the upload form to provide a smooth javascript-powered Progress Bar
+  const uploadForm = document.getElementById('pluginUploadForm');
+  const fileInput = document.getElementById('pluginBinaryInput');
+  const progressContainer = document.getElementById('uploadProgressContainer');
+  const progressBar = document.getElementById('uploadProgressBar');
+  const progressText = document.getElementById('uploadPercentage');
+  const statusText = document.getElementById('uploadStatusText');
+  const submitBtn = document.getElementById('uploadSubmitBtn');
+
+  if (uploadForm) {
+      uploadForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          if (!fileInput.files.length) return;
+          
+          progressContainer.style.display = 'block';
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Uploading...';
+          
+          const formData = new FormData(uploadForm);
+          const xhr = new XMLHttpRequest();
+          
+          xhr.open('POST', uploadForm.action, true);
+          
+          xhr.upload.onprogress = function(e) {
+              if (e.lengthComputable) {
+                  const percentComplete = Math.round((e.loaded / e.total) * 100);
+                  progressBar.style.width = percentComplete + '%';
+                  progressBar.setAttribute('aria-valuenow', percentComplete);
+                  progressText.textContent = percentComplete + '%';
+                  
+                  if (percentComplete === 100) {
+                      progressBar.classList.remove('progress-bar-animated');
+                      statusText.textContent = 'Processing file structure temporarily on OS...';
+                  }
+              }
+          };
+          
+          xhr.onload = function() {
+              if (xhr.status === 200 && xhr.responseURL.includes('error=')) {
+                  let url = new URL(xhr.responseURL);
+                  statusText.textContent = 'Upload failed! ' + url.searchParams.get('error').replace(/\+/g, ' ');
+                  statusText.classList.add('text-danger');
+                  progressBar.classList.replace('bg-primary', 'bg-danger');
+                  submitBtn.disabled = false;
+                  submitBtn.innerText = 'Retry Network Upload';
+              } else if (xhr.status === 200 || xhr.status === 302) {
+                  window.location.href = '/admin/plugins?upload=success';
+              } else {
+                  statusText.textContent = 'Upload failed! Internal Service Response: HTTP ' + xhr.status;
+                  statusText.classList.add('text-danger');
+                  progressBar.classList.replace('bg-primary', 'bg-danger');
+                  submitBtn.disabled = false;
+                  submitBtn.innerText = 'Retry Network Upload';
+              }
+          };
+          
+          xhr.onerror = function() {
+              statusText.textContent = 'Physical network dropout occurred during streaming operation.';
+              statusText.classList.add('text-danger');
+              progressBar.classList.replace('bg-primary', 'bg-danger');
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Retry Network Upload';
+          };
+          
+          xhr.send(formData);
+      });
+  }
+</script>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>{{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }} - {{ .Settings.site_title }}{{ end }}</title>
+    {{ if .Page.MetaDescription }}<meta name="description" content="{{ .Page.MetaDescription }}"/>{{ end }}
+    <!-- CSS files -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet"/>
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      :root {
+      	--tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+      	--tblr-primary: {{ if .BrandColor }}{{ .BrandColor }}{{ else }}#206bc4{{ end }};
+      }
+      body {
+      	font-feature-settings: "cv03", "cv04", "cv11";
+        background-color: #f6f8fb;
+      }
+      .markdown > p {
+         line-height: 1.8;
+         color: #4b5563;
+         font-size: 1.1rem;
+      }
+    </style>
+    <script>
+      function toggleTheme(theme) {
+        document.body.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('tablerTheme', theme);
+      }
+      let savedTheme = localStorage.getItem('tablerTheme');
+      if (savedTheme) { document.addEventListener('DOMContentLoaded', () => document.body.setAttribute('data-bs-theme', savedTheme)); }
+    </script>
+    {{ if .Settings.site_favicon_url }}
+    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+    <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+    {{ end }}
+  </head>
+  <body class="d-flex flex-column" data-bs-theme="light">
+    <div class="page">
+      <!-- Navbar -->
+      <header class="navbar navbar-expand-md d-print-none sticky-top bg-white border-bottom shadow-sm">
+        <div class="container-xl">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+            <a href="/">
+              <div class="d-flex align-items-center">
+                  <span class="bg-primary text-white p-2 rounded-3 me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-wifi" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 18l.01 0" /><path d="M9.172 15.172a4 4 0 0 1 5.656 0" /><path d="M6.343 12.343a8 8 0 0 1 11.314 0" /><path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 16.97 0" /></svg>
+                  </span>
+                  <span class="fw-bold fs-2 tracking-tight">{{ .Settings.site_title }}</span>
+              </div>
+            </a>
+          </h1>
+          <div class="navbar-nav flex-row order-md-last gap-2">
+            <div class="nav-item align-self-center pe-2">
+               <a href="#" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom" onclick="toggleTheme('dark')">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+               </a>
+               <a href="#" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom" onclick="toggleTheme('light')">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sun" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+               </a>
+            </div>
+            <div class="nav-item">
+              <a href="/profile" class="btn btn-outline-primary fw-bold shadow-sm rounded-pill px-4">
+                My Profile
+              </a>
+            </div>
+            <div class="nav-item d-none d-md-flex">
+              <a href="/admin" class="btn btn-primary fw-bold shadow-sm rounded-pill px-4">
+                Operations Gateway
+              </a>
+            </div>
+          </div>
+          <div class="collapse navbar-collapse" id="navbar-menu">
+            <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
+              <ul class="navbar-nav ms-md-4 gap-2">
+                <li class="nav-item">
+                  <a class="nav-link fw-bold text-dark fs-3" href="/" >
+                    <span class="nav-link-title">Dashboard</span>
+                  </a>
+                </li>
+                {{ range .MenuItems }}
+                {{ if .Children }}
+                <li class="nav-item dropdown {{ if eq $.RawPath .URL }}active{{ end }}">
+                  <a class="nav-link dropdown-toggle fw-bold text-dark fs-3" href="#navbar-dropdown-{{ .ID }}" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                    <span class="nav-link-title">{{ .Label }}</span>
+                  </a>
+                  <div class="dropdown-menu">
+                    {{ if ne .URL "#" }}<a class="dropdown-item fw-bold" href="{{ .URL }}">{{ .Label }}</a>{{ end }}
+                    {{ range .Children }}
+                    <a class="dropdown-item" href="{{ .URL }}">{{ .Label }}</a>
+                    {{ end }}
+                  </div>
+                </li>
+                {{ else }}
+                <li class="nav-item {{ if eq $.RawPath .URL }}active{{ end }}">
+                  <a class="nav-link fw-bold text-dark fs-3" href="{{ .URL }}" >
+                    <span class="nav-link-title">{{ .Label }}</span>
+                  </a>
+                </li>
+                {{ end }}
+                {{ end }}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Page Wrapper -->
+      <div class="page-wrapper">
+        <!-- Main body -->
+        <div class="page-body mt-5">
+          <div class="container-xl max-w-screen-lg">
+             <div class="card shadow-sm border-0 rounded-4 p-5 mb-5">
+                 <div class="text-center mb-5">
+                     <h1 class="display-4 fw-bold text-dark tracking-tight">{{ .Page.Title }}</h1>
+                     <div class="hr-text hr-text-center mt-5 mb-4 text-secondary opacity-50">Static Content Engine Layer</div>
+                 </div>
+                 
+                 <article class="markdown">
+                     {{ .Page.Content }}
+                 </article>
+             </div>
+          </div>
+        </div>
+        
+        <footer class="footer footer-transparent d-print-none mt-auto">
+          <div class="container-xl">
+            <div class="row text-center align-items-center flex-row-reverse">
+              <div class="col-lg-auto ms-lg-auto">
+                <ul class="list-inline list-inline-dots mb-0">
+                  <li class="list-inline-item"><a href="/profile" class="link-secondary">Terms of Service</a></li>
+                  <li class="list-inline-item"><a href="/profile" class="link-secondary">Acceptable Use Policy</a></li>
+                </ul>
+              </div>
+              <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                <ul class="list-inline list-inline-dots mb-0 text-secondary">
+                  <li class="list-inline-item">
+                    Copyright &copy; 2026 {{ .Settings.site_title }}. All rights reserved.
+                  </li>
+                  <li class="list-inline-item">Network Operations Platform</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+    <!-- Libs JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js" defer></script>
+  </body>
+</html>

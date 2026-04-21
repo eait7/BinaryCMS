@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" data-accent-color="{{ if .Settings.quantum_light_accent_color }}{{ .Settings.quantum_light_accent_color }}{{ else }}#006fbb{{ end }}">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Sign In — {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
+  <style>
+    :root {
+      --quantum-light-accent:    {{ if .Settings.quantum_light_accent_color }}{{ .Settings.quantum_light_accent_color }}{{ else }}#006fbb{{ end }};
+      --quantum-light-secondary: {{ if .Settings.quantum_light_secondary_color }}{{ .Settings.quantum_light_secondary_color }}{{ else }}#00a389{{ end }};
+    }
+  </style>
+  <link rel="stylesheet" href="/uploads/quantum_light/quantum_light.css?v=1.0.4">
+  {{ if .Settings.site_favicon_url }}
+  <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+  <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+  {{ end }}
+</head>
+<body>
+
+<div class="ql-auth-page">
+  <div class="ql-auth-card">
+    <div class="ql-auth-logo">
+      {{ if .Settings.site_logo_url }}<img src="{{ .Settings.site_logo_url }}" alt="{{ .Settings.site_title }}" style="height:40px;margin:0 auto 0.5rem;display:block;">{{ end }}
+      ⚡ {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+    </div>
+    <div class="ql-auth-title">Welcome back</div>
+    <div class="ql-auth-subtitle">Sign in to your account to continue</div>
+
+    {{ if .Flash }}<div class="ql-flash ql-flash-{{ .Flash.Type }}">{{ .Flash.Message }}</div>{{ end }}
+
+    <form method="POST" action="/login">
+      {{ if .CSRFToken }}<input type="hidden" name="_csrf" value="{{ .CSRFToken }}">{{ end }}
+      {{ if .Redirect }}<input type="hidden" name="redirect" value="{{ .Redirect }}">{{ end }}
+      <div class="ql-form-group">
+        <label class="ql-label" for="login-username">Username or Email</label>
+        <input class="ql-input" id="login-username" type="text" name="username" placeholder="admin" required autocomplete="username">
+      </div>
+      <div class="ql-form-group">
+        <label class="ql-label" for="login-password">Password</label>
+        <input class="ql-input" id="login-password" type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="ql-btn ql-btn-primary" style="width:100%;justify-content:center;">Sign In <span class="ql-arrow">→</span></button>
+    </form>
+
+    {{ if .Settings.allow_registration }}
+    <div class="ql-auth-link">
+      Don't have an account? <a href="/register">Create one →</a>
+    </div>
+    {{ end }}
+    <div class="ql-auth-link" style="margin-top:0.75rem;">
+      <a href="/" style="color:var(--ql-text-dim);font-size:0.82rem;">← Back to {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}home{{ end }}</a>
+    </div>
+  </div>
+</div>
+
+<script src="/uploads/quantum_light/quantum_light.js?v=1.0.0"></script>
+</body>
+</html>

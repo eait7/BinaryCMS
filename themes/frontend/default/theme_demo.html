@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  {{ if .Page.MetaDescription }}<meta name="description" content="{{ .Page.MetaDescription }}"/>{{ end }}
+  <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
+  <!-- Optional Tailwind CSS if desired, or Tabler core. We've been using Tabler. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+  <style>
+    :root {
+      --tblr-primary: {{ .BrandColor }};
+    }
+    body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+    .page-container {
+      max-width: 800px;
+      margin: 40px auto;
+    }
+    .page-content img { max-width: 100%; height: auto; border-radius: 8px; }
+  </style>
+</head>
+<body class="antialiased">
+  <div class="page">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+      <div class="container-xl">
+        <a class="navbar-brand font-weight-bold text-decoration-none" href="/">
+          {{ if .Settings.site_logo_url }}
+            <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; max-height: none !important; width: auto !important;" alt="{{ .Settings.site_title }}">
+          {{ else }}
+            🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+          {{ end }}
+        </a>
+        <div class="navbar-nav flex-row">
+            <a href="/" class="nav-link mx-2">Home</a>
+            {{ range .MenuItems }}
+            <a href="{{ .URL }}" class="nav-link mx-2">{{ .Label }}</a>
+            {{ end }}
+        </div>
+      </div>
+    </nav>
+    <div class="page-wrapper">
+      {{ .Content }}
+      <footer class="footer footer-transparent d-print-none">
+        <div class="container-xl text-center">
+          <p class="text-secondary small mt-4">{{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. All rights reserved.{{ end }}</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>

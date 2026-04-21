@@ -1,0 +1,76 @@
+[
+  {
+    "Label": "Dashboard",
+    "URL": "/admin",
+    "Icon": "home",
+    "Children": null
+  },
+  {
+    "Label": "Appearance",
+    "URL": "/admin/themes",
+    "Icon": "palette",
+    "Children": [
+      {
+        "Label": "Themes",
+        "URL": "/admin/themes",
+        "Icon": "palette",
+        "Children": null
+      },
+      {
+        "Label": "Pages",
+        "URL": "/admin/pages",
+        "Icon": "file-description",
+        "Children": null
+      },
+      {
+        "Label": "Tags",
+        "URL": "/admin/tags",
+        "Icon": "tags",
+        "Children": null
+      },
+      {
+        "Label": "Posts",
+        "URL": "/admin/posts",
+        "Icon": "file-text",
+        "Children": null
+      },
+      {
+        "Label": "Categories",
+        "URL": "/admin/categories",
+        "Icon": "category",
+        "Children": null
+      },
+      {
+        "Label": "Menus",
+        "URL": "/admin/menus",
+        "Icon": "list-details",
+        "Children": null
+      },
+      {
+        "Label": "Comments",
+        "URL": "/admin/comments",
+        "Icon": "message-circle",
+        "Children": null
+      },
+      {
+        "Label": "Media",
+        "URL": "/admin/media",
+        "Icon": "photo",
+        "Children": null
+      }
+    ]
+  },
+  {
+    "Label": "Core Settings",
+    "URL": "/admin/settings",
+    "Icon": "settings",
+    "Children": [
+      {
+        "Label": "Plugins",
+        "URL": "/admin/plugins",
+        "Icon": "puzzle",
+        "Children": null
+      }
+    ]
+  }
+]

@@ -1,0 +1,330 @@
+package main
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/ez8/gocms/internal/auth"
+	"github.com/ez8/gocms/internal/db"
+	"github.com/ez8/gocms/internal/models"
+	"github.com/ez8/gocms/internal/pluginmanager"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+)
+
+func main() {
+	// Initialize Database
+	err := db.Init("cms.db")
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+
+	// Create default admin user if none exists
+	models.CreateDefaultAdmin()
+
+	// Initialize Auth (session store)
+	auth.Init()
+
+	// Initialize Plugins
+	pm := pluginmanager.New()
+	err = pm.LoadPlugins("plugins")
+	if err != nil {
+		log.Printf("Warning: failed to load some plugins: %v", err)
+	}
+	defer pm.Cleanup()
+
+	// Start scheduled post publisher (checks every minute)
+	go startScheduler()
+
+	// Router setup
+	r := chi.NewRouter()
+
+	// Core middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(5))
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	// Security headers
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+			w.Header().Set("X-XSS-Protection", "1; mode=block")
+			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	// Static file serving
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
+
+	// =====================
+	// Admin Routes
+	// =====================
+	r.Route("/admin", func(r chi.Router) {
+		r.Use(auth.RequireAdminRole)
+
+		r.Get("/", handleAdminDashboard(pm))
+
+		// Posts
+		r.Get("/posts", handleListPosts(pm))
+		r.Get("/posts/new", handleNewPost(pm))
+		r.Post("/posts/new", handleNewPost(pm))
+		r.Get("/posts/edit/{id}", handleEditPost(pm))
+		r.Post("/posts/edit/{id}", handleEditPost(pm))
+		r.Post("/posts/delete/{id}", handleDeletePost(pm))
+
+		// Pages
+		r.Get("/pages", handleListPages(pm))
+		r.Get("/pages/new", handleNewPage(pm))
+		r.Post("/pages/new", handleNewPage(pm))
+		r.Get("/pages/edit/{id}", handleEditPage(pm))
+		r.Post("/pages/edit/{id}", handleEditPage(pm))
+		r.Post("/pages/delete/{id}", handleDeletePage(pm))
+
+		// Categories
+		r.Get("/categories", handleListCategories(pm))
+		r.Post("/categories/new", handleCreateCategory(pm))
+		r.Get("/categories/edit/{id}", handleEditCategory(pm))
+		r.Post("/categories/edit/{id}", handleEditCategory(pm))
+		r.Post("/categories/delete/{id}", handleDeleteCategory(pm))
+
+		// Tags
+		r.Get("/tags", handleListTags(pm))
+		r.Post("/tags/new", handleCreateTag(pm))
+		r.Post("/tags/delete/{id}", handleDeleteTag(pm))
+
+		// Comments
+		r.Get("/comments", handleListComments(pm))
+		r.Post("/comments/{action}/{id}", handleCommentAction(pm))
+
+		// Search
+		r.Get("/search", handleAdminSearch(pm))
+
+		// Settings
+		r.Get("/settings", handleSettings(pm))
+		r.Post("/settings", handleSettings(pm))
+
+		// Themes
+		r.Get("/themes", handleThemes(pm))
+		r.Post("/themes", handleThemes(pm))
+		r.Post("/themes/upload", handleUploadTheme(pm))
+		r.Post("/themes/delete/{type}/{name}", handleDeleteTheme(pm))
+
+		// Media
+		r.Get("/media", handleMediaLibrary(pm))
+		r.Post("/media/upload", handleMediaUpload(pm))
+		r.Post("/media/delete/{filename}", handleMediaDelete(pm))
+
+		// Menus (frontend)
+		r.Get("/menus", handleListMenus(pm))
+		r.Post("/menus/add_page", handleAddMenuPage(pm))
+		r.Post("/menus/add_link", handleAddMenuLink(pm))
+		r.Post("/menus/reorder", handleReorderMenus(pm))
+		r.Post("/menus/delete/{id}", handleDeleteMenu(pm))
+
+		// Admin Menu Arrangement (navbar drag-and-drop)
+		r.Get("/arrange-menus", handleAdminMenuArrange(pm))
+		r.Post("/arrange-menus/save", handleSaveAdminMenuArrangement(pm))
+		r.Post("/arrange-menus/reset", handleResetAdminMenuArrangement(pm))
+
+		// Users (unified management)
+		r.Get("/users", handleListUsers(pm))
+		r.Get("/users/new", handleNewUser(pm))
+		r.Post("/users/new", handleNewUser(pm))
+		r.Get("/users/edit/{id}", handleEditUser(pm))
+		r.Post("/users/edit/{id}", handleEditUser(pm))
+		r.Post("/users/delete/{id}", handleDeleteUser(pm))
+		r.Post("/users/toggle-status/{id}", handleToggleUserStatus(pm))
+		r.Get("/users/developer-guide", handleDevGuide(pm))
+
+		// Backwards-compatible redirect
+		r.Get("/subscribers", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/admin/users?role=subscriber", http.StatusMovedPermanently)
+		})
+
+		// Plugins
+		r.Get("/plugins", handleListPlugins(pm))
+		r.Post("/plugins/{action}/{filename}", handlePluginState(pm))
+		r.Post("/plugins/upload", handleUploadPlugin(pm))
+
+		// Dashboard Widgets
+		r.Get("/widgets", handleWidgetManagement(pm))
+		r.Get("/widgets/new", handleNewWidget(pm))
+		r.Post("/widgets/new", handleNewWidget(pm))
+		r.Get("/widgets/edit/{id}", handleEditWidget(pm))
+		r.Post("/widgets/edit/{id}", handleEditWidget(pm))
+		r.Post("/widgets/delete/{id}", handleDeleteWidget(pm))
+		r.Post("/widgets/reorder", handleReorderWidgets(pm))
+
+		// System Resources API (builtin widget data)
+		r.Get("/api/system-resources", handleSystemResourcesAPI())
+		r.Get("/widget/system-resources", handleSystemResourcesWidget())
+
+		// Dashboard Layout API (block order persistence)
+		r.Get("/api/dashboard-layout", handleDashboardLayoutAPI())
+		r.Post("/api/dashboard-layout", handleDashboardLayoutAPI())
+
+		// Profile
+		r.Get("/profile", handleAdminProfile(pm))
+		r.Post("/profile", handleAdminProfile(pm))
+
+		// Plugin admin routes (catch-all)
+		r.Get("/plugin/*", handlePluginAdminRoute(pm))
+		r.Post("/plugin/*", handlePluginAdminRoute(pm))
+
+		// Server restart (graceful)
+		r.Get("/restart", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`
+				<html>
+				<head><meta http-equiv="refresh" content="3;url=/admin"></head>
+				<body>
+					<div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+						<h2>Server is restarting...</h2>
+						<p>You will be redirected automatically...</p>
+					</div>
+				</body>
+				</html>
+			`))
+
+			go func() {
+				time.Sleep(1 * time.Second)
+				log.Println("Restart invoked from admin panel")
+				exe, err := os.Executable()
+				if err != nil {
+					log.Printf("Cannot get executable path: %v", err)
+					os.Exit(1)
+				}
+				err = syscall.Exec(exe, os.Args, os.Environ())
+				if err != nil {
+					log.Printf("Exec failed: %v", err)
+					os.Exit(1)
+				}
+			}()
+		})
+	})
+
+	// =====================
+	// API Routes
+	// =====================
+	r.Route("/api", func(r chi.Router) {
+		r.Get("/posts", handleAPIPosts())
+		r.Get("/post/{slug}", handleAPIPost())
+		r.Get("/pages", handleAPIPages())
+		r.Get("/page/{slug}", handleAPIPage())
+		r.Get("/search", handleAPISearch())
+
+		// Public Plugin API routes (catch-all)
+		r.Get("/plugin/*", handlePluginPublicRoute(pm))
+		r.Post("/plugin/*", handlePluginPublicRoute(pm))
+	})
+
+	// =====================
+	// Auth Routes
+	// =====================
+	r.Get("/login", auth.LoginHandlerTemplate)
+	r.Post("/login", auth.LoginHandler)
+	r.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
+		auth.LogoutHandler(w, r)
+	})
+
+	// Registration
+	r.Get("/register", handleFrontendRegister(pm))
+	r.Post("/register", handleFrontendRegister(pm))
+
+	// =====================
+	// Public Authenticated Routes
+	// =====================
+	r.Route("/profile", func(r chi.Router) {
+		r.Use(auth.RequireLogin)
+		r.Get("/", handleFrontendProfile(pm))
+		r.Post("/", handleFrontendProfile(pm))
+	})
+
+	r.Route("/my-account", func(r chi.Router) {
+		r.Use(auth.RequireLogin)
+		r.Get("/", handleFrontendMyAccount(pm))
+		r.Post("/update", handleFrontendUpdateProfile(pm))
+		r.Post("/password", handleFrontendChangePassword(pm))
+	})
+
+	// =====================
+	// Public Frontend Routes
+	// =====================
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		handleFrontendIndex(pm).ServeHTTP(w, r)
+	})
+
+	r.Get("/post/{slug}", handleFrontendPost(pm))
+	r.Post("/post/{slug}/comment", handleFrontendCommentSubmit(pm))
+	r.Get("/category/{slug}", handleFrontendCategory(pm))
+	r.Get("/tag/{slug}", handleFrontendTag(pm))
+	r.Get("/search", handleFrontendSearch(pm))
+
+	// Fallback: static pages
+	r.Get("/{slug}", handleFrontendPage(pm))
+
+	// =====================
+	// Server Setup
+	// =====================
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 60 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	// Graceful shutdown
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+
+		log.Println("Shutdown signal received, draining connections...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Fatalf("Graceful shutdown failed: %v", err)
+		}
+		log.Println("Server stopped gracefully")
+	}()
+
+	log.Printf("GoCMS server starting on :%s", port)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Server error: %v", err)
+	}
+}
+
+// startScheduler runs a background ticker that publishes scheduled posts.
+func startScheduler() {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		count, err := models.PublishScheduledPosts()
+		if err != nil {
+			log.Printf("Scheduler error: %v", err)
+			continue
+		}
+		if count > 0 {
+			log.Printf("Scheduler: Published %d scheduled post(s)", count)
+		}
+	}
+}

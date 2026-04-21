@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>Go CMS - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      :root {
+      	--tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+      }
+      body {
+      	font-feature-settings: "cv03", "cv04", "cv11";
+      }
+    </style>
+    {{ if .Settings.site_favicon_url }}
+    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+    <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+    {{ end }}
+  </head>
+  <body class=" d-flex flex-column bg-white">
+    <div class="page page-center">
+      <div class="container container-tight py-4">
+        <div class="text-center mb-4">
+          <a href="." class="navbar-brand navbar-brand-autodark"><img src="https://api.dicebear.com/9.x/avataaars/svg?seed=GoCMS" height="36" alt=""> Go CMS</a>
+        </div>
+        <form class="card card-md" action="/login" method="POST" autocomplete="off" novalidate>
+          <div class="card-body">
+            <h2 class="card-title text-center mb-4">Login to your account</h2>
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              <input type="text" name="username" class="form-control" placeholder="Enter username" autocomplete="off" value="admin">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">
+                Password
+              </label>
+              <div class="input-group input-group-flat">
+                <input type="password" name="password" class="form-control" placeholder="Your password" autocomplete="off" value="admin">
+              </div>
+            </div>
+            <div class="form-footer">
+              <button type="submit" class="btn btn-primary w-100">Sign in</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+<div class="card shadow-sm border-0 rounded-3">
+  <div class="card-header">
+    <h3 class="card-title mb-0 fw-bold">{{ if .IsNew }}Add New Widget{{ else }}Edit Widget{{ end }}</h3>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ if .IsNew }}/admin/widgets/new{{ else }}/admin/widgets/edit/{{ .Widget.ID }}{{ end }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Widget Title</label>
+          <input type="text" name="title" class="form-control" placeholder="e.g. System Monitor, Plugin Dashboard" value="{{ if not .IsNew }}{{ .Widget.Title }}{{ end }}" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium">Type</label>
+          <select name="widget_type" class="form-select">
+            <option value="iframe" {{ if and (not .IsNew) (eq .Widget.WidgetType "iframe") }}selected{{ end }}>iframe (Embed Page)</option>
+            <option value="builtin" {{ if and (not .IsNew) (eq .Widget.WidgetType "builtin") }}selected{{ end }}>Built-in</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-medium">Width (Columns)</label>
+          <select name="col_span" class="form-select">
+            <option value="3" {{ if and (not .IsNew) (eq .Widget.ColSpan 3) }}selected{{ end }}>3/12 (Quarter)</option>
+            <option value="4" {{ if and (not .IsNew) (eq .Widget.ColSpan 4) }}selected{{ end }}>4/12 (Third)</option>
+            <option value="6" {{ if or .IsNew (eq .Widget.ColSpan 6) }}selected{{ end }}>6/12 (Half)</option>
+            <option value="8" {{ if and (not .IsNew) (eq .Widget.ColSpan 8) }}selected{{ end }}>8/12 (Two Thirds)</option>
+            <option value="12" {{ if and (not .IsNew) (eq .Widget.ColSpan 12) }}selected{{ end }}>12/12 (Full Width)</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-medium">Source URL</label>
+          <input type="text" name="source_url" class="form-control font-monospace" placeholder="/admin/plugin/my-plugin or /admin/widget/system-resources" value="{{ if not .IsNew }}{{ .Widget.SourceURL }}{{ end }}" required>
+          <small class="text-muted">Full URL or relative path to the page you want to embed. The page will be loaded inside an iframe.</small>
+        </div>
+        <div class="col-12">
+          <label class="form-check">
+            <input type="checkbox" name="enabled" class="form-check-input" {{ if or .IsNew .Widget.Enabled }}checked{{ end }}>
+            <span class="form-check-label fw-medium">Enabled (show on dashboard)</span>
+          </label>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary fw-bold">{{ if .IsNew }}Create Widget{{ else }}Save Changes{{ end }}</button>
+          <a href="/admin/widgets" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{ if not .IsNew }}
+<div class="card shadow-sm border-0 rounded-3 mt-3">
+  <div class="card-header">
+    <h3 class="card-title mb-0 fw-bold">Preview</h3>
+  </div>
+  <iframe src="{{ .Widget.SourceURL }}" style="width:100%;min-height:350px;border:none;border-radius:0 0 8px 8px;" loading="lazy"></iframe>
+</div>
+{{ end }}

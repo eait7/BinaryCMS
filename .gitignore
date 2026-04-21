@@ -1,0 +1,7 @@
+gocms_server
+plugins/
+*.db
+*.log
+*.exe
+.DS_Store
+uploads/

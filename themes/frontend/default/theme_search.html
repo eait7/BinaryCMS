@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <title>Search: {{ .Query }} - {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet"/>
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      :root { --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, sans-serif; }
+      body { font-feature-settings: "cv03", "cv04", "cv11"; background-color: #f6f8fb; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="navbar navbar-expand-md d-print-none sticky-top bg-white border-bottom shadow-sm">
+        <div class="container-xl py-2">
+          <h1 class="navbar-brand pe-0 pe-md-3">
+            <a href="/" class="fw-bold text-decoration-none">🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</a>
+          </h1>
+          <nav class="navbar-nav ms-auto">
+            {{ range .MenuItems }}
+            <a class="nav-link" href="{{ .URL }}">{{ .Label }}</a>
+            {{ end }}
+          </nav>
+        </div>
+      </header>
+
+      <div class="page-wrapper">
+        <div class="page-body mt-4">
+          <div class="container-xl" style="max-width: 800px;">
+            <form method="GET" action="/search" class="mb-4">
+              <div class="input-group input-group-lg">
+                <input type="text" name="q" class="form-control" placeholder="Search posts..." value="{{ .Query }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+              </div>
+            </form>
+
+            {{ if .Query }}
+            <h2 class="mb-3">Results for "{{ .Query }}"</h2>
+            {{ end }}
+            
+            {{ range .Results }}
+            <div class="card mb-3 shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <h3 class="mb-1"><a href="/post/{{ .Slug }}" class="text-decoration-none">{{ .Title }}</a></h3>
+                <div class="text-muted small mb-2">{{ .CreatedAt.Format "January 2, 2006" }}</div>
+                {{ if .Excerpt }}<p class="text-muted">{{ .Excerpt }}</p>{{ end }}
+              </div>
+            </div>
+            {{ else }}
+            {{ if .Query }}
+            <div class="card border-0 shadow-sm rounded-3">
+              <div class="card-body text-center py-5 text-muted">
+                No results found for "{{ .Query }}".
+              </div>
+            </div>
+            {{ end }}
+            {{ end }}
+          </div>
+        </div>
+
+        <footer class="footer footer-transparent d-print-none mt-auto">
+          <div class="container-xl text-center text-muted py-3">
+            {{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS{{ end }}
+          </div>
+        </footer>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" data-accent-color="{{ if .Settings.quantum_light_accent_color }}{{ .Settings.quantum_light_accent_color }}{{ else }}#006fbb{{ end }}">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Search — {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
+  <style>:root { --quantum-light-accent: {{ if .Settings.quantum_light_accent_color }}{{ .Settings.quantum_light_accent_color }}{{ else }}#006fbb{{ end }}; --quantum-light-secondary: {{ if .Settings.quantum_light_secondary_color }}{{ .Settings.quantum_light_secondary_color }}{{ else }}#00a389{{ end }}; }</style>
+  <link rel="stylesheet" href="/uploads/quantum_light/quantum_light.css?v=1.0.4">
+  {{ if .Settings.site_favicon_url }}
+  <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+  <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+  {{ end }}
+</head>
+<body>
+
+<nav id="ql-nav">
+  <div class="ql-nav-inner">
+    <a class="ql-nav-logo" href="/">
+      {{ if .Settings.site_logo_url }}<img src="{{ .Settings.site_logo_url }}" alt="{{ .Settings.site_title }}">{{ else }}<span>⚡ {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>{{ end }}
+    </a>
+    <ul class="ql-nav-links">
+      <li class="ql-nav-item"><a href="/" class="ql-nav-link">Home</a></li>
+      {{ range .MenuItems }}
+      <li class="ql-nav-item">
+        {{ if .Children }}
+          <a class="ql-nav-link" href="{{ if .URL }}{{ .URL }}{{ else }}#{{ end }}">{{ .Label }}<svg class="ql-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></a>
+          <div class="ql-dropdown">
+            {{ if .URL }}{{ if ne .URL "#" }}<a class="ql-dropdown-item" style="font-weight:700;color:var(--ql-accent)" href="{{ .URL }}">Overview →</a>{{ end }}{{ end }}
+            {{ range .Children }}<a class="ql-dropdown-item" href="{{ .URL }}">{{ .Label }}</a>{{ end }}
+          </div>
+        {{ else }}
+          <a class="ql-nav-link" href="{{ .URL }}">{{ .Label }}</a>
+        {{ end }}
+      </li>
+      {{ end }}
+    
+      <li class="ql-nav-item ql-mobile-auth-wrapper" style="display:none;margin-top:1rem;border-top:1px solid rgba(128,128,128,0.2);padding-top:1rem;">
+        {{ if .User.ID }}
+          <a href="/my-account" class="ql-nav-link" style="padding-bottom:0.8rem;">My Account</a>
+          <a href="/logout" class="ql-nav-link" style="color:#ff6b6b;">Sign Out</a>
+        {{ else }}
+          <a href="/login" class="ql-nav-link" style="padding-bottom:0.8rem;">Sign In</a>
+          <a href="/register" class="ql-nav-link" style="color:var(--ql-accent);font-weight:700;">Get Started <span class="ql-arrow">→</span></a>
+        {{ end }}
+      </li>
+    </ul>
+    <div class="ql-nav-actions">
+      <a class="ql-btn ql-btn-primary" href="{{ if .Settings.quantum_light_hero_cta_url }}{{ .Settings.quantum_light_hero_cta_url }}{{ else }}/download{{ end }}">Download Free <span class="ql-arrow">→</span></a>
+    </div>
+    <button class="ql-hamburger" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="ql-page-hero">
+  <div class="ql-container">
+    <h1>Search Results</h1>
+    <form action="/search" method="GET" class="ql-search-box" style="margin:1.5rem auto 0;">
+      <input class="ql-search-input" type="text" name="q" value="{{ .Query }}" placeholder="Search…">
+      <button type="submit" class="ql-search-btn">Search</button>
+    </form>
+  </div>
+</div>
+
+<main class="ql-section">
+  <div class="ql-container" style="max-width:800px;">
+    {{ if .Results }}
+    <p style="color:var(--ql-text-dim);margin-bottom:2rem;">Found {{ len .Results }} result{{ if gt (len .Results) 1 }}s{{ end }} for "<strong style="color:var(--ql-accent)">{{ .Query }}</strong>"</p>
+    {{ range .Results }}
+    <a href="/post/{{ .Slug }}" style="display:block;text-decoration:none;">
+      <div class="ql-card" style="margin-bottom:1rem;">
+        <div style="font-size:0.78rem;color:var(--ql-text-dim);margin-bottom:0.3rem;">{{ .CreatedAt }}</div>
+        <h4 style="margin-bottom:0.4rem;color:var(--ql-accent);">{{ .Title }}</h4>
+        <p style="font-size:0.88rem;margin:0;">{{ .Excerpt }}</p>
+      </div>
+    </a>
+    {{ end }}
+    {{ else if .Query }}
+    <div style="text-align:center;padding:3rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;">🔍</div>
+      <h3>No results for "{{ .Query }}"</h3>
+      <p style="color:var(--ql-text-muted);">Try a different search term.</p>
+    </div>
+    {{ else }}
+    <div style="text-align:center;padding:3rem;">
+      <p style="color:var(--ql-text-muted);">Enter a search term above.</p>
+    </div>
+    {{ end }}
+  </div>
+</main>
+
+<footer id="ql-footer">
+  <div class="ql-container">
+    <div class="ql-footer-bottom">
+      <p>{{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS{{ end }}</p>
+      <p style="font-family:var(--ql-mono);color:var(--ql-text-dim);font-size:0.78rem;">Built with BinaryCMS ⚡</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/uploads/quantum_light/quantum_light.js?v=1.0.0"></script>
+</body></html>

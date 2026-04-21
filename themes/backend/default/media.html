@@ -1,0 +1,68 @@
+<div class="row row-cards">
+  <!-- Upload UI -->
+  <div class="col-12 col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Upload New Media</h3>
+      </div>
+      <div class="card-body">
+        <form action="/admin/media/upload" method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label required">Select File</label>
+            <input type="file" class="form-control" name="media_file" required>
+            <small class="form-hint">Images, videos, or PDFs. Note: EasyMDE inside the Post UI allows automatic Drag-And-Drop into text boxes natively bypassing this UI entirely!</small>
+          </div>
+          <div class="text-end">
+            <button type="submit" class="btn btn-primary">Upload to Server</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Media Grid -->
+  <div class="col-12 col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Global Media Library</h3>
+      </div>
+      <div class="card-body">
+        <div class="row row-cards">
+          {{ range .Files }}
+          <div class="col-sm-6 col-lg-4">
+            <div class="card card-sm">
+              <span class="d-block card-img-top">
+                <!-- Attempt to fetch image preview, if it breaks natively fallback to alt text -->
+                <img src="{{ .URL }}" style="height: 120px; object-fit: cover; width: 100%;" loading="lazy" alt="{{ .Name }}">
+              </span>
+              <div class="card-body pt-2 p-3 text-center">
+                <div class="text-truncate mt-1 text-secondary" style="font-size: 12px;" title="{{ .Name }}">{{ .Name }}</div>
+              </div>
+              <div class="card-footer d-flex p-1 justify-content-between">
+                <button type="button" class="btn btn-sm btn-ghost-primary" onclick="navigator.clipboard.writeText('![Image]({{ .URL }})')">Markdown</button>
+                <form action="/admin/media/delete/{{ .Name }}" method="POST" class="m-0 p-0" onsubmit="return confirm('Burn this file completely?');">
+                  <button type="submit" class="btn btn-sm btn-ghost-danger ms-1">Del</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {{ else }}
+          <div class="col-12 text-center text-secondary py-5">
+            No media files natively uploaded into <code>/uploads</code> yet! Try dragging an image into your Markdown editor recursively!
+          </div>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('upload')) {
+      alert("Media physically saved natively!");
+      window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (urlParams.has('delete')) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+  }
+</script>
