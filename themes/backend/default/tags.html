@@ -1,0 +1,47 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Add New Tag</h3>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/admin/tags/new" class="d-flex gap-2 align-items-end">
+      <div class="flex-grow-1">
+        <label class="form-label">Tag Name</label>
+        <input type="text" name="name" class="form-control" placeholder="Enter tag name" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Add Tag</button>
+    </form>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th>Posts</th>
+          <th class="w-1">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Tags }}
+        <tr>
+          <td><strong>{{ .Name }}</strong></td>
+          <td><code>{{ .Slug }}</code></td>
+          <td><span class="badge bg-blue-lt">{{ .PostCount }}</span></td>
+          <td>
+            <form method="POST" action="/admin/tags/delete/{{ .ID }}" onsubmit="return confirm('Delete this tag?')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">No tags yet. Create your first one above.</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</div>

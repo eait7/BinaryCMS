@@ -1,0 +1,237 @@
+<form class="card border-0 shadow-sm rounded-4" action="{{ if .Post }}/admin/posts/edit/{{ .Post.ID }}{{ else }}/admin/posts/new{{ end }}" method="POST">
+  <div class="card-header bg-white border-bottom py-3">
+    <h3 class="card-title fw-bold">{{ if .Post }}Edit Post{{ else }}Write a new Post{{ end }}</h3>
+  </div>
+  <div class="card-body p-4 border-bottom bg-light">
+    <div class="row">
+      <div class="col-md-9">
+        <div class="mb-4">
+          <label class="form-label required fw-bold">Post Title <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0" style="padding: 0 4px; font-size: 0.75rem;" onclick="alert('Connect an AI provider in settings first!');">✨ AI</button></label>
+          <input type="text" name="title" class="form-control form-control-lg" placeholder="Enter post title" required value="{{ if .Post }}{{ .Post.Title }}{{ end }}">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="mb-3">
+          <label class="form-label required fw-bold">Publishing Status</label>
+          <select name="status" class="form-select">
+            <option value="draft" {{ if .Post }}{{ if eq .Post.Status "draft" }}selected{{ end }}{{ end }}>Draft Process</option>
+            <option value="published" {{ if .Post }}{{ if eq .Post.Status "published" }}selected{{ end }}{{ end }}>Live / Published</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dual Editor Component -->
+    <div class="mb-4 mt-3">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+         <label class="form-label required fw-bold mb-0">Content Formatting Engine <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0" style="padding: 0 4px; font-size: 0.75rem;" onclick="alert('Connect an AI provider in settings first!');">✨ AI</button></label>
+         <ul class="nav nav-pills" data-bs-toggle="tabs">
+           <li class="nav-item">
+             <a href="#editor-basic" class="nav-link active btn btn-sm btn-outline-primary border-primary me-2" style="font-weight:600" data-bs-toggle="tab">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg> Basic Text Editor
+             </a>
+           </li>
+           <li class="nav-item">
+             <a href="#editor-visual" class="nav-link btn btn-sm btn-outline-info border-info" style="font-weight:600" data-bs-toggle="tab">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-layout me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M4 13m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M14 4m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" /></svg> Visual Builder (Pro)
+             </a>
+           </li>
+         </ul>
+      </div>
+
+      <div class="tab-content border rounded bg-white shadow-sm" style="overflow:hidden;">
+        <!-- Basic Editor -->
+        <div class="tab-pane active show" id="editor-basic">
+           <textarea id="mde-content" class="w-100" style="min-height: 400px;"></textarea>
+        </div>
+        
+        <!-- Visual Builder -->
+        <div class="tab-pane" id="editor-visual">
+           <link rel="stylesheet" href="https://unpkg.com/grapesjs/dist/css/grapes.min.css">
+           <script src="https://unpkg.com/grapesjs"></script>
+           <div id="gjs" style="height: 600px; width: 100%;"></div>
+        </div>
+      </div>
+      
+      <!-- hidden master content field -->
+      <textarea id="hidden-content" name="content" style="display:none;">{{ if .Post }}{{ .Post.Content }}{{ end }}</textarea>
+      
+      <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          const rawVal = document.getElementById('hidden-content').value;
+          
+          // Init EasyMDE
+          const easymde = new EasyMDE({
+            element: document.getElementById('mde-content'),
+            spellChecker: false,
+            initialValue: rawVal,
+            maxHeight: "450px",
+            sideBySideFullscreen: false,
+            hideIcons: ["guide"],
+            status: ["lines", "words", "cursor"]
+          });
+
+          // Init GrapesJS
+          const editorTools = grapesjs.init({
+            container: '#gjs',
+            height: '600px',
+            width: '100%',
+            storageManager: false,
+            panels: { defaults: [] },
+            canvas: { styles: [
+              'https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css',
+              {{ if .FrontendStyles }}{{ range .FrontendStyles }}'{{ . }}',{{ end }}{{ end }}
+            ] }
+          });
+          editorTools.setComponents(rawVal);
+          
+          let activeTab = 'basic';
+          
+          // Listen to tab changes to sync content
+          document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(el => {
+             el.addEventListener('shown.bs.tab', event => {
+                const target = event.target.getAttribute('href');
+                if (target === '#editor-visual' && activeTab === 'basic') {
+                   editorTools.setComponents(easymde.value());
+                   activeTab = 'visual';
+                } else if (target === '#editor-basic' && activeTab === 'visual') {
+                   const html = editorTools.getHtml();
+                   const css = editorTools.getCss();
+                   let out = html;
+                   if(css && css.trim()) out = `<style>${css}</style>\n${html}`;
+                   easymde.value(out);
+                   activeTab = 'basic';
+                }
+             })
+          });
+
+          // Master Submission Syncer
+          document.querySelector('form.card').addEventListener('submit', function() {
+             if(activeTab === 'basic'){
+                 document.getElementById('hidden-content').value = easymde.value();
+             } else {
+                 const html = editorTools.getHtml();
+                 const css = editorTools.getCss();
+                 let out = html;
+                 if(css && css.trim()) out = `<style>${css}</style>\n${html}`;
+                 document.getElementById('hidden-content').value = out;
+             }
+          });
+        });
+      </script>
+    </div>
+  </div>
+
+  <!-- Meta and Graph Blocks -->
+  <div class="card-body p-4 bg-white">
+     <div class="row">
+         <div class="col-md-6">
+            <div class="mb-4">
+               <label class="form-label fw-bold">SEO Meta Title</label>
+               <input type="text" class="form-control" name="meta_title" value="{{ if .Post }}{{ .Post.MetaTitle }}{{ end }}" placeholder="Optimized Title Tag">
+               <small class="form-hint">Natively overwrites the &lt;title&gt; tag for Search Engines specifically.</small>
+            </div>
+            <div class="mb-4">
+               <label class="form-label fw-bold">SEO Meta Description <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0" style="padding: 0 4px; font-size: 0.75rem;" onclick="alert('Connect an AI provider in settings first!');">✨ AI</button></label>
+               <textarea class="form-control" name="meta_description" rows="3" placeholder="Write a compelling snippet for Google...">{{ if .Post }}{{ .Post.MetaDescription }}{{ end }}</textarea>
+            </div>
+            
+            <div class="row">
+               <div class="col-md-6">
+                 <div class="mb-3">
+                   <label class="form-label fw-bold">Categories</label>
+                   <div class="border rounded p-2 bg-light mb-2" style="max-height: 150px; overflow-y: auto;">
+                     {{ $selectedCats := .SelectedCategories }}
+                     {{ range .Categories }}
+                     <label class="form-check mb-1">
+                       <input class="form-check-input" type="checkbox" name="categories" value="{{ .ID }}" {{ if $selectedCats }}{{ if index $selectedCats .ID }}checked{{ end }}{{ end }}>
+                       <span class="form-check-label">{{ .Name }}</span>
+                     </label>
+                     {{ end }}
+                   </div>
+                 </div>
+               </div>
+               <div class="col-md-6">
+                 <div class="mb-3">
+                   <label class="form-label fw-bold">Tags</label>
+                   <div class="border rounded p-2 bg-light mb-2" style="max-height: 150px; overflow-y: auto;">
+                     {{ $selectedTags := .SelectedTags }}
+                     {{ range .Tags }}
+                     <label class="form-check mb-1">
+                       <input class="form-check-input" type="checkbox" name="tags" value="{{ .ID }}" {{ if $selectedTags }}{{ if index $selectedTags .ID }}checked{{ end }}{{ end }}>
+                       <span class="form-check-label">{{ .Name }}</span>
+                     </label>
+                     {{ end }}
+                   </div>
+                 </div>
+               </div>
+            </div>
+         </div>
+         
+         <!-- OpenGraph Card -->
+         <div class="col-md-6">
+            <div class="card shadow-none border rounded-4 bg-light h-100">
+               <div class="card-header bg-transparent border-bottom-0 pb-0">
+                  <h4 class="text-primary mb-0 d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M8.7 10.7l6.6 -3.4" /><path d="M8.7 13.3l6.6 3.4" /></svg>
+                    Social Media OpenGraph
+                  </h4>
+               </div>
+               <div class="card-body">
+                  <label class="form-label fw-bold">Featured Image URL</label>
+                  <div class="input-group mb-3">
+                     <input type="text" id="featured_image" name="featured_image" class="form-control" value="{{ if .Post }}{{ .Post.FeaturedImage }}{{ end }}" placeholder="https://example.com/image.jpg" oninput="document.getElementById('og-preview').src = this.value; document.getElementById('og-preview-box').style.display = 'block';">
+                     <button class="btn btn-outline-secondary bg-white" type="button" onclick="uploadFeaturedImage()">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
+                       Upload
+                     </button>
+                  </div>
+                  <small class="form-hint mb-4">This image will appear correctly structured on WhatsApp, Twitter, and Facebook.</small>
+                  
+                  <div class="card border shadow-sm">
+                     <div class="card-img-top bg-muted-lt d-flex align-items-center justify-content-center" style="height: 180px; overflow: hidden;" id="og-preview-box">
+                         {{ if and .Post .Post.FeaturedImage }}
+                         <img src="{{ .Post.FeaturedImage }}" id="og-preview" style="object-fit: cover; width: 100%; height: 100%;">
+                         {{ else }}
+                         <span class="text-secondary" id="og-empty">No Image Provided</span>
+                         <img src="" id="og-preview" style="object-fit: cover; width: 100%; height: 100%; display: none;">
+                         {{ end }}
+                     </div>
+                     <div class="card-body p-3">
+                        <strong class="d-block mb-1 text-truncate" id="og-title-preview">{{ if and .Post .Post.Title }}{{ .Post.Title }}{{ else }}Post Title{{ end }}</strong>
+                        <div class="text-muted small text-truncate" id="og-desc-preview">{{ if and .Post .Post.MetaDescription }}{{ .Post.MetaDescription }}{{ else }}Description...{{ end }}</div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+     </div>
+  </div>
+
+  <div class="card-footer bg-light text-end rounded-bottom-4 py-3">
+    <div class="d-flex align-items-center justify-content-end gap-3">
+      <a href="/admin/posts" class="btn btn-link text-secondary fw-bold text-decoration-none">Cancel Editor</a>
+      <button type="submit" class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm">{{ if .Post }}Save Article Changes{{ else }}Publish Article Node{{ end }}</button>
+    </div>
+  </div>
+</form>
+
+<script>
+  document.querySelector('input[name="title"]').addEventListener('input', e => {
+      document.getElementById('og-title-preview').innerText = e.target.value || 'Post Title';
+  });
+  document.querySelector('textarea[name="meta_description"]').addEventListener('input', e => {
+      document.getElementById('og-desc-preview').innerText = e.target.value || 'Description...';
+  });
+  
+  function uploadFeaturedImage() {
+     const p = prompt("Enter image URL directly, or this can be tied to the media manager via the API in the future:");
+     if(p) {
+        document.getElementById('featured_image').value = p;
+        document.getElementById('og-preview').src = p;
+        document.getElementById('og-preview').style.display = 'block';
+        const empty = document.getElementById('og-empty');
+        if(empty) empty.style.display = 'none';
+     }
+  }
+</script>

@@ -1,0 +1,239 @@
+<div class="row gx-4">
+  <div class="col-lg-8">
+
+    <!-- Overview -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      <div class="card-header bg-gradient-primary text-white py-4 rounded-top-3">
+        <h2 class="card-title mb-1 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M10 13l-1 2l1 2" /><path d="M14 13l1 2l-1 2" /></svg>
+          Plugin Developer Guide — User Hooks
+        </h2>
+        <p class="mb-0 opacity-75">Learn how to extend the User Management system with your own plugins</p>
+      </div>
+      <div class="card-body p-4">
+        <p>BinaryCMS User Management is built with a <strong>plugin-first architecture</strong>. Every user-facing surface exposes hooks so your plugins can inject custom UI, store per-user data, and react to user events — all without modifying core code.</p>
+        
+        <div class="alert alert-info border-0 bg-azure-lt mb-0">
+          <div class="d-flex">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 mt-1 text-azure" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.871l-8.106 -13.534a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
+            <div><strong>Key concept:</strong> The <code>user_meta</code> table is your universal extension point. Store any per-user data as key-value pairs without touching the core <code>users</code> schema.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      <div class="card-header bg-white py-3">
+        <h3 class="card-title fw-bold mb-0">🏗️ Architecture: How Plugins Connect to Users</h3>
+      </div>
+      <div class="card-body">
+        <div class="p-3 bg-light rounded border mb-4" style="font-family:monospace;font-size:0.85rem;line-height:1.8;">
+          ┌─────────────────────────────────────────────────────────────┐<br>
+          │  <strong>USER REGISTERS</strong> → Core creates user in <code>users</code> table        │<br>
+          │                  → Calls <code>HookUserRegistered(userID)</code>         │<br>
+          │                  → Your plugin initializes its own data        │<br>
+          ├─────────────────────────────────────────────────────────────┤<br>
+          │  <strong>ADMIN VIEWS USER</strong> → Core renders profile tabs               │<br>
+          │                    → Calls <code>HookUserProfileTab(userID)</code>       │<br>
+          │                    → Your plugin returns an HTML tab           │<br>
+          ├─────────────────────────────────────────────────────────────┤<br>
+          │  <strong>USER VISITS /my-account</strong> → Core renders account page        │<br>
+          │                          → Calls <code>HookUserAccountCard(userID)</code>│<br>
+          │                          → Your plugin returns an HTML card    │<br>
+          ├─────────────────────────────────────────────────────────────┤<br>
+          │  <strong>DATA STORAGE</strong> → Plugin reads/writes <code>user_meta</code> table       │<br>
+          │                → Key-value pairs per user, fully automatic     │<br>
+          └─────────────────────────────────────────────────────────────┘<br>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hook 1 -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      <div class="card-header bg-white py-3">
+        <h3 class="card-title fw-bold mb-0">🔔 Hook 1: <code>HookUserRegistered(userID int) string</code></h3>
+      </div>
+      <div class="card-body">
+        <p>Called <strong>immediately after</strong> a new user registers. Use this to initialize plugin-specific data for the user.</p>
+        <pre class="bg-dark text-light p-3 rounded" style="overflow-x:auto;"><code>func (p *ShoppingPlugin) HookUserRegistered(userID int) string {
+    // Create an empty cart for the new user
+    db.Exec(`INSERT INTO user_meta (user_id, meta_key, meta_value) 
+             VALUES (?, 'shop_cart_items', '[]')`, userID)
+    db.Exec(`INSERT INTO user_meta (user_id, meta_key, meta_value) 
+             VALUES (?, 'shop_order_count', '0')`, userID)
+    return ""
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- Hook 2 -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      <div class="card-header bg-white py-3">
+        <h3 class="card-title fw-bold mb-0">📋 Hook 2: <code>HookUserProfileTab(userID int) string</code></h3>
+      </div>
+      <div class="card-body">
+        <p>Returns HTML that appears as a <strong>tab on the admin user detail page</strong>. Use this to show admin-facing data for a specific user.</p>
+        <pre class="bg-dark text-light p-3 rounded" style="overflow-x:auto;"><code>func (p *ShoppingPlugin) HookUserProfileTab(userID int) string {
+    // Query this user's order history
+    orders := getOrdersByUser(userID)
+    
+    html := `&lt;div class="card-header"&gt;
+        &lt;h3 class="card-title"&gt;🛍 Purchase History&lt;/h3&gt;
+    &lt;/div&gt;
+    &lt;div class="card-body"&gt;
+        &lt;table class="table"&gt;
+            &lt;tr&gt;&lt;th&gt;Order ID&lt;/th&gt;&lt;th&gt;Amount&lt;/th&gt;&lt;th&gt;Date&lt;/th&gt;&lt;/tr&gt;`
+    
+    for _, o := range orders {
+        html += fmt.Sprintf(`&lt;tr&gt;&lt;td&gt;#%d&lt;/td&gt;&lt;td&gt;$%.2f&lt;/td&gt;&lt;td&gt;%s&lt;/td&gt;&lt;/tr&gt;`,
+            o.ID, o.Total, o.CreatedAt)
+    }
+    
+    html += `&lt;/table&gt;&lt;/div&gt;`
+    return html
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- Hook 3 -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      <div class="card-header bg-white py-3">
+        <h3 class="card-title fw-bold mb-0">🏠 Hook 3: <code>HookUserAccountCard(userID int) string</code></h3>
+      </div>
+      <div class="card-body">
+        <p>Returns HTML that appears as a <strong>card on the frontend <code>/my-account</code> page</strong>. This is what the user sees on their own account dashboard.</p>
+        <pre class="bg-dark text-light p-3 rounded" style="overflow-x:auto;"><code>func (p *ShoppingPlugin) HookUserAccountCard(userID int) string {
+    orderCount := getMetaValue(userID, "shop_order_count")
+    
+    return fmt.Sprintf(`&lt;div class="ql-card" style="margin-bottom:2rem;"&gt;
+        &lt;h3&gt;🛍 My Orders&lt;/h3&gt;
+        &lt;p&gt;You have placed &lt;strong&gt;%s&lt;/strong&gt; orders.&lt;/p&gt;
+        &lt;a href="/shop/orders" class="ql-btn ql-btn-outline"&gt;
+            View Order History →
+        &lt;/a&gt;
+    &lt;/div&gt;`, orderCount)
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- user_meta Guide -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      <div class="card-header bg-white py-3">
+        <h3 class="card-title fw-bold mb-0">💾 Using <code>user_meta</code> — The Plugin Extension Table</h3>
+      </div>
+      <div class="card-body">
+        <p>The <code>user_meta</code> table stores key-value pairs per user. Your plugin can store <strong>any data structure</strong> here without modifying the core database schema.</p>
+
+        <h4 class="mt-4 mb-2">Table Structure</h4>
+        <pre class="bg-dark text-light p-3 rounded"><code>CREATE TABLE user_meta (
+    id         INTEGER PRIMARY KEY,
+    user_id    INTEGER NOT NULL,     -- references users.id
+    meta_key   TEXT NOT NULL,        -- your plugin's key name
+    meta_value TEXT DEFAULT '',      -- the stored value (string/JSON)
+    UNIQUE(user_id, meta_key)       -- one value per key per user
+);</code></pre>
+
+        <h4 class="mt-4 mb-2">Core API Functions</h4>
+        <div class="table-responsive">
+          <table class="table table-bordered table-vcenter">
+            <thead><tr><th>Function</th><th>Purpose</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>models.SetUserMeta(userID, key, value)</code></td>
+                <td>Insert or update a meta value</td>
+                <td><code>SetUserMeta(42, "shop_tier", "premium")</code></td>
+              </tr>
+              <tr>
+                <td><code>models.GetUserMeta(userID, key)</code></td>
+                <td>Get a single meta value</td>
+                <td><code>tier := GetUserMeta(42, "shop_tier")</code></td>
+              </tr>
+              <tr>
+                <td><code>models.GetAllUserMeta(userID)</code></td>
+                <td>Get all meta as map[string]string</td>
+                <td><code>all := GetAllUserMeta(42)</code></td>
+              </tr>
+              <tr>
+                <td><code>models.DeleteUserMeta(userID, key)</code></td>
+                <td>Remove a meta entry</td>
+                <td><code>DeleteUserMeta(42, "shop_cart")</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4 class="mt-4 mb-2">Naming Convention</h4>
+        <div class="alert alert-warning border-0 bg-yellow-lt">
+          <strong>Always prefix meta keys with your plugin name</strong> to avoid collisions with other plugins:
+          <div class="mt-2">
+            <code>shop_cart_id</code>, <code>shop_order_count</code>, <code>shop_stripe_id</code><br>
+            <code>hotspot_bandwidth_quota</code>, <code>hotspot_data_used</code><br>
+            <code>membership_tier</code>, <code>membership_expires</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar -->
+  <div class="col-lg-4">
+    <!-- Quick Reference -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4 sticky-top" style="top:1rem;">
+      <div class="card-header bg-dark text-white py-3 rounded-top-3">
+        <h3 class="card-title mb-0 text-white">⚡ Quick Reference</h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          <div class="list-group-item">
+            <div class="fw-bold text-primary mb-1">Interface Methods</div>
+            <code class="small">HookUserRegistered(userID) string</code><br>
+            <code class="small">HookUserProfileTab(userID) string</code><br>
+            <code class="small">HookUserAccountCard(userID) string</code>
+          </div>
+          <div class="list-group-item">
+            <div class="fw-bold text-primary mb-1">Meta Functions</div>
+            <code class="small">SetUserMeta(uid, key, val)</code><br>
+            <code class="small">GetUserMeta(uid, key) string</code><br>
+            <code class="small">GetAllUserMeta(uid) map</code><br>
+            <code class="small">DeleteUserMeta(uid, key)</code>
+          </div>
+          <div class="list-group-item">
+            <div class="fw-bold text-primary mb-1">User Lookup</div>
+            <code class="small">GetUserByID(id) User</code><br>
+            <code class="small">GetUserByEmail(email) User</code><br>
+            <code class="small">GetUserByUsername(name) User</code>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer bg-light text-center py-3 rounded-bottom-3">
+        <a href="/admin/users" class="btn btn-primary w-100 fw-bold">← Back to Users</a>
+      </div>
+    </div>
+
+    <!-- Real-World Examples -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+      <div class="card-header bg-white py-3">
+        <h4 class="card-title fw-bold mb-0">💡 Plugin Ideas</h4>
+      </div>
+      <div class="card-body">
+        <div class="mb-3 pb-3 border-bottom">
+          <strong class="d-block mb-1">🛒 Shopping Plugin</strong>
+          <small class="text-muted">Adds "Orders" tab to admin, "My Purchases" card to frontend account. Stores cart data and order history via user_meta.</small>
+        </div>
+        <div class="mb-3 pb-3 border-bottom">
+          <strong class="d-block mb-1">🏷️ Membership Plugin</strong>
+          <small class="text-muted">Adds "Subscription" tab with tier management. Stores membership level, expiry date, and renewal info.</small>
+        </div>
+        <div class="mb-3 pb-3 border-bottom">
+          <strong class="d-block mb-1">📶 Hotspot Plugin</strong>
+          <small class="text-muted">Adds "Data Usage" tab showing bandwidth stats. Stores usage quotas and package info per user.</small>
+        </div>
+        <div class="mb-3">
+          <strong class="d-block mb-1">📧 Newsletter Plugin</strong>
+          <small class="text-muted">Adds "Subscriptions" card to frontend. Tracks opt-in status and email preferences.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

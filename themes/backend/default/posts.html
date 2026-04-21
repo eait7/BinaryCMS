@@ -1,0 +1,47 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">All Posts</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="table card-table table-vcenter text-nowrap datatable">
+      <thead>
+        <tr>
+          <th class="w-1">ID</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Author ID</th>
+          <th>Created At</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Posts }}
+        <tr>
+          <td><span class="text-secondary">{{ .ID }}</span></td>
+          <td>{{ .Title }}</td>
+          <td>
+            {{ if eq .Status "published" }}
+              <span class="badge bg-green text-green-fg">Published</span>
+            {{ else }}
+              <span class="badge bg-yellow text-yellow-fg">Draft</span>
+            {{ end }}
+          </td>
+          <td>{{ .AuthorID }}</td>
+          <td>{{ .CreatedAt }}</td>
+          <td class="text-end">
+            <a href="/post/{{ .Slug }}" target="_blank" class="btn btn-sm btn-ghost-info">View</a>
+            <a href="/admin/posts/edit/{{ .ID }}" class="btn btn-sm btn-ghost-primary">Edit</a>
+            <form action="/admin/posts/delete/{{ .ID }}" method="POST" style="display:inline;">
+              <button type="submit" class="btn btn-sm btn-ghost-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="5" class="text-center text-secondary py-4">No posts found. Start writing!</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</div>

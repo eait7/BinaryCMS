@@ -1,0 +1,125 @@
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3">
+      <span style="font-size:24px;">💡</span>
+      <div>
+        <strong>Dashboard Widgets</strong> let you embed any page as a live, scrollable panel on the dashboard.
+        Use iframe widgets to embed plugin pages, external dashboards, or the built-in System Resources monitor.
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ if .Widgets }}
+<div class="card shadow-sm border-0 rounded-3">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Source URL</th>
+          <th>Width</th>
+          <th>Status</th>
+          <th class="w-1">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Widgets }}
+        <tr>
+          <td><strong>{{ .Title }}</strong></td>
+          <td><span class="badge bg-blue-lt">{{ .WidgetType }}</span></td>
+          <td><code class="small">{{ .SourceURL }}</code></td>
+          <td><span class="badge bg-azure-lt">{{ .ColSpan }}/12 cols</span></td>
+          <td>
+            {{ if .Enabled }}
+            <span class="badge bg-green-lt">Active</span>
+            {{ else }}
+            <span class="badge bg-secondary-lt">Disabled</span>
+            {{ end }}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="/admin/widgets/edit/{{ .ID }}" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/admin/widgets/delete/{{ .ID }}" onsubmit="return confirm('Remove this widget?')">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{ else }}
+<div class="card shadow-sm border-0 rounded-3">
+  <div class="card-body text-center py-5">
+    <div class="mb-3" style="font-size:48px;">📊</div>
+    <h3 class="fw-bold mb-2">No Widgets Yet</h3>
+    <p class="text-muted mb-3">Add your first dashboard widget to get started.</p>
+    <a href="/admin/widgets/new" class="btn btn-primary fw-bold">Add Widget</a>
+  </div>
+</div>
+{{ end }}
+
+<div class="card shadow-sm border-0 rounded-3 mt-3">
+  <div class="card-header">
+    <h3 class="card-title mb-0 fw-bold">Built-in Widgets</h3>
+  </div>
+  <div class="card-body">
+    <p class="text-muted mb-3">These are ready-to-use widgets included with GoCMS. Click "Add to Dashboard" to enable them.</p>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card border rounded-3">
+          <div class="card-body text-center py-4">
+            <div class="mb-2" style="font-size:32px;">⚡</div>
+            <h4 class="fw-bold mb-1">System Resources</h4>
+            <p class="text-muted small mb-3">CPU, memory, disk, goroutines, uptime</p>
+            <form method="POST" action="/admin/widgets/new">
+              <input type="hidden" name="title" value="System Resources">
+              <input type="hidden" name="widget_type" value="builtin">
+              <input type="hidden" name="source_url" value="/admin/widget/system-resources">
+              <input type="hidden" name="col_span" value="6">
+              <input type="hidden" name="enabled" value="on">
+              <button type="submit" class="btn btn-sm btn-primary fw-bold">Add to Dashboard</button>
+            </form>
+          </div>
+        </div>
+      <div class="col-md-4">
+        <div class="card border rounded-3">
+          <div class="card-body text-center py-4">
+            <div class="mb-2 text-blue"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-router" width="32" height="32" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M17 17l0 .01" /><path d="M13 17l0 .01" /><path d="M15 13l0 -2" /><path d="M11.75 8.75l-.5 -1.5" /><path d="M8.5 6.5l-1.5 -.5" /><path d="M12 11l-3 -3" /></svg></div>
+            <h4 class="fw-bold mb-1">RouterOS Fleet</h4>
+            <p class="text-muted small mb-3">Live topology and session statuses</p>
+            <form method="POST" action="/admin/widgets/new">
+              <input type="hidden" name="title" value="RouterOS Matrix">
+              <input type="hidden" name="widget_type" value="iframe">
+              <input type="hidden" name="source_url" value="/admin/plugin/routeros/widget">
+              <input type="hidden" name="col_span" value="4">
+              <input type="hidden" name="enabled" value="on">
+              <button type="submit" class="btn btn-sm btn-primary fw-bold">Add to Dashboard</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border rounded-3">
+          <div class="card-body text-center py-4">
+            <div class="mb-2 text-teal"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="32" height="32" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M20 4v8" /><path d="M16 4.5v7" /><path d="M12 5v16" /><path d="M8 5.5v5" /><path d="M4 6v4" /><path d="M20 8h-16" /></svg></div>
+            <h4 class="fw-bold mb-1">Ubiquiti Backhauls</h4>
+            <p class="text-muted small mb-3">P2P capacity & signal strengths</p>
+            <form method="POST" action="/admin/widgets/new">
+              <input type="hidden" name="title" value="Enterprise Backhauls">
+              <input type="hidden" name="widget_type" value="iframe">
+              <input type="hidden" name="source_url" value="/admin/plugin/ubiquiti_backhaul/widget">
+              <input type="hidden" name="col_span" value="12">
+              <input type="hidden" name="enabled" value="on">
+              <button type="submit" class="btn btn-sm btn-primary fw-bold">Add to Dashboard</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

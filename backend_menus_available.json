@@ -1,0 +1,20 @@
+[
+  {
+    "Label": "Live Analytics",
+    "URL": "/admin/plugin/advanced_analytics",
+    "Icon": "chart-dots",
+    "Children": null
+  },
+  {
+    "Label": "AI Provider Settings",
+    "URL": "/admin/plugin/content_ai",
+    "Icon": "wand",
+    "Children": null
+  },
+  {
+    "Label": "Visit Overview",
+    "URL": "/admin/plugin/visit_tracker",
+    "Icon": "eye",
+    "Children": null
+  }
+]

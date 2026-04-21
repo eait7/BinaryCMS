@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" data-accent-color="{{ if .Settings.quantum_light_accent_color }}{{ .Settings.quantum_light_accent_color }}{{ else }}#006fbb{{ end }}" data-secondary-color="{{ if .Settings.quantum_light_secondary_color }}{{ .Settings.quantum_light_secondary_color }}{{ else }}#00a389{{ end }}">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ if .Page }}{{ if .Page.Title }}{{ .Page.Title }} — {{ end }}{{ end }}{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
+  <meta name="description" content="{{ if .MetaDescription }}{{ .MetaDescription }}{{ else }}{{ if .Settings.site_tagline }}{{ .Settings.site_tagline }}{{ end }}{{ end }}">
+  <style>
+    :root {
+      --quantum-light-accent:    {{ if .Settings.quantum_light_accent_color }}{{ .Settings.quantum_light_accent_color }}{{ else }}#006fbb{{ end }};
+      --quantum-light-secondary: {{ if .Settings.quantum_light_secondary_color }}{{ .Settings.quantum_light_secondary_color }}{{ else }}#00a389{{ end }};
+    }
+  </style>
+  <link rel="stylesheet" href="/uploads/quantum_light/quantum_light.css?v=1.0.4">
+  {{ if .Settings.quantum_light_custom_css }}<style>{{ .Settings.quantum_light_custom_css }}</style>{{ end }}
+  {{ if .Settings.site_favicon_url }}
+  <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+  <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+  {{ end }}
+</head>
+<body>
+
+<nav id="ql-nav">
+  <div class="ql-nav-inner">
+    <a class="ql-nav-logo" href="/">
+      {{ if .Settings.quantum_light_logo_url }}<img src="{{ .Settings.quantum_light_logo_url }}" alt="{{ .Settings.site_title }}">{{ else if .Settings.site_logo_url }}<img src="{{ .Settings.site_logo_url }}" alt="{{ .Settings.site_title }}">{{ else }}<span>⚡ {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>{{ end }}
+    </a>
+    <ul class="ql-nav-links">
+      <li class="ql-nav-item"><a href="/" class="ql-nav-link">Home</a></li>
+      {{ range .MenuItems }}
+      <li class="ql-nav-item">
+        {{ if .Children }}
+          <a class="ql-nav-link" href="{{ if .URL }}{{ .URL }}{{ else }}#{{ end }}">{{ .Label }}<svg class="ql-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></a>
+          <div class="ql-dropdown">
+            {{ if .URL }}{{ if ne .URL "#" }}<a class="ql-dropdown-item" style="font-weight:700;color:var(--ql-accent)" href="{{ .URL }}">Overview →</a>{{ end }}{{ end }}
+            {{ range .Children }}<a class="ql-dropdown-item" href="{{ .URL }}">{{ .Label }}</a>{{ end }}
+          </div>
+        {{ else }}
+          <a class="ql-nav-link" href="{{ .URL }}">{{ .Label }}</a>
+        {{ end }}
+      </li>
+      {{ end }}
+    
+      <li class="ql-nav-item ql-mobile-auth-wrapper" style="display:none;margin-top:1rem;border-top:1px solid rgba(128,128,128,0.2);padding-top:1rem;">
+        {{ if .User.ID }}
+          <a href="/my-account" class="ql-nav-link" style="padding-bottom:0.8rem;">My Account</a>
+          <a href="/logout" class="ql-nav-link" style="color:#ff6b6b;">Sign Out</a>
+        {{ else }}
+          <a href="/login" class="ql-nav-link" style="padding-bottom:0.8rem;">Sign In</a>
+          <a href="/register" class="ql-nav-link" style="color:var(--ql-accent);font-weight:700;">Get Started <span class="ql-arrow">→</span></a>
+        {{ end }}
+      </li>
+    </ul>
+    <div class="ql-nav-actions">
+      <a href="{{ if .Settings.quantum_cart_url }}{{ .Settings.quantum_cart_url }}{{ else }}#{{ end }}" class="ql-btn ql-btn-ghost" style="padding:0.6rem 0.9rem;font-size:1rem;" title="Cart">{{ if .Settings.quantum_cart_label }}{{ .Settings.quantum_cart_label }}{{ else }}🛒{{ end }} <span id="ql-cart-count" style="font-size:0.75rem;font-weight:700;background:var(--ql-accent);color:#fff;padding:0.1rem 0.45rem;border-radius:50px;display:none;">0</span></a>
+      <a class="ql-btn ql-btn-primary" href="{{ if .Settings.quantum_light_hero_cta_url }}{{ .Settings.quantum_light_hero_cta_url }}{{ else }}/download{{ end }}">{{ if .Settings.quantum_light_hero_cta_label }}{{ .Settings.quantum_light_hero_cta_label }}{{ else }}Download Free{{ end }} <span class="ql-arrow">→</span></a>
+    </div>
+    <button class="ql-hamburger" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- Page Hero Banner -->
+{{ if .Page }}
+{{ if ne .Page.Title "Home" }}
+<div class="ql-page-hero">
+  <div class="ql-container">
+    <div class="ql-breadcrumb">
+      <a href="/">Home</a>
+      <span class="ql-breadcrumb-sep">/</span>
+      <span>{{ .Page.Title }}</span>
+    </div>
+    <h1>{{ .Page.Title }}</h1>
+  </div>
+</div>
+
+<!-- Page Content -->
+<main>
+  <div class="ql-page-content">
+    {{ .Content }}
+  </div>
+</main>
+{{ else }}
+  {{ .Content }}
+{{ end }}
+{{ end }}
+
+<!-- Footer -->
+<footer id="ql-footer">
+  <div class="ql-container">
+    <div class="ql-footer-grid">
+      <div class="ql-footer-brand">
+        <a href="/" class="ql-nav-logo" style="margin-bottom:0.8rem;display:inline-flex;">
+          {{ if .Settings.site_logo_url }}<img src="{{ .Settings.site_logo_url }}" alt="{{ .Settings.site_title }}" style="height:32px;">{{ else }}<span>⚡ {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>{{ end }}
+        </a>
+        <p>The fast, flexible, open-source CMS. Free forever, powered by Go.</p>
+        <div class="ql-footer-social">
+          <a href="#" class="ql-social-btn">🐙</a>
+          <a href="#" class="ql-social-btn">𝕏</a>
+          <a href="#" class="ql-social-btn">💬</a>
+        </div>
+      </div>
+      <div class="ql-footer-col">
+        <h5>Product</h5>
+        <ul>
+          <li><a href="/features">Features</a></li>
+          <li><a href="/plugins">Plugins</a></li>
+          <li><a href="/pricing">Pricing</a></li>
+          <li><a href="/changelog">Changelog</a></li>
+        </ul>
+      </div>
+      <div class="ql-footer-col">
+        <h5>Developers</h5>
+        <ul>
+          <li><a href="/docs">Documentation</a></li>
+          <li><a href="/download">Download</a></li>
+          <li><a href="#">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="ql-footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ql-footer-bottom">
+      <p>© {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}. Open source, MIT licensed.</p>
+      <p>Built with ❤️ by the BinaryCMS Team</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/uploads/quantum_light/quantum_light.js?v=1.0.0"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Add New Category</h3>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/admin/categories/new">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Name</label>
+          <input type="text" name="name" class="form-control" placeholder="Category name" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Parent Category</label>
+          <select name="parent_id" class="form-select">
+            <option value="0">— None (Top Level) —</option>
+            {{ range .Categories }}
+            <option value="{{ .ID }}">{{ .Name }}</option>
+            {{ end }}
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-control" rows="2" placeholder="Optional description"></textarea>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">Add Category</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th>Description</th>
+          <th>Posts</th>
+          <th class="w-1">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Categories }}
+        <tr>
+          <td><strong>{{ .Name }}</strong></td>
+          <td><code>{{ .Slug }}</code></td>
+          <td class="text-muted">{{ .Description }}</td>
+          <td><span class="badge bg-blue-lt">{{ .PostCount }}</span></td>
+          <td>
+            <div class="d-flex gap-2">
+              <a href="/admin/categories/edit/{{ .ID }}" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/admin/categories/delete/{{ .ID }}" onsubmit="return confirm('Delete this category?')">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">No categories yet. Create your first one above.</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</div>

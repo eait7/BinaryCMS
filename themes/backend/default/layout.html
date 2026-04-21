@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}Go CMS{{ end }} - {{ .Title }}</title>
+    <!-- Tabler CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      :root {
+        --tblr-primary: {{ .BrandColor }};
+        --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      }
+      body {
+        font-feature-settings: "cv03", "cv04", "cv11";
+        letter-spacing: -0.01em;
+      }
+      
+      /* Card Overlays & Shadows */
+      .card {
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid rgba(0,0,0,0.05);
+      }
+      .card:hover { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1) !important; }
+      
+      /* Intelligent Button Gradients */
+      .btn-primary {
+        background: linear-gradient(135deg, var(--tblr-primary) 0%, color-mix(in srgb, var(--tblr-primary) 80%, black) 100%) !important;
+        border: none !important;
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--tblr-primary) 30%, transparent) !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px color-mix(in srgb, var(--tblr-primary) 40%, transparent) !important;
+      }
+      
+      /* Input Utility Enhancements */
+      .form-control, .form-select {
+        transition: all 0.2s ease;
+      }
+      .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--tblr-primary) 15%, transparent);
+        border-color: var(--tblr-primary);
+      }
+	  
+	  /* Standard Navigation Spacing Injection */
+	  .navbar-expand-md .navbar-nav .nav-link {
+		padding: 0.75rem 1rem;
+	  }
+    </style>
+    <!-- Live Theme Persistence State Management -->
+    <script>
+      let themeStorageKey = "tablerTheme";
+      let defaultTheme = "light";
+      let selectedTheme = localStorage.getItem(themeStorageKey);
+      if (selectedTheme === 'dark' || (selectedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute("data-bs-theme", "dark");
+      } else {
+        document.documentElement.setAttribute("data-bs-theme", "light");
+      }
+    </script>
+    {{ if .Settings.site_favicon_url }}
+    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+    <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+    {{ end }}
+  </head>
+  <body>
+    <!-- Theme Core Runtime Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler-theme.min.js"></script>
+    <div class="page">
+    
+      <!-- Module Top Utility Strip -->
+      <header class="navbar navbar-expand-md d-print-none" >
+        <div class="container-xl">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          
+          <!-- Live Site Configuration Header -->
+          <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+            <a href="/admin">
+              {{ if .Settings.site_logo_url }}
+                <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}36{{ end }}px !important; max-height: none;" alt="{{ .Settings.site_title }}">
+              {{ else }}
+                {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}Go CMS{{ end }}
+              {{ end }}
+            </a>
+          </h1>
+          
+          <div class="navbar-nav flex-row order-md-last">
+            <div class="d-none d-md-flex">
+              <!-- Dark / Light UI State Toggles -->
+              <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom" onclick="event.preventDefault(); document.documentElement.setAttribute('data-bs-theme', 'dark'); localStorage.setItem('tablerTheme', 'dark');">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+              </a>
+              <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom" onclick="event.preventDefault(); document.documentElement.setAttribute('data-bs-theme', 'light'); localStorage.setItem('tablerTheme', 'light');">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+              </a>
+              
+              <!-- Red Badge Floating Event Notification -->
+              <div class="nav-item dropdown d-none d-md-flex me-3 ms-2">
+                <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1" aria-label="Show notifications">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
+                  <span class="badge bg-red"></span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
+                  <div class="card">
+                    <div class="card-header border-0"><h3 class="card-title">System Notifications</h3></div>
+                    <div class="list-group list-group-flush list-group-hoverable">
+                      <div class="list-group-item">
+                        <div class="row align-items-center">
+                          <div class="col-auto"><span class="status-dot status-dot-animated bg-red d-block"></span></div>
+                          <div class="col text-truncate">
+                            <a href="#" class="text-body d-block">Welcome to the Environment</a>
+                            <div class="d-block text-muted text-truncate mt-n1">Your system successfully transitioned layouts properly safely globally.</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Global Internal Authentication Dropdown Hook -->
+            <div class="nav-item dropdown">
+              <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
+                <span class="avatar avatar-sm" style="background-image: url(https://api.dicebear.com/9.x/avataaars/svg?seed={{ .User.Username }})"></span>
+                <div class="d-none d-xl-block ps-2">
+                  <div class="fw-bold">{{ if .User.Name }}{{ .User.Name }}{{ else }}{{ .User.Username }}{{ end }}</div>
+                  <div class="mt-1 small text-muted opacity-50">{{ if .User.Email }}{{ .User.Email }}{{ else }}Super Administrator{{ end }}</div>
+                </div>
+              </a>
+              <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow shadow-sm border-0">
+                <a href="/admin/profile" class="dropdown-item">Profile Configuration</a>
+                <a href="/admin/profile?tab=security" class="dropdown-item">Access Constraints</a>
+                <div class="dropdown-divider"></div>
+                <a href="/admin/staff" class="dropdown-item fw-bold text-dark">Staff Management</a>
+                <a href="/admin/settings" class="dropdown-item">Platform Settings</a>
+                <div class="dropdown-divider"></div>
+                <a href="/admin/restart" class="dropdown-item text-warning fw-bold">Restart Server</a>
+                <a href="/logout" class="dropdown-item text-danger fw-bold">Execute Sign Out</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Persistent Sticky Router Interface (Horizontal Navbar) -->
+      <header class="navbar-expand-md sticky-top">
+        <div class="collapse navbar-collapse" id="navbar-menu">
+          <div class="navbar bg-white border-bottom shadow-sm">
+            <div class="container-xl">
+              <ul class="navbar-nav">
+                
+                <!-- Dynamic Menu Injectors Automatically Mapping Handshake Configuration Plugins -->
+                {{ range .Menus }}
+                {{ if .Children }}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                      {{ if .Icon }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-{{ .Icon }}" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/></svg>
+                      {{ else }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M4 13m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M14 4m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M14 15m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /></svg>
+                      {{ end }}
+                    </span>
+                    <span class="nav-link-title fw-medium">{{ .Label }}</span>
+                  </a>
+                  <div class="dropdown-menu shadow border-0 mt-2">
+                    <div class="dropdown-menu-columns">
+                      <div class="dropdown-menu-column">
+                        {{ if .URL }}
+                           {{ if ne .URL "#" }}
+                        <a class="dropdown-item py-2 fw-bold text-primary" href="{{ .URL }}">Overview: {{ .Label }}</a>
+                        <div class="dropdown-divider"></div>
+                           {{ end }}
+                        {{ end }}
+                        {{ range .Children }}
+                        <a class="dropdown-item py-2 fw-medium" href="{{ .URL }}">{{ .Label }}</a>
+                        {{ end }}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                {{ else }}
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ .URL }}" >
+                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                      {{ if .Icon }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-{{ .Icon }}" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/></svg>
+                      {{ else }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M4 13m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M14 4m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M14 15m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /></svg>
+                      {{ end }}
+                    </span>
+                    <span class="nav-link-title fw-medium">{{ .Label }}</span>
+                  </a>
+                </li>
+                {{ end }}
+                {{ end }}
+              </ul>
+              
+              <!-- Functional Input & Escape Controls -->
+              <div class="my-2 my-md-0 flex-grow-1 flex-md-grow-0 order-first order-md-last d-flex align-items-center">
+                <form action="#" method="get" autocomplete="off" novalidate onsubmit="return false;">
+                  <div class="input-icon">
+                    <span class="input-icon-addon">
+                      <!-- Search Icon Vector Intentionally Aligned to Generic Design Specifications -->
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+                    </span>
+                    <input type="text" value="" class="form-control rounded-pill bg-light" placeholder="Search parameters..." aria-label="Search in website">
+                  </div>
+                </form>
+                <div class="ms-3">
+                  <a href="#" onclick="history.back(); return false;" class="btn btn-success d-none d-sm-inline-flex gap-2 rounded-pill fw-bold border-0 shadow-sm px-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left bg-white text-success rounded-circle p-1" style="margin-left: -5px;" width="24" height="24" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+                    Back Frame
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-wrapper">
+        <!-- Rendered Title Hooking Logic -->
+        <div class="page-header d-print-none mt-4">
+          <div class="container-xl">
+            <div class="row g-2 align-items-center">
+              <div class="col">
+                <h2 class="page-title fw-bold">
+                  {{ .Title }}
+                </h2>
+              </div>
+              <div class="col-auto ms-auto d-print-none d-flex align-items-center">
+                {{ if .Actions }}
+                  <div class="me-3">
+                    {{ .Actions }}
+                  </div>
+                {{ end }}
+                {{ if .TopRightWidget }}
+                  <div class="me-3">
+                    {{ .TopRightWidget }}
+                  </div>
+                {{ end }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- CMS Core Native Page Body Yield Container -->
+        <div class="page-body">
+          <div class="container-xl">
+            {{ .Content }}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Deferred Initializer Elements Mapping To Tabler Constraints Native Standard Specifications Successfully Automatically Safely Cleanly Cleanly Correctly Elegantly Robustly -->
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+  </body>
+</html>
