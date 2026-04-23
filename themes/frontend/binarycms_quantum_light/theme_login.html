@@ -10,7 +10,7 @@
       --quantum-light-secondary: {{ if .Settings.quantum_light_secondary_color }}{{ .Settings.quantum_light_secondary_color }}{{ else }}#00a389{{ end }};
     }
   </style>
-  <link rel="stylesheet" href="/uploads/quantum_light/quantum_light.css?v=1.0.4">
+  <link rel="stylesheet" href="{{ asset "/uploads/quantum_light/quantum_light.css" }}">
   {{ if .Settings.site_favicon_url }}
   <link rel="icon" href="{{ .Settings.site_favicon_url }}">
   <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
@@ -54,6 +54,6 @@
   </div>
 </div>
 
-<script src="/uploads/quantum_light/quantum_light.js?v=1.0.0"></script>
+<script src="{{ asset "/uploads/quantum_light/quantum_light.js" }}"></script>
 </body>
 </html>

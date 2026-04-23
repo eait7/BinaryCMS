@@ -63,9 +63,19 @@ func main() {
 		})
 	})
 
-	// Static file serving
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
+	// Static file serving caching architecture
+	staticCacheHandler := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if os.Getenv("ENV") == "production" {
+				w.Header().Set("Cache-Control", "public, max-age=31536000") // 1 Year
+			} else {
+				w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+	r.Handle("/static/*", http.StripPrefix("/static/", staticCacheHandler(http.FileServer(http.Dir("static")))))
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", staticCacheHandler(http.FileServer(http.Dir("uploads")))))
 
 	// =====================
 	// Admin Routes

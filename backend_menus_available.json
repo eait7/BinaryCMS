@@ -12,6 +12,12 @@
     "Children": null
   },
   {
+    "Label": "SEO Settings",
+    "URL": "/admin/plugin/seo_optimizer",
+    "Icon": "search",
+    "Children": null
+  },
+  {
     "Label": "Visit Overview",
     "URL": "/admin/plugin/visit_tracker",
     "Icon": "eye",

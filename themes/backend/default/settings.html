@@ -23,6 +23,16 @@
           <small class="form-hint">Paste an image URL to replace the text "Go CMS" logo in the administrative sidebar natively.</small>
         </div>
         <div class="col-md-12 mb-3">
+          <label class="form-label">Logo Display Mode</label>
+          <select name="logo_display_mode" class="form-select">
+            <option value="" {{ if eq .Settings.logo_display_mode "" }}selected{{ end }}>Logo Only (Default)</option>
+            <option value="logo_only" {{ if eq .Settings.logo_display_mode "logo_only" }}selected{{ end }}>Logo Only</option>
+            <option value="logo_title" {{ if eq .Settings.logo_display_mode "logo_title" }}selected{{ end }}>Logo + Site Title</option>
+            <option value="logo_title_slogan" {{ if eq .Settings.logo_display_mode "logo_title_slogan" }}selected{{ end }}>Logo + Site Title + Slogan</option>
+          </select>
+          <small class="form-hint">Choose how the branding is presented on the navigation headers.</small>
+        </div>
+        <div class="col-md-12 mb-3">
           <label class="form-label">Favicon URL <span class="form-label-description">Optional</span></label>
           <input type="text" name="site_favicon_url" class="form-control" value="{{ .Settings.site_favicon_url }}" placeholder="e.g. /uploads/favicon.png">
           <small class="form-hint">Paste an image URL for the site Favicon. Essential for Google Search and Facebook URLs sharing visibility.</small>
@@ -93,12 +103,28 @@
               <div class="form-selectgroup-label-content w-100">
                 <strong>A static page</strong>
                 <div class="text-secondary mt-1 mb-2">Select a specifically authored page to act as the homepage landing.</div>
-                <select name="homepage_page_id" class="form-select">
-                  <option value="0">-- Select a Page --</option>
-                  {{ range .Pages }}
-                  <option value="{{ .ID }}" {{ if eq $.CurrentPageID (print .ID) }}selected{{ end }}>{{ .Title }}</option>
-                  {{ end }}
-                </select>
+                
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label" style="font-size:0.8rem;margin-bottom:0.2rem;">Homepage</label>
+                    <select name="homepage_page_id" class="form-select">
+                      <option value="0">-- Select a Page --</option>
+                      {{ range .Pages }}
+                      <option value="{{ .ID }}" {{ if eq $.CurrentPageID (print .ID) }}selected{{ end }}>{{ .Title }}</option>
+                      {{ end }}
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" style="font-size:0.8rem;margin-bottom:0.2rem;">Posts page</label>
+                    <select name="homepage_blog_id" class="form-select">
+                      <option value="0">-- Select a Page --</option>
+                      {{ range .Pages }}
+                      <option value="{{ .ID }}" {{ if eq $.CurrentBlogID (print .ID) }}selected{{ end }}>{{ .Title }}</option>
+                      {{ end }}
+                    </select>
+                  </div>
+                </div>
+
               </div>
             </div>
           </label>

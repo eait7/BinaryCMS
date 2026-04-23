@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -92,7 +93,7 @@ func handleFrontendIndex(pm *pluginmanager.Manager) http.HandlerFunc {
 					}
 
 					htmlContent := markdown.ToHTML([]byte(page.Content), nil, nil)
-					t, err := template.ParseFiles(theme.GetFrontendPath("theme_page.html"))
+					t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_page.html"))
 					if err != nil {
 						log.Printf("Homepage page template error: %v", err)
 						http.Error(w, "Template error", http.StatusInternalServerError)
@@ -122,226 +123,245 @@ func handleFrontendIndex(pm *pluginmanager.Manager) http.HandlerFunc {
 		}
 
 		// Default: paginated post timeline
-		pageNum := 1
-		if p := r.URL.Query().Get("page"); p != "" {
-			pageNum, _ = strconv.Atoi(p)
-		}
-		perPageStr := models.GetSetting("posts_per_page")
-		perPage, _ := strconv.Atoi(perPageStr)
-		if perPage < 1 {
-			perPage = 10
-		}
-
-		posts, total, err := models.GetPaginatedPosts(pageNum, perPage, true)
-		if err != nil {
-			http.Error(w, "Database error", http.StatusInternalServerError)
-			return
-		}
-
-		// Convert markdown to HTML
-		var postMap []map[string]interface{}
-		for _, p := range posts {
-			htmlContent := markdown.ToHTML([]byte(p.Content), nil, nil)
-			postMap = append(postMap, map[string]interface{}{
-				"Post":    p,
-				"Content": template.HTML(htmlContent),
-			})
-		}
-
-		totalPages := (total + perPage - 1) / perPage
-
-		t, err := template.ParseFiles(theme.GetFrontendPath("theme_index.html"))
-		if err != nil {
-			log.Printf("Index template error: %v", err)
-			http.Error(w, "Template error", http.StatusInternalServerError)
-			return
-		}
-		data := getFrontendData(r, map[string]interface{}{
-			"Posts":       postMap,
-			"CurrentPage": pageNum,
-			"TotalPages":  totalPages,
-			"TotalPosts":  total,
-			"HasPrev":     pageNum > 1,
-			"HasNext":     pageNum < totalPages,
-			"PrevPage":    pageNum - 1,
-			"NextPage":    pageNum + 1,
-		})
-		var buf bytes.Buffer
-		if err := t.Execute(&buf, data); err != nil {
-			log.Printf("Template execution error: %v", err)
-			http.Error(w, "Template error", http.StatusInternalServerError)
-			return
-		}
-		finalHTML := buf.String()
-		if pm != nil {
-			if hooked := pm.RunHook("BeforeFrontPageRender", finalHTML); hooked != nil {
-				finalHTML = hooked.(string)
-			}
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write([]byte(finalHTML))
+		ServePaginatedPosts(w, r, pm, false)
 	}
+}
+
+// ServePaginatedPosts serves the chronological post timeline to the designated route
+func ServePaginatedPosts(w http.ResponseWriter, r *http.Request, pm *pluginmanager.Manager, isExplicitBlog bool) {
+	pageNum := 1
+	if p := r.URL.Query().Get("page"); p != "" {
+		pageNum, _ = strconv.Atoi(p)
+	}
+	perPageStr := models.GetSetting("posts_per_page")
+	perPage, _ := strconv.Atoi(perPageStr)
+	if perPage < 1 {
+		perPage = 10
+	}
+
+	posts, total, err := models.GetPaginatedPosts(pageNum, perPage, true)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	// Convert markdown to HTML
+	var postMap []map[string]interface{}
+	for _, p := range posts {
+		htmlContent := markdown.ToHTML([]byte(p.Content), nil, nil)
+		postMap = append(postMap, map[string]interface{}{
+			"Post":    p,
+			"Content": template.HTML(htmlContent),
+		})
+	}
+
+	totalPages := (total + perPage - 1) / perPage
+
+	templateFile := theme.GetFrontendPath("theme_index.html")
+	if isExplicitBlog {
+		archivePath := theme.GetFrontendPath("theme_archive.html")
+		if _, err := os.Stat(archivePath); err == nil {
+			templateFile = archivePath
+		}
+	}
+
+	t, err := theme.ParseTemplateWithFuncs(templateFile)
+	if err != nil {
+		log.Printf("Index template error: %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+	data := getFrontendData(r, map[string]interface{}{
+		"Posts":       postMap,
+		"CurrentPage": pageNum,
+		"TotalPages":  totalPages,
+		"TotalPosts":  total,
+		"HasPrev":     pageNum > 1,
+		"HasNext":     pageNum < totalPages,
+		"PrevPage":    pageNum - 1,
+		"NextPage":    pageNum + 1,
+	})
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, data); err != nil {
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+	finalHTML := buf.String()
+	if pm != nil {
+		if hooked := pm.RunHook("BeforeFrontPageRender", finalHTML); hooked != nil {
+			finalHTML = hooked.(string)
+		}
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(finalHTML))
 }
 
 func handleFrontendPost(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		slug := chi.URLParam(r, "slug")
+	slug := chi.URLParam(r, "slug")
 
-		post, err := models.GetPostBySlug(slug)
-		if err != nil || post.Status != "published" {
-			http.Error(w, "Post not found", http.StatusNotFound)
-			return
-		}
-
-		htmlContent := markdown.ToHTML([]byte(post.Content), nil, nil)
-
-		// Load comments if enabled
-		commentsEnabled := models.GetSetting("comments_enabled") == "true"
-		var comments []models.Comment
-		if commentsEnabled {
-			comments, _ = models.GetCommentsByPost(post.ID)
-		}
-
-		// Load post categories and tags
-		categories, _ := models.GetPostCategories(post.ID)
-		tags, _ := models.GetPostTags(post.ID)
-
-		t, err := template.ParseFiles(theme.GetFrontendPath("theme_post.html"))
-		if err != nil {
-			log.Printf("Post template error: %v", err)
-			http.Error(w, "Template error", http.StatusInternalServerError)
-			return
-		}
-		data := getFrontendData(r, map[string]interface{}{
-			"Post":            post,
-			"Content":         template.HTML(htmlContent),
-			"Comments":        comments,
-			"CommentsEnabled": commentsEnabled,
-			"Categories":      categories,
-			"Tags":            tags,
-		})
-		var buf bytes.Buffer
-		if err := t.Execute(&buf, data); err != nil {
-			log.Printf("Template execution error: %v", err)
-			http.Error(w, "Template error", http.StatusInternalServerError)
-			return
-		}
-		finalHTML := buf.String()
-		if pm != nil {
-			if hooked := pm.RunHook("BeforeFrontPageRender", finalHTML); hooked != nil {
-				finalHTML = hooked.(string)
-			}
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write([]byte(finalHTML))
+	post, err := models.GetPostBySlug(slug)
+	if err != nil || post.Status != "published" {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
 	}
+
+	htmlContent := markdown.ToHTML([]byte(post.Content), nil, nil)
+
+	// Load comments if enabled
+	commentsEnabled := models.GetSetting("comments_enabled") == "true"
+	var comments []models.Comment
+	if commentsEnabled {
+		comments, _ = models.GetCommentsByPost(post.ID)
+	}
+
+	// Load post categories and tags
+	categories, _ := models.GetPostCategories(post.ID)
+	tags, _ := models.GetPostTags(post.ID)
+
+	t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_post.html"))
+	if err != nil {
+		log.Printf("Post template error: %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+	data := getFrontendData(r, map[string]interface{}{
+		"Post":            post,
+		"Content":         template.HTML(htmlContent),
+		"Comments":        comments,
+		"CommentsEnabled": commentsEnabled,
+		"Categories":      categories,
+		"Tags":            tags,
+	})
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, data); err != nil {
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+	finalHTML := buf.String()
+	if pm != nil {
+		if hooked := pm.RunHook("BeforeFrontPageRender", finalHTML); hooked != nil {
+			finalHTML = hooked.(string)
+		}
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(finalHTML))
+}
 }
 
 // handleFrontendCommentSubmit handles public comment form submissions.
 func handleFrontendCommentSubmit(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Redirect(w, r, "/", http.StatusFound)
-			return
-		}
-
-		slug := chi.URLParam(r, "slug")
-		post, err := models.GetPostBySlug(slug)
-		if err != nil || post.Status != "published" {
-			http.Error(w, "Post not found", http.StatusNotFound)
-			return
-		}
-
-		// Honeypot spam check
-		if r.FormValue("website") != "" {
-			// Bot detected, silently redirect
-			http.Redirect(w, r, "/post/"+slug+"#comments", http.StatusFound)
-			return
-		}
-
-		authorName := strings.TrimSpace(r.FormValue("author_name"))
-		authorEmail := strings.TrimSpace(r.FormValue("author_email"))
-		content := strings.TrimSpace(r.FormValue("content"))
-		parentID, _ := strconv.Atoi(r.FormValue("parent_id"))
-
-		if authorName == "" || content == "" {
-			http.Redirect(w, r, "/post/"+slug+"?error=Name+and+comment+are+required#comments", http.StatusFound)
-			return
-		}
-
-		status := "approved"
-		if models.GetSetting("comment_moderation") == "true" {
-			status = "pending"
-		}
-
-		comment := models.Comment{
-			PostID:      post.ID,
-			ParentID:    parentID,
-			AuthorName:  authorName,
-			AuthorEmail: authorEmail,
-			Content:     content,
-			Status:      status,
-		}
-		models.CreateComment(comment)
-
-		http.Redirect(w, r, "/post/"+slug+"?comment=submitted#comments", http.StatusFound)
+	if r.Method != "POST" {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
 	}
+
+	slug := chi.URLParam(r, "slug")
+	post, err := models.GetPostBySlug(slug)
+	if err != nil || post.Status != "published" {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	// Honeypot spam check
+	if r.FormValue("website") != "" {
+		// Bot detected, silently redirect
+		http.Redirect(w, r, "/post/"+slug+"#comments", http.StatusFound)
+		return
+	}
+
+	authorName := strings.TrimSpace(r.FormValue("author_name"))
+	authorEmail := strings.TrimSpace(r.FormValue("author_email"))
+	content := strings.TrimSpace(r.FormValue("content"))
+	parentID, _ := strconv.Atoi(r.FormValue("parent_id"))
+
+	if authorName == "" || content == "" {
+		http.Redirect(w, r, "/post/"+slug+"?error=Name+and+comment+are+required#comments", http.StatusFound)
+		return
+	}
+
+	status := "approved"
+	if models.GetSetting("comment_moderation") == "true" {
+		status = "pending"
+	}
+
+	comment := models.Comment{
+		PostID:      post.ID,
+		ParentID:    parentID,
+		AuthorName:  authorName,
+		AuthorEmail: authorEmail,
+		Content:     content,
+		Status:      status,
+	}
+	models.CreateComment(comment)
+
+	http.Redirect(w, r, "/post/"+slug+"?comment=submitted#comments", http.StatusFound)
+}
 }
 
 func handleFrontendPage(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		slug := chi.URLParam(r, "slug")
+	slug := chi.URLParam(r, "slug")
 
-		page, err := models.GetPageBySlug(slug)
-		if err != nil || page.Status != "published" {
-			http.Error(w, "Page not found", http.StatusNotFound)
+	page, err := models.GetPageBySlug(slug)
+	if err != nil || page.Status != "published" {
+		http.Error(w, "Page not found", http.StatusNotFound)
+		return
+	}
+
+	// Role-based access check
+	if page.RequiredRole != "" {
+		user, _ := auth.GetSessionUser(r)
+		if user.ID == 0 || (user.Role != "admin" && !strings.Contains(page.RequiredRole, user.Role)) {
+			http.Redirect(w, r, "/login?next=/"+slug, http.StatusSeeOther)
 			return
 		}
-
-		// Role-based access check
-		if page.RequiredRole != "" {
-			user, _ := auth.GetSessionUser(r)
-			if user.ID == 0 || (user.Role != "admin" && !strings.Contains(page.RequiredRole, user.Role)) {
-				http.Redirect(w, r, "/login?next=/"+slug, http.StatusSeeOther)
-				return
-			}
-		}
-
-		var htmlContent []byte
-		if strings.HasPrefix(slug, "demo-") {
-			htmlContent = []byte(page.Content)
-		} else {
-			htmlContent = markdown.ToHTML([]byte(page.Content), nil, nil)
-		}
-
-		data := getFrontendData(r, map[string]interface{}{
-			"Page":    page,
-			"Content": template.HTML(htmlContent),
-		})
-
-		var t *template.Template
-		if strings.HasPrefix(slug, "demo-") {
-			t, _ = template.ParseFiles(theme.GetFrontendPath("theme_demo.html"))
-		} else {
-			t, _ = template.ParseFiles(theme.GetFrontendPath("theme_page.html"))
-		}
-		if t != nil {
-			var buf bytes.Buffer
-			if err := t.Execute(&buf, data); err != nil {
-				log.Printf("Template execution error: %v", err)
-				http.Error(w, "Template error", http.StatusInternalServerError)
-				return
-			}
-			finalHTML := buf.String()
-			if pm != nil {
-				if hooked := pm.RunHook("BeforeFrontPageRender", finalHTML); hooked != nil {
-					finalHTML = hooked.(string)
-				}
-			}
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Write([]byte(finalHTML))
-		} else {
-			http.Error(w, "Template not found", http.StatusInternalServerError)
-		}
 	}
+
+	blogPageIDStr := models.GetSetting("homepage_blog_id")
+	if blogPageIDStr != "" && strconv.Itoa(page.ID) == blogPageIDStr {
+		ServePaginatedPosts(w, r, pm, true)
+		return
+	}
+
+	var htmlContent []byte
+	if strings.HasPrefix(slug, "demo-") {
+		htmlContent = []byte(page.Content)
+	} else {
+		htmlContent = markdown.ToHTML([]byte(page.Content), nil, nil)
+	}
+
+	data := getFrontendData(r, map[string]interface{}{
+		"Page":    page,
+		"Content": template.HTML(htmlContent),
+	})
+
+	var t *template.Template
+	if strings.HasPrefix(slug, "demo-") {
+		t, _ = theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_demo.html"))
+	} else {
+		t, _ = theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_page.html"))
+	}
+	if t != nil {
+		var buf bytes.Buffer
+		if err := t.Execute(&buf, data); err != nil {
+			log.Printf("Template execution error: %v", err)
+			http.Error(w, "Template error", http.StatusInternalServerError)
+			return
+		}
+		finalHTML := buf.String()
+		if pm != nil {
+			if hooked := pm.RunHook("BeforeFrontPageRender", finalHTML); hooked != nil {
+				finalHTML = hooked.(string)
+			}
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte(finalHTML))
+	} else {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+	}
+}
 }

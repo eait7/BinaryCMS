@@ -1,5 +1,8 @@
 gocms_server
 plugins/
+plugins_data/
+server
+server_local
 *.db
 *.log
 *.exe

@@ -6,7 +6,7 @@
     <div class="row">
       <div class="col-md-9">
         <div class="mb-4">
-          <label class="form-label required fw-bold">Post Title <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0" style="padding: 0 4px; font-size: 0.75rem;" onclick="alert('Connect an AI provider in settings first!');">✨ AI</button></label>
+          <label class="form-label required fw-bold">Post Title <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0 ai-trigger" data-context="title" style="padding: 0 4px; font-size: 0.75rem;" onclick="generateWithAI(this, 'title')">✨ AI</button></label>
           <input type="text" name="title" class="form-control form-control-lg" placeholder="Enter post title" required value="{{ if .Post }}{{ .Post.Title }}{{ end }}">
         </div>
       </div>
@@ -24,7 +24,7 @@
     <!-- Dual Editor Component -->
     <div class="mb-4 mt-3">
       <div class="d-flex align-items-center justify-content-between mb-2">
-         <label class="form-label required fw-bold mb-0">Content Formatting Engine <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0" style="padding: 0 4px; font-size: 0.75rem;" onclick="alert('Connect an AI provider in settings first!');">✨ AI</button></label>
+         <label class="form-label required fw-bold mb-0">Content Formatting Engine <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0 ai-trigger" data-context="body" style="padding: 0 4px; font-size: 0.75rem;" onclick="generateWithAI(this, 'body')">✨ AI</button></label>
          <ul class="nav nav-pills" data-bs-toggle="tabs">
            <li class="nav-item">
              <a href="#editor-basic" class="nav-link active btn btn-sm btn-outline-primary border-primary me-2" style="font-weight:600" data-bs-toggle="tab">
@@ -61,7 +61,7 @@
           const rawVal = document.getElementById('hidden-content').value;
           
           // Init EasyMDE
-          const easymde = new EasyMDE({
+          window.activeEasymde = new EasyMDE({
             element: document.getElementById('mde-content'),
             spellChecker: false,
             initialValue: rawVal,
@@ -70,6 +70,7 @@
             hideIcons: ["guide"],
             status: ["lines", "words", "cursor"]
           });
+          const easymde = window.activeEasymde;
 
           // Init GrapesJS
           const editorTools = grapesjs.init({
@@ -124,15 +125,33 @@
 
   <!-- Meta and Graph Blocks -->
   <div class="card-body p-4 bg-white">
+     <!-- Page Health Widget -->
+     <div class="card shadow-sm border rounded-4 mb-4 bg-light" id="page-health-card">
+       <div class="card-header bg-transparent d-flex justify-content-between align-items-center pb-2">
+         <h4 class="mb-0 text-success d-flex align-items-center" id="ph-title">
+           <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v2m0 4v.01" /><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" /></svg>
+           Page/Post Health: <span id="ph-score" class="ms-1">100</span>/100
+         </h4>
+         <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="autoFixPageHealth()">✨ Auto-Fix All</button>
+       </div>
+       <div class="card-body p-3">
+         <div class="progress mb-3" style="height: 8px;">
+           <div id="ph-progress" class="progress-bar bg-success" role="progressbar" style="width: 100%; transition: width 0.3s ease;"></div>
+         </div>
+         <ul class="list-unstyled mb-0 small" id="ph-details">
+         </ul>
+       </div>
+     </div>
+
      <div class="row">
          <div class="col-md-6">
             <div class="mb-4">
-               <label class="form-label fw-bold">SEO Meta Title</label>
+               <label class="form-label fw-bold">SEO Meta Title <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0 ai-trigger" data-context="meta_title" style="padding: 0 4px; font-size: 0.75rem;" onclick="generateWithAI(this, 'meta_title')">✨ AI</button></label>
                <input type="text" class="form-control" name="meta_title" value="{{ if .Post }}{{ .Post.MetaTitle }}{{ end }}" placeholder="Optimized Title Tag">
                <small class="form-hint">Natively overwrites the &lt;title&gt; tag for Search Engines specifically.</small>
             </div>
             <div class="mb-4">
-               <label class="form-label fw-bold">SEO Meta Description <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0" style="padding: 0 4px; font-size: 0.75rem;" onclick="alert('Connect an AI provider in settings first!');">✨ AI</button></label>
+               <label class="form-label fw-bold">SEO Meta Description <button type="button" class="btn btn-sm btn-ghost-primary ms-2 border-0 ai-trigger" data-context="meta" style="padding: 0 4px; font-size: 0.75rem;" onclick="generateWithAI(this, 'meta')">✨ AI</button></label>
                <textarea class="form-control" name="meta_description" rows="3" placeholder="Write a compelling snippet for Google...">{{ if .Post }}{{ .Post.MetaDescription }}{{ end }}</textarea>
             </div>
             
@@ -216,6 +235,41 @@
   </div>
 </form>
 
+<!-- AI Assistant Modal -->
+<div class="modal modal-blur fade" id="ai-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      <div class="modal-header bg-primary text-white border-bottom-0 pb-3" style="border-radius: 1rem 1rem 0 0;">
+        <h5 class="modal-title d-flex align-items-center fw-bold">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25" /><path d="M8.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M16.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+          AI Assistant <span class="badge bg-white text-primary ms-2 fs-5" id="ai-context-badge">Context</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <div class="mb-3">
+           <label class="form-label fw-bold text-muted small">Active Editor Context</label>
+           <div class="form-control bg-white text-muted" id="ai-context-preview" style="height: 80px; overflow-y: auto; font-size: 0.85rem; font-family: monospace;"></div>
+        </div>
+        
+        <div class="mb-3">
+           <label class="form-label fw-bold">Instructions for AI</label>
+           <textarea class="form-control border-primary" id="ai-prompt-input" rows="4" placeholder="Type exactly what you want the AI to do..." style="box-shadow: 0 0 0 4px rgba(32, 107, 196, 0.1);"></textarea>
+        </div>
+        
+        <div class="d-flex flex-wrap gap-2 mb-2" id="ai-macros"></div>
+      </div>
+      <div class="modal-footer bg-white border-top-0 d-flex justify-content-between pb-4 pt-3 px-4 rounded-bottom-4">
+        <button type="button" class="btn btn-ghost-danger rounded-pill fw-bold px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill fw-bold px-4 shadow-sm" id="ai-submit-btn" onclick="executeAI()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10 14l11 -11" /><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5" /></svg>
+          Generate Output
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   document.querySelector('input[name="title"]').addEventListener('input', e => {
       document.getElementById('og-title-preview').innerText = e.target.value || 'Post Title';
@@ -234,4 +288,267 @@
         if(empty) empty.style.display = 'none';
      }
   }
+
+  // --- Page Health Diagnostics ---
+  function calculatePageHealth() {
+    let score = 100;
+    let details = [];
+    
+    const title = (document.querySelector('input[name="title"]')?.value || '').trim();
+    if (title.length < 5) {
+      score -= 15;
+      details.push('<li class="text-danger mb-1">❌ Title is too short or missing.</li>');
+    } else {
+      details.push('<li class="text-success mb-1">✔ Target Title length reached.</li>');
+    }
+
+    const metaTitle = (document.querySelector('input[name="meta_title"]')?.value || '').trim();
+    if (metaTitle.length === 0 && title.length < 5) {
+      score -= 10;
+      details.push('<li class="text-danger mb-1">❌ SEO Meta Title is completely missing.</li>');
+    } else {
+      details.push('<li class="text-success mb-1">✔ SEO Meta Title configured.</li>');
+    }
+
+    let metaDesc = (document.querySelector('textarea[name="meta_description"]')?.value || '').trim();
+    if (metaDesc.length < 50) {
+      score -= 20;
+      details.push('<li class="text-warning mb-1">⚠ Meta Description should be at least 50 chars for Google.</li>');
+    } else if (metaDesc.length > 160) {
+      score -= 5;
+      details.push('<li class="text-warning mb-1">⚠ Meta Description is slightly too long (over 160 chars).</li>');
+    } else {
+      details.push('<li class="text-success mb-1">✔ Meta Description is optimized.</li>');
+    }
+
+    let content = '';
+    if (window.activeEasymde) {
+       content = window.activeEasymde.value();
+    } else {
+       content = document.getElementById('hidden-content')?.value || '';
+    }
+
+    const imgRegex = /<img[^>]+>/g;
+    let missingAlt = false;
+    let missingLazy = false;
+    let match;
+    while ((match = imgRegex.exec(content)) !== null) {
+      if (!match[0].includes('alt=')) missingAlt = true;
+      if (!match[0].includes('loading="lazy"')) missingLazy = true;
+    }
+    const mdImgRegex = /!\[(.*?)\]\([^)]+\)/g;
+    while ((match = mdImgRegex.exec(content)) !== null) {
+      if (match[1].trim() === "") missingAlt = true;
+    }
+
+    if (missingAlt) {
+      score -= 15;
+      details.push('<li class="text-danger mb-1">❌ Some images are missing Alt attributes!</li>');
+    } else {
+      details.push('<li class="text-success mb-1">✔ All images have Alt attributes.</li>');
+    }
+    if (missingLazy) {
+      score -= 10;
+      details.push('<li class="text-warning mb-1">⚠ HTML images are missing lazy loading.</li>');
+    }
+
+    const ogImg = (document.querySelector('input[name="featured_image"]')?.value || '').trim();
+    if (ogImg.length === 0) {
+      score -= 10;
+      details.push('<li class="text-warning mb-1">⚠ Missing OpenGraph Featured Image.</li>');
+    } else {
+      details.push('<li class="text-success mb-1">✔ OpenGraph image configured.</li>');
+    }
+
+    const scoreEl = document.getElementById('ph-score');
+    const titleEl = document.getElementById('ph-title');
+    const barEl = document.getElementById('ph-progress');
+    
+    if(scoreEl) scoreEl.innerText = score;
+    if(barEl) barEl.style.width = score + '%';
+    if(document.getElementById('ph-details')) document.getElementById('ph-details').innerHTML = details.join('');
+
+    if (score >= 90) {
+      if(barEl) barEl.className = 'progress-bar bg-success';
+      if(titleEl) titleEl.className = 'mb-0 text-success d-flex align-items-center';
+    } else if (score >= 60) {
+      if(barEl) barEl.className = 'progress-bar bg-warning';
+      if(titleEl) titleEl.className = 'mb-0 text-warning d-flex align-items-center';
+    } else {
+      if(barEl) barEl.className = 'progress-bar bg-danger';
+      if(titleEl) titleEl.className = 'mb-0 text-danger d-flex align-items-center';
+    }
+  }
+
+  function autoFixPageHealth() {
+    const titleEl = document.querySelector('input[name="title"]');
+    const metaTitleEl = document.querySelector('input[name="meta_title"]');
+    if (metaTitleEl && titleEl && metaTitleEl.value.trim() === '' && titleEl.value.trim() !== '') {
+      metaTitleEl.value = titleEl.value.trim();
+    }
+
+    const metaDescEl = document.querySelector('textarea[name="meta_description"]');
+    const hiddenEl = document.getElementById('hidden-content');
+    
+    let content = '';
+    if (window.activeEasymde) {
+       content = window.activeEasymde.value();
+    } else if (hiddenEl) {
+       content = hiddenEl.value;
+    }
+
+    if (metaDescEl && (metaDescEl.value.trim() === '' || metaDescEl.value.trim().length < 50)) {
+      let text = content.replace(/<\/?[^>]+(>|$)/g, " ").replace(/[*_=~`#-]/g, " ").replace(/\s+/g, " ").trim();
+      if (text.length > 155) text = text.substring(0, 155) + "...";
+      if (text.length > 0) {
+         metaDescEl.value = text;
+         // Trigger input event to update char counter if any
+         metaDescEl.dispatchEvent(new Event('input'));
+      }
+    }
+
+    let newContent = content;
+    newContent = newContent.replace(/<img([^>]+)>/g, function(match, p1) {
+      let attrs = p1;
+      if (!attrs.includes('alt=')) attrs += ' alt="image"';
+      if (!attrs.includes('loading=')) attrs += ' loading="lazy"';
+      return '<img' + attrs + '>';
+    });
+    newContent = newContent.replace(/!\[\]\(([^)]+)\)/g, '![image]($1)');
+    
+    if (content !== newContent) {
+      if (hiddenEl) hiddenEl.value = newContent;
+      if (window.activeEasymde && document.getElementById('editor-basic')?.classList.contains('active')) {
+          window.activeEasymde.value(newContent);
+      }
+    }
+    
+    calculatePageHealth();
+  }
+
+  // --- Content AI Generation Logic ---
+  let aiAbortController = null;
+
+  async function generateWithAI(btn, context) {
+      window.activeAIContext = context;
+      window.activeAIBtn = btn;
+      
+      let hiddenEl = document.getElementById('hidden-content');
+      let bodyData = window.activeEasymde ? window.activeEasymde.value() : (hiddenEl ? hiddenEl.value : "");
+      
+      document.getElementById('ai-context-badge').innerText = context.toUpperCase();
+      document.getElementById('ai-context-preview').innerText = bodyData ? bodyData.substring(0, 250) + "..." : "[Empty Payload]";
+      
+      const macrosEl = document.getElementById('ai-macros');
+      macrosEl.style.display = 'flex';
+      
+      if (context === 'body') {
+          macrosEl.innerHTML = `
+           <button class="btn btn-sm btn-outline-info rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Beautify this text natively. Fix all grammatical errors, improve the flow, and utilize professional vocabulary.'">✨ Beautify Text</button>
+           <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Restructure this raw text by cleanly organizing it under properly formatted HTML &lt;h2&gt; and &lt;h3&gt; headers.'">📑 Add H-Headers</button>
+           <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Suggest exactly where high-quality images should go in this text by natively dropping &lt;img src=\\'\\' alt=\\'descriptive text\\'&gt; tags at appropriate breaks.'">🖼 Suggest Images</button>
+           <button class="btn btn-sm btn-outline-warning rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Significantly expand on this content in high detail, adding compelling statistics, deep explanations, and professional insights.'">📝 Expand Content</button>
+          `;
+      } else if (context === 'meta') {
+          macrosEl.innerHTML = `
+           <button class="btn btn-sm btn-outline-info rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Extract a highly compelling, SEO-friendly meta description natively from this context under exactly 160 characters.'">✨ Generate Summary</button>
+           <button class="btn btn-sm btn-outline-warning rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Rewrite my current meta description to be punchier and encourage higher click-through rates.'">🎯 Optimize CTR</button>
+          `;
+      } else if (context === 'title' || context === 'meta_title') {
+          macrosEl.innerHTML = `
+           <button class="btn btn-sm btn-outline-info rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Suggest 3 highly-optimized SEO Title variations based on the current context, strictly under 60 characters.'">✨ SEO Optimize</button>
+           <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Make the title more catchy and viral, yet concise.'">🔥 Make Catchy</button>
+           <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Create a short, punchy title containing strong action verbs.'">⚡ Short & Punchy</button>
+          `;
+      }
+      
+      document.getElementById('ai-prompt-input').value = "";
+      
+      const modal = new bootstrap.Modal(document.getElementById('ai-modal'));
+      modal.show();
+  }
+
+  async function executeAI() {
+      const promptStr = document.getElementById('ai-prompt-input').value.trim();
+      if(promptStr === "") {
+          alert("Please provide an instruction for the AI.");
+          return;
+      }
+      
+      const context = window.activeAIContext;
+      const btn = window.activeAIBtn;
+      
+      let hiddenEl = document.getElementById('hidden-content');
+      let bodyData = window.activeEasymde ? window.activeEasymde.value() : (hiddenEl ? hiddenEl.value : "");
+      
+      const modalInstance = bootstrap.Modal.getInstance(document.getElementById('ai-modal'));
+      if(modalInstance) modalInstance.hide();
+      
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      let aiSecs = 0;
+      btn.innerHTML = "⏳ Generating (0s)...";
+      const timerInt = setInterval(() => { aiSecs++; btn.innerHTML = `⏳ Generating (${aiSecs}s)...`; }, 1000);
+      
+      const payload = { context: context, prompt: promptStr, body: bodyData };
+      const b64 = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
+      
+      aiAbortController = new AbortController();
+      const timeoutId = setTimeout(() => aiAbortController.abort(), 120000); // 120 sec timeout
+      
+      try {
+          const response = await fetch(`/api/plugin/content_ai/generate?payload=${b64}`, { signal: aiAbortController.signal });
+          clearTimeout(timeoutId);
+          
+          let data;
+          try { data = await response.json(); } catch(err) { data = {error: "Malformed Response API Error."}; }
+          
+          if (data.error) {
+              alert("AI Error: " + data.error);
+          } else if (data.text) {
+              let text = data.text.trim().replace(/^["']|["']$/g, '');
+              if (context === 'title') {
+                  const tEl = document.querySelector('input[name="title"]');
+                  if(tEl){ tEl.value = text; tEl.dispatchEvent(new Event('input')); }
+              } else if (context === 'meta_title') {
+                  const mtEl = document.querySelector('input[name="meta_title"]');
+                  if(mtEl){ mtEl.value = text; mtEl.dispatchEvent(new Event('input')); }
+              } else if (context === 'meta') {
+                  const mEl = document.querySelector('textarea[name="meta_description"]');
+                  if(mEl){ mEl.value = text; mEl.dispatchEvent(new Event('input')); }
+              } else if (context === 'body') {
+                  const mde = window.activeEasymde;
+                  if (mde) {
+                      const cur = mde.value();
+                      mde.value(cur + (cur.trim() !== "" ? "\n\n" : "") + text);
+                  } else if(hiddenEl) {
+                      hiddenEl.value += (hiddenEl.value.trim() !== "" ? "\n\n" : "") + text;
+                  }
+              }
+              calculatePageHealth();
+          }
+      } catch (err) {
+          clearTimeout(timeoutId);
+          if (err.name === 'AbortError') {
+              alert("Timeout: The AI Provider took longer than 2 minutes and was aborted. Try splitting up complex instructions.");
+          } else {
+              alert("Network Error: Could not connect to AI Plugin Endpoint.");
+          }
+      } finally {
+          clearInterval(timerInt);
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+      }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    setInterval(calculatePageHealth, 2000);
+    const fields = ['title', 'meta_title', 'meta_description', 'featured_image'];
+    fields.forEach(name => {
+       const el = document.querySelector(`[name="${name}"]`);
+       if(el) el.addEventListener('input', calculatePageHealth);
+    });
+    // Give MDE a moment to load
+    setTimeout(calculatePageHealth, 500); 
+  });
 </script>

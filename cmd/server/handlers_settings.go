@@ -25,11 +25,13 @@ func handleSettings(pm *pluginmanager.Manager) http.HandlerFunc {
 		if r.Method == "POST" {
 			homepageType := r.FormValue("homepage_type")
 			pageID := r.FormValue("homepage_page_id")
+			blogPageID := r.FormValue("homepage_blog_id")
 
 			siteTitle := r.FormValue("site_title")
 			siteTagline := r.FormValue("site_tagline")
 			siteUrl := r.FormValue("site_url")
 			siteLogoUrl := r.FormValue("site_logo_url")
+			logoDisplayMode := r.FormValue("logo_display_mode")
 			siteFaviconUrl := r.FormValue("site_favicon_url")
 			customFooter := r.FormValue("custom_footer")
 
@@ -38,6 +40,9 @@ func handleSettings(pm *pluginmanager.Manager) http.HandlerFunc {
 			}
 			if pageID != "" {
 				models.SetSetting("homepage_page_id", pageID)
+			}
+			if blogPageID != "" {
+				models.SetSetting("homepage_blog_id", blogPageID)
 			}
 			if siteTitle != "" {
 				models.SetSetting("site_title", siteTitle)
@@ -49,6 +54,7 @@ func handleSettings(pm *pluginmanager.Manager) http.HandlerFunc {
 			// Optional fields can be set to empty
 			models.SetSetting("site_url", siteUrl)
 			models.SetSetting("site_logo_url", siteLogoUrl)
+			models.SetSetting("logo_display_mode", logoDisplayMode)
 			models.SetSetting("site_favicon_url", siteFaviconUrl)
 			models.SetSetting("custom_footer", customFooter)
 
@@ -158,8 +164,9 @@ func renderSettingsPage(w http.ResponseWriter, r *http.Request, pm *pluginmanage
 	pages, _ := models.GetAllPages(true)
 	currentType := models.GetSetting("homepage_type")
 	currentID := models.GetSetting("homepage_page_id")
+	currentBlogID := models.GetSetting("homepage_blog_id")
 
-	t, err := template.ParseFiles(theme.GetBackendPath("settings.html"))
+	t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath("settings.html"))
 	if err != nil {
 		log.Printf("Settings template error: %v", err)
 		http.Error(w, "Template error", http.StatusInternalServerError)
@@ -171,6 +178,7 @@ func renderSettingsPage(w http.ResponseWriter, r *http.Request, pm *pluginmanage
 		"Pages":         pages,
 		"CurrentType":   currentType,
 		"CurrentPageID": currentID,
+		"CurrentBlogID": currentBlogID,
 		"Settings":      models.GetAllSettingsMap(),
 		"SSLLog":        sslLog,
 	})
