@@ -82,9 +82,17 @@
           
           <!-- Live Site Configuration Header -->
           <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
-            <a href="/admin">
+            <a href="https://binarycms.com" target="_blank" rel="noopener" class="d-flex align-items-center text-decoration-none text-body">
               {{ if .Settings.site_logo_url }}
                 <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}36{{ end }}px !important; max-height: none;" alt="{{ .Settings.site_title }}">
+                {{ if eq .Settings.logo_display_mode "logo_title" }}
+                  <span class="ms-2 fs-3 fw-bold">{{ .Settings.site_title }}</span>
+                {{ else if eq .Settings.logo_display_mode "logo_title_slogan" }}
+                  <span class="ms-2 d-flex flex-column justify-content-center" style="line-height:1.1;">
+                    <span class="fs-4 fw-bold">{{ .Settings.site_title }}</span>
+                    <span class="fs-6 text-muted fw-normal" style="font-size:0.75rem !important;">{{ .Settings.site_tagline }}</span>
+                  </span>
+                {{ end }}
               {{ else }}
                 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}Go CMS{{ end }}
               {{ end }}
