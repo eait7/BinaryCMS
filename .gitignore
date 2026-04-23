@@ -4,6 +4,8 @@ plugins_data/
 server
 server_local
 *.db
+*.db-shm
+*.db-wal
 *.log
 *.exe
 .DS_Store
