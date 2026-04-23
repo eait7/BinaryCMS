@@ -134,7 +134,7 @@ func handleThemes(pm *pluginmanager.Manager) http.HandlerFunc {
 			"BackendThemes":  getAvailableThemes("backend"),
 		}
 
-		t, err := template.ParseFiles(theme.GetBackendPath("themes.html"))
+		t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath("themes.html"))
 		if err != nil {
 			log.Printf("Themes template error: %v", err)
 			http.Error(w, "Template error", http.StatusInternalServerError)

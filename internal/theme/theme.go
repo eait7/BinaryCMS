@@ -1,11 +1,13 @@
 package theme
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/ez8/gocms/internal/models"
@@ -30,7 +32,7 @@ func (tc *templateCache) Get(path string) (*template.Template, error) {
 	}
 	tc.mu.RUnlock()
 
-	t, err := template.ParseFiles(path)
+	t, err := template.New(filepath.Base(path)).Funcs(GlobalFuncMap()).ParseFiles(path)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +55,32 @@ func InvalidateCache() {
 // GetCachedTemplate returns a cached, parsed template ready for execution.
 func GetCachedTemplate(path string) (*template.Template, error) {
 	return cache.Get(path)
+}
+
+// AssetFunc checks file modification time and appends a v= timestamp query
+func AssetFunc(path string) string {
+	localPath := strings.TrimPrefix(path, "/")
+	info, err := os.Stat(localPath)
+	if err == nil {
+		return fmt.Sprintf("%s?v=%d", path, info.ModTime().UnixNano())
+	}
+	return path
+}
+
+// GlobalFuncMap returns the global template functions map
+func GlobalFuncMap() template.FuncMap {
+	return template.FuncMap{
+		"asset": AssetFunc,
+	}
+}
+
+// ParseTemplateWithFuncs parses templates with the global FuncMap included
+func ParseTemplateWithFuncs(files ...string) (*template.Template, error) {
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no files provided")
+	}
+	name := filepath.Base(files[0])
+	return template.New(name).Funcs(GlobalFuncMap()).ParseFiles(files...)
 }
 
 // GetFrontendPath resolves the template path for the active frontend theme,

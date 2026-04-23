@@ -1,7 +1,6 @@
 package main
 
 import (
-	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -236,10 +235,10 @@ func handleFrontendCategory(pm *pluginmanager.Manager) http.HandlerFunc {
 
 		posts, _ := models.GetPostsByCategory(category.ID)
 
-		t, err := template.ParseFiles(theme.GetFrontendPath("theme_archive.html"))
+		t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_archive.html"))
 		if err != nil {
 			// Fallback to index template
-			t, _ = template.ParseFiles(theme.GetFrontendPath("theme_index.html"))
+			t, _ = theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_index.html"))
 		}
 		t.Execute(w, getFrontendData(r, map[string]interface{}{
 			"Category":    category,
@@ -270,9 +269,9 @@ func handleFrontendTag(pm *pluginmanager.Manager) http.HandlerFunc {
 
 		posts, _ := models.GetPostsByTag(foundTag.ID)
 
-		t, err := template.ParseFiles(theme.GetFrontendPath("theme_archive.html"))
+		t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_archive.html"))
 		if err != nil {
-			t, _ = template.ParseFiles(theme.GetFrontendPath("theme_index.html"))
+			t, _ = theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_index.html"))
 		}
 		t.Execute(w, getFrontendData(r, map[string]interface{}{
 			"Tag":          foundTag,
@@ -292,9 +291,9 @@ func handleFrontendSearch(pm *pluginmanager.Manager) http.HandlerFunc {
 			posts, _ = models.SearchPosts(query)
 		}
 
-		t, err := template.ParseFiles(theme.GetFrontendPath("theme_search.html"))
+		t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_search.html"))
 		if err != nil {
-			t, _ = template.ParseFiles(theme.GetFrontendPath("theme_index.html"))
+			t, _ = theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_index.html"))
 		}
 		t.Execute(w, getFrontendData(r, map[string]interface{}{
 			"Query":   query,

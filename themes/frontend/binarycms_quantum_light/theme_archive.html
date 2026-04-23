@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Blog — {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
   <style>:root { --quantum-light-accent: {{ if .Settings.quantum_light_accent_color }}{{ .Settings.quantum_light_accent_color }}{{ else }}#006fbb{{ end }}; --quantum-light-secondary: {{ if .Settings.quantum_light_secondary_color }}{{ .Settings.quantum_light_secondary_color }}{{ else }}#00a389{{ end }}; }</style>
-  <link rel="stylesheet" href="/uploads/quantum_light/quantum_light.css?v=1.0.4">
+  <link rel="stylesheet" href="{{ asset "/uploads/quantum_light/quantum_light.css" }}">
   {{ if .Settings.site_favicon_url }}
   <link rel="icon" href="{{ .Settings.site_favicon_url }}">
   <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
@@ -15,8 +15,25 @@
 
 <nav id="ql-nav">
   <div class="ql-nav-inner">
-    <a class="ql-nav-logo" href="/">
-      {{ if .Settings.site_logo_url }}<img src="{{ .Settings.site_logo_url }}" alt="{{ .Settings.site_title }}">{{ else }}<span>⚡ {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>{{ end }}
+    <a class="ql-nav-logo" href="/" style="display:inline-flex; align-items:center; gap:0.5rem; text-decoration:none;">
+      {{ if .Settings.quantum_light_logo_url }}
+        <img src="{{ .Settings.quantum_light_logo_url }}" alt="{{ .Settings.site_title }}">
+      {{ else if .Settings.site_logo_url }}
+        <img src="{{ .Settings.site_logo_url }}" alt="{{ .Settings.site_title }}">
+      {{ else }}
+        <span>⚡ {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>
+      {{ end }}
+
+      {{ if or .Settings.quantum_light_logo_url .Settings.site_logo_url }}
+        {{ if eq .Settings.logo_display_mode "logo_title" }}
+          <span style="font-weight:800; font-size:1.2rem; line-height:1; color:inherit;">{{ .Settings.site_title }}</span>
+        {{ else if eq .Settings.logo_display_mode "logo_title_slogan" }}
+          <div style="display:flex; flex-direction:column; justify-content:center; line-height:1;">
+            <span style="font-weight:800; font-size:1.2rem; color:inherit;">{{ .Settings.site_title }}</span>
+            <span style="font-size:0.75rem; color:var(--ql-text-muted); font-weight:normal; margin-top:2px;">{{ .Settings.site_tagline }}</span>
+          </div>
+        {{ end }}
+      {{ end }}
     </a>
     <ul class="ql-nav-links">
       <li class="ql-nav-item"><a href="/" class="ql-nav-link">Home</a></li>
@@ -101,5 +118,5 @@
   </div>
 </footer>
 
-<script src="/uploads/quantum_light/quantum_light.js?v=1.0.0"></script>
+<script src="{{ asset "/uploads/quantum_light/quantum_light.js" }}"></script>
 </body></html>

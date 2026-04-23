@@ -218,7 +218,7 @@ func handleFrontendChangePassword(pm *pluginmanager.Manager) http.HandlerFunc {
 
 // renderFrontendTemplate is a helper to render a frontend theme template with data.
 func renderFrontendTemplate(w http.ResponseWriter, templateName string, data map[string]interface{}) {
-	t, err := template.ParseFiles(theme.GetFrontendPath(templateName))
+	t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath(templateName))
 	if err != nil {
 		log.Printf("Frontend template error (%s): %v", templateName, err)
 		http.Error(w, "Template error", http.StatusInternalServerError)

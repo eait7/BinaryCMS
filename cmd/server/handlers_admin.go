@@ -153,7 +153,7 @@ func renderAdminPage(w http.ResponseWriter, r *http.Request, title string, conte
 
 // renderTemplate is a helper that parses a backend template, executes it, and returns the HTML.
 func renderTemplate(templateName string, data interface{}) (template.HTML, error) {
-	t, err := template.ParseFiles(theme.GetBackendPath(templateName))
+	t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath(templateName))
 	if err != nil {
 		return "", err
 	}

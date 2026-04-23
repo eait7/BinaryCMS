@@ -105,7 +105,7 @@ func (m *Manager) RenderAdminRoute(route string) string {
 
 	for _, p := range m.plugins {
 		html := p.HookAdminRoute(route)
-		if html != "" && html != "Plugin Route Error" && html != "Not implemented" {
+		if html != "" && html != "Plugin Route Error" && html != "Not implemented" && html != "Invalid route." {
 			return html
 		}
 	}
