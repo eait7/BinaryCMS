@@ -26,8 +26,8 @@ jobs:
           GIT_COMMIT=$(git rev-parse --short HEAD)
           BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
           
-          CGO_ENABLED=1 GOOS=linux go build \
-            -ldflags="-s -w -X 'main.GitCommit=$GIT_COMMIT' -X 'main.BuildTime=$BUILD_TIME'" \
+          CGO_ENABLED=0 GOOS=linux go build \
+            -ldflags="-s -w -X 'github.com/ez8/gocms/internal/handlers.GitCommit=$GIT_COMMIT' -X 'github.com/ez8/gocms/internal/handlers.BuildTime=$BUILD_TIME'" \
             -o gocms_server_linux_amd64 ./cmd/server
 
       - name: Update Continuous Release
