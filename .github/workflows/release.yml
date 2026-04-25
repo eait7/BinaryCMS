@@ -1,0 +1,43 @@
+name: Core Binary Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Core Binary
+        run: |
+          # Embed the short git hash and build time into the binary
+          GIT_COMMIT=$(git rev-parse --short HEAD)
+          BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          
+          CGO_ENABLED=1 GOOS=linux go build \
+            -ldflags="-s -w -X 'main.GitCommit=$GIT_COMMIT' -X 'main.BuildTime=$BUILD_TIME'" \
+            -o gocms_server_linux_amd64 ./cmd/server
+
+      - name: Update Continuous Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Latest Core Build"
+          tag_name: "latest"
+          body: "Automated rolling release of the BinaryCMS core binary for in-app self-updating."
+          files: gocms_server_linux_amd64
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
