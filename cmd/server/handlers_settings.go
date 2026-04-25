@@ -31,6 +31,7 @@ func handleSettings(pm *pluginmanager.Manager) http.HandlerFunc {
 			siteTagline := r.FormValue("site_tagline")
 			siteUrl := r.FormValue("site_url")
 			siteLogoUrl := r.FormValue("site_logo_url")
+			siteLogoIcon := r.FormValue("site_logo_icon")
 			logoDisplayMode := r.FormValue("logo_display_mode")
 			siteFaviconUrl := r.FormValue("site_favicon_url")
 			customFooter := r.FormValue("custom_footer")
@@ -54,6 +55,9 @@ func handleSettings(pm *pluginmanager.Manager) http.HandlerFunc {
 			// Optional fields can be set to empty
 			models.SetSetting("site_url", siteUrl)
 			models.SetSetting("site_logo_url", siteLogoUrl)
+			if siteLogoIcon != "" {
+				models.SetSetting("site_logo_icon", siteLogoIcon)
+			}
 			models.SetSetting("logo_display_mode", logoDisplayMode)
 			models.SetSetting("site_favicon_url", siteFaviconUrl)
 			models.SetSetting("custom_footer", customFooter)
@@ -166,6 +170,27 @@ func renderSettingsPage(w http.ResponseWriter, r *http.Request, pm *pluginmanage
 	currentID := models.GetSetting("homepage_page_id")
 	currentBlogID := models.GetSetting("homepage_blog_id")
 
+	logoIcons := []string{
+		"brand-abstract", "triangle", "hexagon", "diamond", "square", "circle",
+		"flame", "rocket", "leaf", "comet", "infinity", "layers-linked", "planet",
+		"ripple", "sparkles", "star", "bolt", "zap", "droplet", "flower", "shield",
+		"prism", "meteor", "moon", "sun", "wind", "cloud", "water", "ghost",
+		"crown", "gem", "medal", "trophy", "anchor", "compass", "map", "camera",
+		"movie", "music", "microphone", "headphones", "cube", "box", "packages",
+		"building", "home", "school", "hospital", "tools", "hammer", "brush",
+		"palette", "code", "terminal", "bug", "shield-check", "lock", "key",
+		"eye", "fingerprint", "heart", "brain", "globe", "world", "flag",
+		"bookmark", "tags", "shopping-cart", "bag", "gift", "truck", "plane",
+		"car", "bike", "train", "bus", "boat", "ship", "coffee", "cup",
+		"glass", "flask", "microscope", "atom", "magnet", "radar", "satellite",
+		"wifi", "bluetooth", "battery", "bulb", "cpu", "device-laptop",
+		"device-mobile", "device-tablet", "device-watch", "keyboard", "mouse",
+		"printer", "camera-rotate", "hexagon-letter-a", "hexagon-letter-b",
+		"hexagon-letter-c", "hexagon-letter-d", "hexagon-letter-e", "hexagon-letter-f",
+		"hexagon-letter-g", "hexagon-letter-h", "hexagon-letter-i", "hexagon-letter-j",
+		"hexagon-letter-k", "hexagon-letter-l", "hexagon-letter-m", "hexagon-letter-n",
+	}
+
 	t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath("settings.html"))
 	if err != nil {
 		log.Printf("Settings template error: %v", err)
@@ -181,6 +206,7 @@ func renderSettingsPage(w http.ResponseWriter, r *http.Request, pm *pluginmanage
 		"CurrentBlogID": currentBlogID,
 		"Settings":      models.GetAllSettingsMap(),
 		"SSLLog":        sslLog,
+		"LogoIcons":     logoIcons,
 	})
 
 	renderAdminPage(w, r, "Core Settings", template.HTML(buf.String()), "", pm)
