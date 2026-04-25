@@ -11,13 +11,23 @@ import (
 
 	"github.com/ez8/gocms/internal/auth"
 	"github.com/ez8/gocms/internal/db"
+	"github.com/ez8/gocms/internal/handlers"
 	"github.com/ez8/gocms/internal/models"
 	"github.com/ez8/gocms/internal/pluginmanager"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+var (
+	GitCommit = "development"
+	BuildTime = "unknown"
+)
+
 func main() {
+	// Pass build info to the updater
+	handlers.GitCommit = GitCommit
+	handlers.BuildTime = BuildTime
+
 	// Initialize Database
 	err := db.Init("cms.db")
 	if err != nil {
@@ -156,6 +166,10 @@ func main() {
 		r.Post("/users/delete/{id}", handleDeleteUser(pm))
 		r.Post("/users/toggle-status/{id}", handleToggleUserStatus(pm))
 		r.Get("/users/developer-guide", handleDevGuide(pm))
+
+		// Core Updater
+		r.Get("/api/updater/check", handlers.CheckUpdate)
+		r.Post("/api/updater/install", handlers.InstallUpdate)
 
 		// Backwards-compatible redirect
 		r.Get("/subscribers", func(w http.ResponseWriter, r *http.Request) {
