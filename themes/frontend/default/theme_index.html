@@ -4,114 +4,270 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <title>{{ if .Title }}{{ .Title }} - {{ end }}{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
-    <!-- CSS files -->
+    <meta name="description" content="{{ if .Settings.site_tagline }}{{ .Settings.site_tagline }}{{ end }}">
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
     <style>
       @import url('https://rsms.me/inter/inter.css');
-      body { font-family: 'Inter Var', sans-serif; }
       :root {
         --tblr-primary: {{ .BrandColor }};
+        --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       }
+      body {
+        font-family: var(--tblr-font-sans-serif);
+        font-feature-settings: "cv03", "cv04", "cv11";
+        letter-spacing: -0.01em;
+        background-color: #f8fafc;
+      }
+      /* Premium Navbar */
+      .navbar {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+      .navbar-brand { font-weight: 800; letter-spacing: -0.02em; }
+      .nav-link { font-weight: 500; transition: color 0.2s ease; }
+      .nav-link:hover { color: var(--tblr-primary) !important; }
+
+      /* Dynamic Hero Section */
+      .hero-section {
+        position: relative;
+        padding: 6rem 0;
+        background: radial-gradient(circle at top right, color-mix(in srgb, var(--tblr-primary) 15%, transparent), transparent 40%),
+                    radial-gradient(circle at bottom left, color-mix(in srgb, var(--tblr-primary) 10%, transparent), transparent 40%);
+        overflow: hidden;
+      }
+      .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .hero-subtitle {
+        font-size: 1.25rem;
+        color: #64748b;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* Glassmorphic Post Cards */
+      .post-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+        padding-top: 2rem;
+      }
+      .post-card {
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.04);
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+      }
+      .post-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05), 0 10px 10px -5px rgba(0,0,0,0.02);
+        border-color: color-mix(in srgb, var(--tblr-primary) 30%, transparent);
+      }
+      .post-card-body {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+      .post-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.75rem;
+      }
+      .post-title a {
+        color: #0f172a;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .post-title a:hover { color: var(--tblr-primary); }
+      .post-excerpt {
+        color: #64748b;
+        line-height: 1.6;
+        flex-grow: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .post-meta {
+        margin-top: 1.5rem;
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+        color: #94a3b8;
+        font-weight: 500;
+      }
+
+      /* Footer */
+      .premium-footer {
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 4rem;
+        margin-top: 5rem;
+      }
+      .footer-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1.5rem;
+      }
+      .footer-link {
+        color: #64748b;
+        text-decoration: none;
+        transition: color 0.2s;
+        font-weight: 500;
+      }
+      .footer-link:hover { color: var(--tblr-primary); }
+      .footer-brand-text { color: #64748b; line-height: 1.6; }
     </style>
   </head>
-  <body class="antialiased">
+  <body>
     <div class="page">
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
-      <div class="container-xl">
-        <a class="navbar-brand font-weight-bold text-decoration-none" href="/">
-          {{ if .Settings.site_logo_url }}
-            <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; max-height: none !important; width: auto !important;" alt="{{ .Settings.site_title }}">
-          {{ else }}
-            🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
-          {{ end }}
-        </a>
-        <div class="navbar-nav flex-row">
-            <a href="/" class="nav-link mx-2">Home</a>
-            {{ range .MenuItems }}
-            <a href="{{ .URL }}" class="nav-link mx-2">{{ .Label }}</a>
+      <!-- Premium Navbar -->
+      <nav class="navbar navbar-expand-md sticky-top">
+        <div class="container-xl">
+          <a class="navbar-brand d-flex align-items-center" href="/">
+            {{ if .Settings.site_logo_url }}
+              <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; width: auto;" alt="{{ .Settings.site_title }}">
+            {{ else }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-abstract text-primary me-2" width="32" height="32" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" /><path d="M10.5 13.5m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0" /><path d="M8 8h8v8" /></svg>
+              {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
             {{ end }}
-        </div>
-      </div>
-    </nav>
-    <div class="page-wrapper">
-      <div class="page-body">
-        <div class="container-tight py-4">
-          {{ if .Settings.site_tagline }}
-            <div class="text-center text-secondary mb-4">{{ .Settings.site_tagline }}</div>
-          {{ end }}
-        
-        <div class="mb-4">
-         <h1 class="text-center">Latest Posts</h1>
-        </div>
-
-        {{ range .Posts }}
-        <div class="card mb-3">
-          <div class="card-body">
-            <h3 class="card-title"><a href="/post/{{ .Post.Slug }}">{{ .Post.Title }}</a></h3>
-            <div class="text-secondary">{{ .Content }}</div>
-            <div class="text-muted small mt-2">Published: {{ .Post.CreatedAt }}</div>
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbar-menu">
+            <div class="navbar-nav ms-auto flex-row align-items-center">
+              <a href="/" class="nav-link px-3">Home</a>
+              {{ range .MenuItems }}
+              <a href="{{ .URL }}" class="nav-link px-3">{{ .Label }}</a>
+              {{ end }}
+            </div>
           </div>
         </div>
-        {{ else }}
-        <div class="card">
-          <div class="card-body text-center">
-             No posts available yet!
+      </nav>
+
+      <div class="page-wrapper">
+        <!-- Dynamic Hero Section -->
+        <section class="hero-section text-center">
+          <div class="container-xl">
+            <h1 class="hero-title">{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</h1>
+            {{ if .Settings.site_tagline }}
+              <p class="hero-subtitle mb-5">{{ .Settings.site_tagline }}</p>
+            {{ end }}
+          </div>
+        </section>
+
+        <!-- Main Content -->
+        <div class="page-body mt-0">
+          <div class="container-xl">
+            <div class="d-flex align-items-center mb-4 border-bottom pb-3">
+              <h2 class="h3 mb-0 fw-bold text-dark">Latest Articles</h2>
+            </div>
+
+            {{ if .Posts }}
+            <div class="post-grid">
+              {{ range .Posts }}
+              <article class="post-card">
+                <div class="post-card-body">
+                  <h3 class="post-title"><a href="/post/{{ .Post.Slug }}">{{ .Post.Title }}</a></h3>
+                  <div class="post-excerpt">{{ .Content }}</div>
+                  <div class="post-meta mt-auto pt-3 border-top border-light">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar me-2" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M11 15h1" /><path d="M12 15v3" /></svg>
+                    {{ .Post.CreatedAt }}
+                  </div>
+                </div>
+              </article>
+              {{ end }}
+            </div>
+            {{ else }}
+            <div class="empty bg-white rounded-4 border py-5">
+              <div class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
+              </div>
+              <p class="empty-title">No content published yet</p>
+              <p class="empty-subtitle text-muted">Check back later for new articles and updates.</p>
+            </div>
+            {{ end }}
           </div>
         </div>
-        {{ end }}
 
-
-        <div class="mt-5 border-top pt-5">
-           <div class="container-xl">
-              <div class="row text-center text-md-start">
-                 <div class="col-12 col-md-4 mb-4">
-                     <a class="navbar-brand font-weight-bold text-decoration-none h3 mb-3 d-inline-block" href="/">
-                       {{ if .Settings.site_logo_url }}
-                         <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: 32px;" alt="{{ .Settings.site_title }}">
-                       {{ else }}
-                         🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
-                       {{ end }}
-                     </a>
-                     <p class="text-secondary small pe-md-5">{{ .Settings.footer_brand_text }}</p>
-                 </div>
-                 
-                 <div class="col-6 col-md-2 mb-4">
-                     <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Information{{ end }}</h6>
-                     <ul class="list-unstyled mt-3">
-                         {{ range .FooterMenu1 }}
-                         <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
-                         {{ end }}
-                     </ul>
-                 </div>
-
-                 <div class="col-6 col-md-3 mb-4">
-                     <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
-                     <ul class="list-unstyled mt-3">
-                         {{ range .FooterMenu2 }}
-                         <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
-                         {{ end }}
-                     </ul>
-                 </div>
-
-                 <div class="col-6 col-md-3 mb-4">
-                     <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
-                     <ul class="list-unstyled mt-3">
-                         {{ range .FooterMenu3 }}
-                         <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
-                         {{ end }}
-                     </ul>
-                 </div>
+        <!-- Premium Footer -->
+        <footer class="premium-footer pb-4">
+          <div class="container-xl">
+            <div class="row g-5 mb-5">
+              <div class="col-12 col-lg-4">
+                <a class="navbar-brand d-inline-flex align-items-center mb-3" href="/">
+                  {{ if .Settings.site_logo_url }}
+                    <img src="{{ .Settings.site_logo_url }}" style="height: 32px;" alt="{{ .Settings.site_title }}">
+                  {{ else }}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-abstract text-primary me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" /><path d="M10.5 13.5m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0" /><path d="M8 8h8v8" /></svg>
+                    {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+                  {{ end }}
+                </a>
+                <p class="footer-brand-text pe-lg-4">{{ .Settings.footer_brand_text }}</p>
               </div>
               
-              <div class="border-top py-4 mt-3 d-flex flex-column flex-md-row align-items-center justify-content-between">
-                 <div class="text-muted small">{{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. All rights reserved.{{ end }}</div>
-                 <a href="/admin" class="text-muted small mt-2 mt-md-0 d-flex align-items-center text-decoration-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg> Admin Access</a>
+              <div class="col-6 col-sm-4 col-lg-2 ms-lg-auto">
+                <h6 class="footer-title">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Product{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu1 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
               </div>
-           </div>
-        </div>
-        </div>
+
+              <div class="col-6 col-sm-4 col-lg-2">
+                <h6 class="footer-title">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu2 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-4 col-lg-2">
+                <h6 class="footer-title">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu3 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
+            </div>
+            
+            <div class="border-top border-light pt-4 d-flex flex-column flex-md-row align-items-center justify-content-between">
+              <div class="text-muted small fw-medium mb-3 mb-md-0">
+                {{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. All rights reserved.{{ end }}
+              </div>
+              <a href="/admin" class="btn btn-light btn-sm text-muted fw-medium border-0 rounded-pill px-3 shadow-sm d-inline-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings me-1 text-primary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                Administration
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
-  </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
   </body>
 </html>
