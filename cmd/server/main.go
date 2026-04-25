@@ -28,8 +28,11 @@ func main() {
 	handlers.GitCommit = GitCommit
 	handlers.BuildTime = BuildTime
 
-	// Initialize Database
-	err := db.Init("cms.db")
+	// Ensure data directory exists
+	os.MkdirAll("data", 0755)
+
+	// Initialize Database in the persistent volume
+	err := db.Init("data/cms.db")
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
