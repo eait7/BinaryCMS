@@ -2,13 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 	"time"
 )
