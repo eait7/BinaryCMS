@@ -20,13 +20,20 @@ WORKDIR /app
 # Ensure SQLite runtime binaries exist
 RUN apt-get update && apt-get install -y ca-certificates libsqlite3-0 && rm -rf /var/lib/apt/lists/*
 
+# Create restricted system user
+RUN groupadd -r gocms && useradd --no-log-init -r -g gocms gocms
+
 # Extract compiled server wrapper
 COPY --from=builder /app/gocms_server /app/gocms_server
 COPY --from=builder /app/themes /app/themes
 COPY --from=builder /app/static /app/static
 
-# Construct mapped persistence layers cleanly
-RUN mkdir -p /app/uploads /app/data /app/plugins_data
+# Construct mapped persistence layers cleanly and set ownership
+RUN mkdir -p /app/uploads /app/data /app/plugins /app/plugins_data \
+    && chown -R gocms:gocms /app/uploads /app/data /app/plugins /app/plugins_data /app/themes
+
+# Switch to non-root user
+USER gocms
 
 EXPOSE 8080
 ENTRYPOINT ["/app/gocms_server"]
