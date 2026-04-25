@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <title>{{ if .Title }}{{ .Title }} - {{ end }}{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
     <meta name="description" content="{{ if .Settings.site_tagline }}{{ .Settings.site_tagline }}{{ end }}">
+    {{ if .Settings.site_favicon_url }}
+    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+    <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+    {{ else if .Settings.site_favicon_icon }}
+    <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
+    {{ end }}
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
     <style>
       @import url('https://rsms.me/inter/inter.css');
