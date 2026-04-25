@@ -79,7 +79,8 @@ func CheckUpdate(w http.ResponseWriter, r *http.Request) {
 		} else {
 			pubTime, _ := time.Parse(time.RFC3339, release.PublishedAt)
 			bldTime, _ := time.Parse(time.RFC3339, BuildTime)
-			if pubTime.After(bldTime) {
+			// Add a 15-minute tolerance because the GitHub Release is created slightly after the binary is built in CI
+			if pubTime.After(bldTime.Add(15 * time.Minute)) {
 				updateAvailable = true
 			}
 		}
