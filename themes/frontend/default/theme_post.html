@@ -116,7 +116,7 @@
             {{ if .Settings.site_logo_url }}
               <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; width: auto;" alt="{{ .Settings.site_title }}">
             {{ else if .Settings.site_logo_icon }}
-              <svg class="icon text-primary me-2" style="width: 32px; height: 32px;"><use href="https://cdn.jsdelivr.net/npm/@tabler/icons-sprite@3.0.0/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
+              <svg class="icon text-primary me-2" style="width: 32px; height: 32px;"><use href="/static/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
               {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
             {{ else }}
               {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
@@ -169,7 +169,7 @@
                   {{ if .Settings.site_logo_url }}
                     <img src="{{ .Settings.site_logo_url }}" style="height: 32px;" alt="{{ .Settings.site_title }}">
                   {{ else if .Settings.site_logo_icon }}
-                    <svg class="icon text-primary me-2" style="width: 24px; height: 24px;"><use href="https://cdn.jsdelivr.net/npm/@tabler/icons-sprite@3.0.0/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
+                    <svg class="icon text-primary me-2" style="width: 24px; height: 24px;"><use href="/static/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
                     {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
                   {{ else }}
                     {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}

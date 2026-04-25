@@ -117,7 +117,7 @@
                   </span>
                 {{ end }}
               {{ else if .Settings.site_logo_icon }}
-                <svg class="icon text-primary me-2" style="width: 32px; height: 32px;"><use href="https://cdn.jsdelivr.net/npm/@tabler/icons-sprite@3.0.0/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
+                <svg class="icon text-primary me-2" style="width: 32px; height: 32px;"><use href="/static/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
                 {{ if ne .Settings.logo_display_mode "logo_only" }}
                   <span class="fs-3 fw-bold">{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>
                 {{ end }}
