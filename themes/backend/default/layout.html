@@ -113,20 +113,15 @@
               <div class="nav-item dropdown d-none d-md-flex me-3 ms-2">
                 <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1" aria-label="Show notifications">
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
-                  <span class="badge bg-red"></span>
+                  <span class="badge bg-red d-none" id="update-badge"></span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
                   <div class="card">
                     <div class="card-header border-0"><h3 class="card-title">System Notifications</h3></div>
-                    <div class="list-group list-group-flush list-group-hoverable">
-                      <div class="list-group-item">
-                        <div class="row align-items-center">
-                          <div class="col-auto"><span class="status-dot status-dot-animated bg-red d-block"></span></div>
-                          <div class="col text-truncate">
-                            <a href="#" class="text-body d-block">Welcome to the Environment</a>
-                            <div class="d-block text-muted text-truncate mt-n1">Your system successfully transitioned layouts properly safely globally.</div>
-                          </div>
-                        </div>
+                    <div class="list-group list-group-flush list-group-hoverable" id="notifications-list">
+                      <!-- Dynamic Notifications injected here -->
+                      <div class="list-group-item text-center text-muted py-4" id="no-notifications">
+                        No new notifications
                       </div>
                     </div>
                   </div>
@@ -282,5 +277,93 @@
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+
+    <!-- Core Updater Polling -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const checkUpdate = () => {
+          fetch('/admin/api/updater/check')
+            .then(r => r.json())
+            .then(data => {
+              if (data.update_available) {
+                document.getElementById('update-badge').classList.remove('d-none');
+                document.getElementById('no-notifications').classList.add('d-none');
+                
+                // Add the update card
+                const list = document.getElementById('notifications-list');
+                // Remove if already exists to prevent duplicates
+                const existing = document.getElementById('update-notification-card');
+                if (existing) existing.remove();
+
+                list.insertAdjacentHTML('afterbegin', `
+                  <div class="list-group-item bg-azure-lt" id="update-notification-card">
+                    <div class="row align-items-center">
+                      <div class="col-auto"><span class="status-dot status-dot-animated bg-red d-block"></span></div>
+                      <div class="col text-truncate">
+                        <span class="text-body d-block fw-bold mb-1">New Core Update Available!</span>
+                        <div class="d-block text-muted text-truncate mt-n1 mb-2">Version: ${data.latest_release} (${data.release_notes})</div>
+                        <button class="btn btn-sm btn-primary w-100" onclick="installUpdate('${data.download_url}')">
+                          Install 1-Click Update
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `);
+              }
+            }).catch(e => console.error("Update check failed:", e));
+        };
+
+        // Check on load
+        checkUpdate();
+        // Check every hour
+        setInterval(checkUpdate, 3600000);
+
+        window.installUpdate = function(url) {
+          const btn = document.querySelector('#update-notification-card button');
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Installing...';
+
+          fetch('/admin/api/updater/install', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({download_url: url})
+          })
+          .then(r => {
+            if(!r.ok) throw new Error("Server rejected update request");
+            return r.json();
+          })
+          .then(data => {
+            if (data.success) {
+              btn.classList.remove('btn-primary');
+              btn.classList.add('btn-success');
+              btn.innerHTML = 'Restarting Server...';
+              
+              // Poll for server to come back up
+              let attempts = 0;
+              const checkAlive = setInterval(() => {
+                attempts++;
+                fetch('/admin')
+                  .then(res => {
+                    if (res.ok) {
+                      clearInterval(checkAlive);
+                      window.location.reload();
+                    }
+                  }).catch(e => {
+                    if (attempts > 30) {
+                      clearInterval(checkAlive);
+                      alert("Server took too long to reboot. Please refresh manually.");
+                    }
+                  });
+              }, 1000);
+            }
+          })
+          .catch(e => {
+            alert("Update failed: " + e.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Install 1-Click Update';
+          });
+        };
+      });
+    </script>
   </body>
 </html>
