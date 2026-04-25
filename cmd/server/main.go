@@ -242,6 +242,7 @@ func main() {
 	// API Routes
 	// =====================
 	r.Route("/api", func(r chi.Router) {
+		r.Get("/dynamic-favicon.svg", handleDynamicFaviconSVG())
 		r.Get("/posts", handleAPIPosts())
 		r.Get("/post/{slug}", handleAPIPost())
 		r.Get("/pages", handleAPIPages())

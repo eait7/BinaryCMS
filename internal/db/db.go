@@ -310,6 +310,7 @@ func seedDefaults(db *sql.DB) {
 		"site_tagline":     "The Premium Content Management Engine",
 		"site_logo_url":    "",
 		"site_logo_icon":   "brand-abstract",
+		"site_favicon_icon": "brand-abstract",
 		"custom_footer":    "© 2026 BinaryCMS. All rights reserved.",
 		"homepage_type":    "posts",
 		"homepage_page_id": "0",

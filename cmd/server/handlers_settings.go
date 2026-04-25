@@ -34,6 +34,7 @@ func handleSettings(pm *pluginmanager.Manager) http.HandlerFunc {
 			siteLogoIcon := r.FormValue("site_logo_icon")
 			logoDisplayMode := r.FormValue("logo_display_mode")
 			siteFaviconUrl := r.FormValue("site_favicon_url")
+			siteFaviconIcon := r.FormValue("site_favicon_icon")
 			customFooter := r.FormValue("custom_footer")
 
 			if homepageType != "" {
@@ -60,6 +61,9 @@ func handleSettings(pm *pluginmanager.Manager) http.HandlerFunc {
 			}
 			models.SetSetting("logo_display_mode", logoDisplayMode)
 			models.SetSetting("site_favicon_url", siteFaviconUrl)
+			if siteFaviconIcon != "" {
+				models.SetSetting("site_favicon_icon", siteFaviconIcon)
+			}
 			models.SetSetting("custom_footer", customFooter)
 
 			sslDomain := r.FormValue("ssl_domain")
@@ -189,6 +193,12 @@ func renderSettingsPage(w http.ResponseWriter, r *http.Request, pm *pluginmanage
 		"hexagon-letter-c", "hexagon-letter-d", "hexagon-letter-e", "hexagon-letter-f",
 		"hexagon-letter-g", "hexagon-letter-h", "hexagon-letter-i", "hexagon-letter-j",
 		"hexagon-letter-k", "hexagon-letter-l", "hexagon-letter-m", "hexagon-letter-n",
+		"letter-a", "letter-b", "letter-c", "letter-d", "letter-e", "letter-f",
+		"letter-g", "letter-h", "letter-i", "letter-j", "letter-k", "letter-l",
+		"letter-m", "letter-n", "letter-o", "letter-p", "letter-q", "letter-r",
+		"letter-s", "letter-t", "letter-u", "letter-v", "letter-w", "letter-x",
+		"letter-y", "letter-z", "square-letter-a", "circle-letter-a", "mountain",
+		"alien", "robot", "campfire", "flame", "moon-stars", "brightness",
 	}
 
 	t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath("settings.html"))
@@ -211,3 +221,37 @@ func renderSettingsPage(w http.ResponseWriter, r *http.Request, pm *pluginmanage
 
 	renderAdminPage(w, r, "Core Settings", template.HTML(buf.String()), "", pm)
 }
+
+func handleDynamicFaviconSVG() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		iconName := models.GetSetting("site_favicon_icon")
+		if iconName == "" {
+			iconName = "brand-abstract"
+		}
+		brandColor := models.GetSetting("brand_color")
+		if brandColor == "" {
+			brandColor = "#4f46e5"
+		}
+
+		b, err := os.ReadFile("static/tabler-sprite.svg")
+		if err != nil {
+			http.Error(w, "Sprite not found", http.StatusInternalServerError)
+			return
+		}
+
+		re := regexp.MustCompile(`(?s)<symbol id="tabler-` + regexp.QuoteMeta(iconName) + `"[^>]*>(.*?)</symbol>`)
+		matches := re.FindStringSubmatch(string(b))
+		if len(matches) < 2 {
+			http.Error(w, "Icon not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/svg+xml")
+		// Cache for 1 hour to reduce regex overhead
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+
+		svgTemplate := `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="` + brandColor + `" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` + matches[1] + `</svg>`
+		w.Write([]byte(svgTemplate))
+	}
+}
+
