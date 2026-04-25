@@ -63,6 +63,16 @@
           left: 0;
           margin-top: 0;
         }
+        /* Invisible bridge to prevent mouse leaving the hover area in the gap */
+        .navbar .nav-item.dropdown .dropdown-menu::before {
+          content: '';
+          position: absolute;
+          top: -15px;
+          left: 0;
+          right: 0;
+          height: 15px;
+          background: transparent;
+        }
       }
     </style>
     <!-- Live Theme Persistence State Management -->
