@@ -1,117 +1,201 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="{{ .RequestURL }}" />
-  <meta property="og:title" content="{{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}" />
-  {{ if .Page.MetaDescription }}
-  <meta name="description" content="{{ .Page.MetaDescription }}"/>
-  <meta property="og:description" content="{{ .Page.MetaDescription }}" />
-  {{ end }}
-  {{ if .Page.FeaturedImage }}
-  <meta property="og:image" content="{{ .Page.FeaturedImage }}" />
-  <meta name="twitter:card" content="summary_large_image" />
-  {{ else }}
-  <meta name="twitter:card" content="summary" />
-  {{ end }}
-  <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
-  <!-- Optional Tailwind CSS if desired, or Tabler core. We've been using Tabler. -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
-  <style>
-    :root {
-      --tblr-primary: {{ .BrandColor }};
-    }
-    body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-    .page-container {
-      max-width: 800px;
-      margin: 40px auto;
-    }
-    .page-content img { max-width: 100%; height: auto; border-radius: 8px; }
-  </style>
-</head>
-<body class="antialiased">
-  <div class="page">
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
-      <div class="container-xl">
-        <a class="navbar-brand font-weight-bold text-decoration-none" href="/">
-          {{ if .Settings.site_logo_url }}
-            <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; max-height: none !important; width: auto !important;" alt="{{ .Settings.site_title }}">
-          {{ else }}
-            🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
-          {{ end }}
-        </a>
-        <div class="navbar-nav flex-row">
-            <a href="/" class="nav-link mx-2">Home</a>
-            {{ range .MenuItems }}
-            <a href="{{ .URL }}" class="nav-link mx-2">{{ .Label }}</a>
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ .RequestURL }}" />
+    <meta property="og:title" content="{{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}" />
+    {{ if .Page.MetaDescription }}
+    <meta name="description" content="{{ .Page.MetaDescription }}"/>
+    <meta property="og:description" content="{{ .Page.MetaDescription }}" />
+    {{ end }}
+    {{ if .Page.FeaturedImage }}
+    <meta property="og:image" content="{{ .Page.FeaturedImage }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {{ else }}
+    <meta name="twitter:card" content="summary" />
+    {{ end }}
+    <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
+    <!-- Tabler CSS inside frontend fallback -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      :root {
+        --tblr-primary: {{ .BrandColor }};
+        --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      }
+      body {
+        font-family: var(--tblr-font-sans-serif);
+        font-feature-settings: "cv03", "cv04", "cv11";
+        letter-spacing: -0.01em;
+        background-color: #f8fafc;
+      }
+      .navbar {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      }
+      .navbar-brand { font-weight: 800; letter-spacing: -0.02em; }
+      
+      .article-header {
+        padding: 4rem 0 2rem;
+        text-align: center;
+      }
+      .article-title {
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        color: #0f172a;
+        margin-bottom: 1rem;
+      }
+      .article-content {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -2px rgba(0, 0, 0, 0.01);
+        padding: 4rem;
+        font-size: 1.125rem;
+        line-height: 1.8;
+        color: #334155;
+        border: 1px solid rgba(0,0,0,0.04);
+        margin-bottom: 4rem;
+      }
+      .article-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+        margin: 2rem 0;
+      }
+      .article-content h2, .article-content h3 {
+        color: #0f172a;
+        font-weight: 700;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+      }
+      .article-content a {
+        color: var(--tblr-primary);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        text-decoration-color: color-mix(in srgb, var(--tblr-primary) 30%, transparent);
+        transition: all 0.2s;
+      }
+      .article-content a:hover {
+        text-decoration-color: var(--tblr-primary);
+      }
+      
+      /* Footer */
+      .premium-footer {
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 4rem;
+      }
+      .footer-title { font-size: 0.875rem; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+      .footer-link { color: #64748b; text-decoration: none; transition: color 0.2s; font-weight: 500; }
+      .footer-link:hover { color: var(--tblr-primary); }
+      .footer-brand-text { color: #64748b; line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <!-- Premium Navbar -->
+      <nav class="navbar navbar-expand-md sticky-top">
+        <div class="container-xl">
+          <a class="navbar-brand d-flex align-items-center" href="/">
+            {{ if .Settings.site_logo_url }}
+              <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; width: auto;" alt="{{ .Settings.site_title }}">
+            {{ else }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-abstract text-primary me-2" width="32" height="32" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" /><path d="M10.5 13.5m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0" /><path d="M8 8h8v8" /></svg>
+              {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
             {{ end }}
-        </div>
-      </div>
-    </nav>
-    <div class="page-wrapper">
-      <div class="page-body">
-        <div class="container-xl page-container">
-          <div class="card shadow-sm border-0" style="border-radius: 12px;">
-            <div class="card-body p-5">
-              <h1 class="card-title text-center text-primary mb-5" style="font-size: 2.5rem; font-weight: 800;">{{ .Page.Title }}</h1>
-              <div class="text-secondary markdown-body" style="line-height: 1.8; font-size: 1.1rem;">
-                {{ .Content }}
-              </div>
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbar-menu">
+            <div class="navbar-nav ms-auto flex-row align-items-center">
+              <a href="/" class="nav-link px-3">Home</a>
+              {{ range .MenuItems }}
+              <a href="{{ .URL }}" class="nav-link px-3">{{ .Label }}</a>
+              {{ end }}
             </div>
           </div>
         </div>
-      </div>
-      <footer class="mt-5 border-top pt-5 bg-white d-print-none">
-         <div class="container-xl">
-            <div class="row text-center text-md-start">
-               <div class="col-12 col-md-4 mb-4">
-                   <a class="navbar-brand font-weight-bold text-decoration-none h3 mb-3 d-inline-block text-dark" href="/">
-                     {{ if .Settings.site_logo_url }}
-                       <img src="{{ .Settings.site_logo_url }}" class="navbar-brand-image" style="height: 32px;" alt="{{ .Settings.site_title }}">
-                     {{ else }}
-                       🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
-                     {{ end }}
-                   </a>
-                   <p class="text-secondary small pe-md-5">{{ .Settings.footer_brand_text }}</p>
-               </div>
-               
-               <div class="col-6 col-md-2 mb-4">
-                   <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Information{{ end }}</h6>
-                   <ul class="list-unstyled mt-3">
-                       {{ range .FooterMenu1 }}
-                       <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
-                       {{ end }}
-                   </ul>
-               </div>
+      </nav>
 
-               <div class="col-6 col-md-3 mb-4">
-                   <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
-                   <ul class="list-unstyled mt-3">
-                       {{ range .FooterMenu2 }}
-                       <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
-                       {{ end }}
-                   </ul>
-               </div>
+      <div class="page-wrapper">
+        <div class="container-xl" style="max-width: 800px;">
+          <!-- Article Header -->
+          <header class="article-header">
+            <h1 class="article-title">{{ .Page.Title }}</h1>
+          </header>
 
-               <div class="col-6 col-md-3 mb-4">
-                   <h6 class="text-uppercase text-muted fw-bold tracking-wide">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
-                   <ul class="list-unstyled mt-3">
-                       {{ range .FooterMenu3 }}
-                       <li class="mb-2"><a href="{{ .URL }}" class="text-secondary text-decoration-none">{{ .Label }}</a></li>
-                       {{ end }}
-                   </ul>
-               </div>
+          <!-- Article Content -->
+          <article class="article-content">
+            {{ .Content }}
+          </article>
+        </div>
+
+        <!-- Premium Footer -->
+        <footer class="premium-footer pb-4 mt-auto">
+          <div class="container-xl">
+            <div class="row g-5 mb-5">
+              <div class="col-12 col-lg-4">
+                <a class="navbar-brand d-inline-flex align-items-center mb-3" href="/">
+                  {{ if .Settings.site_logo_url }}
+                    <img src="{{ .Settings.site_logo_url }}" style="height: 32px;" alt="{{ .Settings.site_title }}">
+                  {{ else }}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-abstract text-primary me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" /><path d="M10.5 13.5m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0" /><path d="M8 8h8v8" /></svg>
+                    {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+                  {{ end }}
+                </a>
+                <p class="footer-brand-text pe-lg-4">{{ .Settings.footer_brand_text }}</p>
+              </div>
+              
+              <div class="col-6 col-sm-4 col-lg-2 ms-lg-auto">
+                <h6 class="footer-title">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Product{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu1 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-4 col-lg-2">
+                <h6 class="footer-title">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu2 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-4 col-lg-2">
+                <h6 class="footer-title">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu3 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
             </div>
             
-            <div class="border-top py-4 mt-3 d-flex flex-column flex-md-row align-items-center justify-content-between">
-               <div class="text-muted small">{{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. All rights reserved.{{ end }}</div>
-               <a href="/admin" class="text-muted small mt-2 mt-md-0 d-flex align-items-center text-decoration-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg> Admin Access</a>
+            <div class="border-top border-light pt-4 d-flex flex-column flex-md-row align-items-center justify-content-between">
+              <div class="text-muted small fw-medium mb-3 mb-md-0">
+                {{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. All rights reserved.{{ end }}
+              </div>
+              <a href="/admin" class="btn btn-light btn-sm text-muted fw-medium border-0 rounded-pill px-3 shadow-sm d-inline-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings me-1 text-primary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                Administration
+              </a>
             </div>
-         </div>
-      </footer>
+          </div>
+        </footer>
+      </div>
     </div>
-  </div>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+  </body>
 </html>
