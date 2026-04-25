@@ -30,8 +30,8 @@
                 <div class="col-auto">
                    <label class="form-imagecheck mb-0" title="{{ . }}">
                       <input name="site_logo_icon" type="radio" value="{{ . }}" class="form-imagecheck-input" {{ if eq $.Settings.site_logo_icon . }}checked{{ end }}>
-                      <span class="form-imagecheck-figure p-2 d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 52px; height: 52px; border-radius: 10px; transition: all 0.2s;">
-                         <svg class="icon text-primary" style="width: 28px; height: 28px;"><use href="/static/tabler-sprite.svg#tabler-{{ . }}" /></svg>
+                      <span class="form-imagecheck-figure p-2 d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 42px; height: 42px; border-radius: 8px; transition: all 0.2s;">
+                         <svg class="icon text-primary" style="width: 24px; height: 24px;"><use href="/static/tabler-sprite.svg#tabler-{{ . }}" /></svg>
                       </span>
                    </label>
                 </div>
@@ -53,7 +53,25 @@
         <div class="col-md-12 mb-3">
           <label class="form-label">Favicon URL <span class="form-label-description">Optional</span></label>
           <input type="text" name="site_favicon_url" class="form-control" value="{{ .Settings.site_favicon_url }}" placeholder="e.g. /uploads/favicon.png">
-          <small class="form-hint">Paste an image URL for the site Favicon. Essential for Google Search and Facebook URLs sharing visibility.</small>
+          <small class="form-hint">Paste an image URL for a custom favicon. This overrides the native favicon library below.</small>
+        </div>
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Native Favicon Library <span class="form-label-description">Select a vector favicon</span></label>
+          <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+             <div class="row g-2">
+                {{ range .LogoIcons }}
+                <div class="col-auto">
+                   <label class="form-imagecheck mb-0" title="{{ . }}">
+                      <input name="site_favicon_icon" type="radio" value="{{ . }}" class="form-imagecheck-input" {{ if eq $.Settings.site_favicon_icon . }}checked{{ end }}>
+                      <span class="form-imagecheck-figure p-2 d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 36px; height: 36px; border-radius: 6px; transition: all 0.2s;">
+                         <svg class="icon text-primary" style="width: 20px; height: 20px;"><use href="/static/tabler-sprite.svg#tabler-{{ . }}" /></svg>
+                      </span>
+                   </label>
+                </div>
+                {{ end }}
+             </div>
+          </div>
+          <small class="form-hint mt-2">Dynamic SVG favicon that automatically matches your brand color. Essential for Google Search and Facebook URLs sharing visibility.</small>
         </div>
         <div class="col-md-12 mb-3">
           <label class="form-label">Logo Size <span class="form-label-description">Adjust height</span></label>

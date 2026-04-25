@@ -89,6 +89,8 @@
     {{ if .Settings.site_favicon_url }}
     <link rel="icon" href="{{ .Settings.site_favicon_url }}">
     <meta property="og:image" content="{{ .Settings.site_favicon_url }}">
+    {{ else if .Settings.site_favicon_icon }}
+    <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
     {{ end }}
   </head>
   <body>
