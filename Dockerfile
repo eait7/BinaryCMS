@@ -11,7 +11,7 @@ RUN go mod download
 
 # Build securely
 COPY . .
-RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o gocms_server ./cmd/server
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w -X 'github.com/ez8/gocms/internal/handlers.GitCommit=docker-deploy' -X 'github.com/ez8/gocms/internal/handlers.BuildTime=$(date -u +'%Y-%m-%dT%H:%M:%SZ')'" -o gocms_server ./cmd/server
 
 # ── Stage 2: Minimal runtime ──
 FROM alpine:3.19
