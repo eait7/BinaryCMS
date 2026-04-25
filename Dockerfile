@@ -1,9 +1,9 @@
 # ── Stage 1: Build the Go binary ──
-FROM golang:alpine AS builder
+FROM golang:1.22-bookworm AS builder
 WORKDIR /app
 
-# Install build dependencies completely automatically
-RUN apk --no-cache add build-base sqlite-dev
+# Install build dependencies
+RUN apt-get update && apt-get install -y build-essential libsqlite3-dev
 
 # Cache dependencies
 COPY go.mod go.sum ./
@@ -14,11 +14,11 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w -X 'github.com/ez8/gocms/internal/handlers.GitCommit=docker-deploy' -X 'github.com/ez8/gocms/internal/handlers.BuildTime=$(date -u +'%Y-%m-%dT%H:%M:%SZ')'" -o gocms_server ./cmd/server
 
 # ── Stage 2: Minimal runtime ──
-FROM alpine:3.19
+FROM debian:bookworm-slim
 WORKDIR /app
 
 # Ensure SQLite runtime binaries exist
-RUN apk --no-cache add ca-certificates sqlite-libs
+RUN apt-get update && apt-get install -y ca-certificates libsqlite3-0 && rm -rf /var/lib/apt/lists/*
 
 # Extract compiled server wrapper
 COPY --from=builder /app/gocms_server /app/gocms_server
