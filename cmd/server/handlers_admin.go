@@ -26,17 +26,32 @@ import (
 func getAdminMenus(pm *pluginmanager.Manager) []plugin.MenuItem {
 	menus := []plugin.MenuItem{
 		{Label: "Dashboard", URL: "/admin", Icon: "home"},
-		{Label: "Posts", URL: "/admin/posts", Icon: "file-text"},
-		{Label: "Pages", URL: "/admin/pages", Icon: "file-description"},
-		{Label: "Categories", URL: "/admin/categories", Icon: "category"},
-		{Label: "Tags", URL: "/admin/tags", Icon: "tags"},
-		{Label: "Comments", URL: "/admin/comments", Icon: "message-circle"},
-		{Label: "Menus", URL: "/admin/menus", Icon: "list-details"},
-		{Label: "Media", URL: "/admin/media", Icon: "photo"},
-		{Label: "Users", URL: "/admin/users", Icon: "users"},
-		{Label: "Plugins", URL: "/admin/plugins", Icon: "puzzle"},
-		{Label: "Appearance", URL: "/admin/themes", Icon: "palette"},
-		{Label: "Core Settings", URL: "/admin/settings", Icon: "settings"},
+		{
+			Label: "Content", URL: "", Icon: "file-text",
+			Children: []plugin.MenuItem{
+				{Label: "Posts", URL: "/admin/posts"},
+				{Label: "Pages", URL: "/admin/pages"},
+				{Label: "Categories", URL: "/admin/categories"},
+				{Label: "Tags", URL: "/admin/tags"},
+				{Label: "Comments", URL: "/admin/comments"},
+			},
+		},
+		{
+			Label: "Design & Media", URL: "", Icon: "palette",
+			Children: []plugin.MenuItem{
+				{Label: "Media", URL: "/admin/media"},
+				{Label: "Menus", URL: "/admin/menus"},
+				{Label: "Appearance", URL: "/admin/themes"},
+			},
+		},
+		{
+			Label: "System", URL: "", Icon: "settings",
+			Children: []plugin.MenuItem{
+				{Label: "Users", URL: "/admin/users"},
+				{Label: "Plugins", URL: "/admin/plugins"},
+				{Label: "Core Settings", URL: "/admin/settings"},
+			},
+		},
 	}
 	menus = append(menus, pm.GetAdminMenus()...)
 
