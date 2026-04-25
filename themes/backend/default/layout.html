@@ -51,6 +51,16 @@
 	  .navbar-expand-md .navbar-nav .nav-link {
 		padding: 0.75rem 1rem;
 	  }
+
+      /* Hover Dropdowns for Desktop */
+      @media (min-width: 768px) {
+        .navbar .nav-item.dropdown:hover .dropdown-menu {
+          display: block;
+          visibility: visible;
+          opacity: 1;
+          margin-top: 0;
+        }
+      }
     </style>
     <!-- Live Theme Persistence State Management -->
     <script>
