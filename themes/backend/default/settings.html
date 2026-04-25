@@ -20,7 +20,25 @@
         <div class="col-md-12 mb-3">
           <label class="form-label">Brand Logo URL <span class="form-label-description">Optional</span></label>
           <input type="text" name="site_logo_url" class="form-control" value="{{ .Settings.site_logo_url }}" placeholder="e.g. /uploads/logo.png">
-          <small class="form-hint">Paste an image URL to replace the text "Go CMS" logo in the administrative sidebar natively.</small>
+          <small class="form-hint">Paste an image URL for a custom logo. This overrides the native logo library below.</small>
+        </div>
+        <div class="col-md-12 mb-4">
+          <label class="form-label">Native Logo Library <span class="form-label-description">Select a vector logo</span></label>
+          <div class="border rounded p-3 bg-light" style="max-height: 260px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+             <div class="row g-2">
+                {{ range .LogoIcons }}
+                <div class="col-auto">
+                   <label class="form-imagecheck mb-0" title="{{ . }}">
+                      <input name="site_logo_icon" type="radio" value="{{ . }}" class="form-imagecheck-input" {{ if eq $.Settings.site_logo_icon . }}checked{{ end }}>
+                      <span class="form-imagecheck-figure p-2 d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 52px; height: 52px; border-radius: 10px; transition: all 0.2s;">
+                         <svg class="icon text-primary" style="width: 28px; height: 28px;"><use href="https://cdn.jsdelivr.net/npm/@tabler/icons-sprite@3.0.0/tabler-sprite.svg#tabler-{{ . }}" /></svg>
+                      </span>
+                   </label>
+                </div>
+                {{ end }}
+             </div>
+          </div>
+          <small class="form-hint mt-2">Select a beautifully scalable vector logo from 100+ premium options. It will automatically inherit your Primary Brand Color.</small>
         </div>
         <div class="col-md-12 mb-3">
           <label class="form-label">Logo Display Mode</label>
