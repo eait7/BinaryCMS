@@ -23,9 +23,10 @@ RUN apk --no-cache add ca-certificates sqlite-libs
 # Extract compiled server wrapper
 COPY --from=builder /app/gocms_server /app/gocms_server
 COPY --from=builder /app/themes /app/themes
+COPY --from=builder /app/static /app/static
 
 # Construct mapped persistence layers cleanly
-RUN mkdir -p /app/static /app/uploads /app/data /app/plugins_data
+RUN mkdir -p /app/uploads /app/data /app/plugins_data
 
 EXPOSE 8080
 ENTRYPOINT ["/app/gocms_server"]
