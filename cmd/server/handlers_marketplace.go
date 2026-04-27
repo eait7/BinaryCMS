@@ -20,7 +20,7 @@ func handleMarketplace(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		hubURL := models.GetSetting("marketplace_hub_url")
 		if hubURL == "" {
-			hubURL = "https://binarycms.co/api/marketplace"
+			hubURL = "https://binarycms.com/api/plugin/marketplace-hub"
 		}
 
 		siteURL := models.GetSetting("site_url")
@@ -101,7 +101,7 @@ func handleMarketplaceInstall(pm *pluginmanager.Manager) http.HandlerFunc {
 
 		hubURL := models.GetSetting("marketplace_hub_url")
 		if hubURL == "" {
-			hubURL = "https://binarycms.co/api/marketplace"
+			hubURL = "https://binarycms.com/api/plugin/marketplace-hub"
 		}
 		siteURL := models.GetSetting("site_url")
 		client := marketplace.NewHubClient(hubURL, siteURL)
@@ -197,7 +197,7 @@ func handleMarketplaceActivate(pm *pluginmanager.Manager) http.HandlerFunc {
 
 		hubURL := models.GetSetting("marketplace_hub_url")
 		if hubURL == "" {
-			hubURL = "https://binarycms.co/api/marketplace"
+			hubURL = "https://binarycms.com/api/plugin/marketplace-hub"
 		}
 		siteURL := models.GetSetting("site_url")
 		client := marketplace.NewHubClient(hubURL, siteURL)
