@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -653,6 +654,21 @@ func handlePluginPublicRoute(pm *pluginmanager.Manager) http.HandlerFunc {
 		fullRoute := "/api/plugin/" + route
 		if r.URL.RawQuery != "" {
 			fullRoute += "?" + r.URL.RawQuery
+		}
+		if r.Method == "POST" {
+			body, _ := io.ReadAll(r.Body)
+			if len(body) > 0 {
+				if strings.Contains(fullRoute, "?") {
+					fullRoute += "&__body=" + url.QueryEscape(string(body))
+				} else {
+					fullRoute += "?__body=" + url.QueryEscape(string(body))
+				}
+				// Pass LemonSqueezy Signature
+				sig := r.Header.Get("X-Signature")
+				if sig != "" {
+					fullRoute += "&__signature=" + url.QueryEscape(sig)
+				}
+			}
 		}
 		html := pm.RenderAdminRoute(fullRoute)
 
