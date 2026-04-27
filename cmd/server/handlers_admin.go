@@ -434,6 +434,35 @@ func handlePluginAdminRoute(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		route := chi.URLParam(r, "*")
 		fullRoute := "/admin/plugin/" + route
+		
+		if r.Method == "POST" && strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+			r.ParseMultipartForm(32 << 20) // 32MB max memory
+			q := r.URL.Query()
+			for k, v := range r.MultipartForm.Value {
+				if len(v) > 0 {
+					q.Set(k, v[0])
+				}
+			}
+			os.MkdirAll("/tmp/gocms_plugin_uploads", 0755)
+			for k, files := range r.MultipartForm.File {
+				if len(files) > 0 {
+					file, err := files[0].Open()
+					if err == nil {
+						// Prefix with random string or timestamp to prevent collisions, but keep filename for extension
+						tmpPath := filepath.Join("/tmp/gocms_plugin_uploads", files[0].Filename)
+						dst, err := os.Create(tmpPath)
+						if err == nil {
+							io.Copy(dst, file)
+							dst.Close()
+							q.Set("__file_"+k, tmpPath)
+						}
+						file.Close()
+					}
+				}
+			}
+			r.URL.RawQuery = q.Encode()
+		}
+
 		if r.URL.RawQuery != "" {
 			fullRoute += "?" + r.URL.RawQuery
 		}
