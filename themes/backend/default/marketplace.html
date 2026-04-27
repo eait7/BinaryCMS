@@ -1,0 +1,317 @@
+<style>
+  .marketplace-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+  .mp-card { border: 1px solid var(--tblr-border-color); border-radius: 8px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; background: var(--tblr-card-bg); }
+  .mp-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
+  .mp-card-icon { width: 100%; height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; position: relative; }
+  .mp-card-icon svg { width: 64px; height: 64px; color: white; opacity: 0.9; }
+  .mp-card-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .mp-badge-price { position: absolute; top: 12px; right: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+  .mp-badge-free { background: #10b981; color: white; }
+  .mp-badge-paid { background: #3b82f6; color: white; }
+  .mp-badge-installed { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(4px); }
+  .mp-card-body { padding: 1.25rem; }
+  .mp-card-body h3 { margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; }
+  .mp-card-body .mp-author { color: var(--tblr-secondary); font-size: 0.85rem; margin-bottom: 0.5rem; }
+  .mp-card-body .mp-desc { color: var(--tblr-secondary); font-size: 0.875rem; line-height: 1.5; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mp-card-footer { padding: 0.75rem 1.25rem; border-top: 1px solid var(--tblr-border-color); display: flex; justify-content: space-between; align-items: center; }
+  .mp-card-footer .mp-meta { font-size: 0.8rem; color: var(--tblr-secondary); }
+  .mp-search-bar { position: relative; max-width: 400px; }
+  .mp-search-bar input { padding-left: 2.5rem; }
+  .mp-search-bar .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--tblr-secondary); }
+  .mp-filter-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .mp-filter-tabs .btn.active { background: var(--tblr-primary); color: white; }
+  .mp-empty-state { text-align: center; padding: 4rem 2rem; color: var(--tblr-secondary); }
+  .mp-empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: 0.4; }
+
+  /* License Modal */
+  .mp-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1050; align-items: center; justify-content: center; }
+  .mp-modal-overlay.show { display: flex; }
+  .mp-modal { background: var(--tblr-card-bg); border-radius: 12px; padding: 2rem; max-width: 480px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .mp-modal h3 { margin: 0 0 0.5rem; }
+  .mp-modal .mp-modal-desc { color: var(--tblr-secondary); margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .mp-license-input { font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace; font-size: 1.1rem; text-align: center; letter-spacing: 2px; text-transform: uppercase; }
+  .mp-modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+  .mp-status-msg { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+  .mp-status-msg.error { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .mp-status-msg.success { display: block; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+</style>
+
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h2 class="page-title mb-1" style="font-size:1.4rem;">Plugin Store</h2>
+        <p class="text-secondary mb-0">Browse, install, and activate plugins from the BinaryCMS marketplace</p>
+      </div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="mp-search-bar">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="form-control" id="mpSearch" placeholder="Search plugins..." oninput="filterPlugins()">
+        </div>
+        <div class="mp-filter-tabs">
+          <button class="btn btn-sm btn-outline-secondary active" data-filter="all" onclick="setFilter(this, 'all')">All</button>
+          <button class="btn btn-sm btn-outline-secondary" data-filter="free" onclick="setFilter(this, 'free')">Free</button>
+          <button class="btn btn-sm btn-outline-secondary" data-filter="paid" onclick="setFilter(this, 'paid')">Premium</button>
+          <button class="btn btn-sm btn-outline-secondary" data-filter="installed" onclick="setFilter(this, 'installed')">Installed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ if .FetchError }}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex">
+    <div><svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg></div>
+    <div>
+      <h4 class="alert-title">Unable to connect to the Plugin Hub</h4>
+      <div class="text-secondary">Could not reach the marketplace server. Please check your <a href="/admin/settings">Plugin Hub URL</a> in Core Settings, or try again later.</div>
+    </div>
+  </div>
+</div>
+{{ end }}
+
+<div class="marketplace-grid" id="mpGrid">
+  {{ range .Plugins }}
+  <div class="mp-card" data-name="{{ .Name }}" data-slug="{{ .Slug }}" data-price="{{ .Price }}" data-installed="{{ if index $.InstalledPlugins .Slug }}true{{ else }}false{{ end }}">
+    <div class="mp-card-icon">
+      {{ if .IconURL }}
+        <img src="{{ .IconURL }}" alt="{{ .Name }}">
+      {{ else }}
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M18 13l-6 6"/><path d="M6 13l6 6"/></svg>
+      {{ end }}
+      {{ if eq .Price 0.0 }}
+        <span class="mp-badge-price mp-badge-free">Free</span>
+      {{ else }}
+        <span class="mp-badge-price mp-badge-paid">${{ printf "%.2f" .Price }} {{ .Currency }}</span>
+      {{ end }}
+      {{ if index $.InstalledPlugins .Slug }}
+        <span class="mp-badge-installed">✓ Installed</span>
+      {{ end }}
+    </div>
+    <div class="mp-card-body">
+      <h3>{{ .Name }}</h3>
+      <div class="mp-author">by {{ .Author }} · v{{ .Version }}</div>
+      <div class="mp-desc">{{ .Description }}</div>
+    </div>
+    <div class="mp-card-footer">
+      <div class="mp-meta">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        {{ .Downloads }} installs
+      </div>
+      {{ if index $.InstalledPlugins .Slug }}
+        {{ if and (gt .Price 0.0) (not (index $.LicenseMap .Slug)) }}
+          <button class="btn btn-sm btn-warning" onclick="openLicenseModal('{{ .Slug }}', '{{ .Name }}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Activate License
+          </button>
+        {{ else }}
+          <span class="badge bg-green-lt">Active</span>
+        {{ end }}
+      {{ else }}
+        {{ if eq .Price 0.0 }}
+          <button class="btn btn-sm btn-primary" onclick="installPlugin('{{ .Slug }}', this)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Install
+          </button>
+        {{ else }}
+          <button class="btn btn-sm btn-primary" onclick="openLicenseModal('{{ .Slug }}', '{{ .Name }}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Purchase & Activate
+          </button>
+        {{ end }}
+      {{ end }}
+    </div>
+  </div>
+  {{ else }}
+  {{ if not .FetchError }}
+  <div class="col-12">
+    <div class="mp-empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+      <h3>No plugins available</h3>
+      <p>The plugin hub has no plugins listed yet, or the hub URL has not been configured.<br>
+      Go to <a href="/admin/settings">Core Settings</a> to set your Plugin Hub URL.</p>
+    </div>
+  </div>
+  {{ end }}
+  {{ end }}
+</div>
+
+<!-- License Activation Modal -->
+<div class="mp-modal-overlay" id="licenseModal">
+  <div class="mp-modal">
+    <h3 id="licenseModalTitle">Activate Plugin</h3>
+    <p class="mp-modal-desc">Enter the license code you received after purchasing this plugin from the BinaryCMS store.</p>
+    <input type="hidden" id="licensePluginSlug">
+    <div class="mb-3">
+      <label class="form-label">License Code</label>
+      <input type="text" class="form-control mp-license-input" id="licenseKeyInput" placeholder="BNCMS-XXXX-XXXX-XXXX-XXXX" maxlength="24" oninput="formatLicenseKey(this)">
+    </div>
+    <div class="mp-status-msg" id="licenseStatusMsg"></div>
+    <div class="mp-modal-actions">
+      <button class="btn btn-ghost-secondary" onclick="closeLicenseModal()">Cancel</button>
+      <button class="btn btn-primary" id="licenseActivateBtn" onclick="submitLicense()">
+        <span class="spinner-border spinner-border-sm me-1" role="status" style="display:none;" id="licenseSpinner"></span>
+        Activate License
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentFilter = 'all';
+
+  function filterPlugins() {
+    const query = document.getElementById('mpSearch').value.toLowerCase();
+    document.querySelectorAll('.mp-card').forEach(card => {
+      const name = card.dataset.name.toLowerCase();
+      const slug = card.dataset.slug.toLowerCase();
+      const price = parseFloat(card.dataset.price);
+      const installed = card.dataset.installed === 'true';
+
+      let matchFilter = true;
+      if (currentFilter === 'free') matchFilter = price === 0;
+      else if (currentFilter === 'paid') matchFilter = price > 0;
+      else if (currentFilter === 'installed') matchFilter = installed;
+
+      const matchSearch = name.includes(query) || slug.includes(query);
+      card.style.display = (matchFilter && matchSearch) ? '' : 'none';
+    });
+  }
+
+  function setFilter(btn, filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.mp-filter-tabs .btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterPlugins();
+  }
+
+  async function installPlugin(slug, btn) {
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Installing...';
+
+    try {
+      const resp = await fetch('/admin/marketplace/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: slug })
+      });
+      const data = await resp.json();
+
+      if (data.success) {
+        btn.innerHTML = '✓ Installed';
+        btn.classList.replace('btn-primary', 'btn-success');
+        // Update card state
+        btn.closest('.mp-card').dataset.installed = 'true';
+        const iconDiv = btn.closest('.mp-card').querySelector('.mp-card-icon');
+        if (!iconDiv.querySelector('.mp-badge-installed')) {
+          const badge = document.createElement('span');
+          badge.className = 'mp-badge-installed';
+          badge.textContent = '✓ Installed';
+          iconDiv.appendChild(badge);
+        }
+      } else {
+        alert('Installation failed: ' + (data.error || 'Unknown error'));
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
+    }
+  }
+
+  function openLicenseModal(slug, name) {
+    document.getElementById('licensePluginSlug').value = slug;
+    document.getElementById('licenseModalTitle').textContent = 'Activate: ' + name;
+    document.getElementById('licenseKeyInput').value = '';
+    document.getElementById('licenseStatusMsg').className = 'mp-status-msg';
+    document.getElementById('licenseStatusMsg').textContent = '';
+    document.getElementById('licenseModal').classList.add('show');
+    setTimeout(() => document.getElementById('licenseKeyInput').focus(), 100);
+  }
+
+  function closeLicenseModal() {
+    document.getElementById('licenseModal').classList.remove('show');
+  }
+
+  function formatLicenseKey(input) {
+    let val = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    // Auto-insert the BNCMS prefix and dashes
+    if (val.length > 4 && !val.startsWith('BNCMS')) {
+      // User typing raw code, add dashes every 4 chars
+      let parts = [];
+      parts.push('BNCMS');
+      for (let i = 0; i < val.length && parts.length < 5; i += 4) {
+        parts.push(val.substr(i, 4));
+      }
+      val = parts.join('-');
+    } else {
+      // Remove existing formatting and reformat
+      val = val.replace(/BNCMS/g, '');
+      let parts = ['BNCMS'];
+      for (let i = 0; i < val.length; i += 4) {
+        parts.push(val.substr(i, 4));
+      }
+      val = parts.join('-');
+    }
+    input.value = val;
+  }
+
+  async function submitLicense() {
+    const slug = document.getElementById('licensePluginSlug').value;
+    const key = document.getElementById('licenseKeyInput').value.trim();
+    const statusEl = document.getElementById('licenseStatusMsg');
+    const spinner = document.getElementById('licenseSpinner');
+    const btn = document.getElementById('licenseActivateBtn');
+
+    if (!key || key.length < 10) {
+      statusEl.className = 'mp-status-msg error';
+      statusEl.textContent = 'Please enter a valid license code.';
+      return;
+    }
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+    statusEl.className = 'mp-status-msg';
+    statusEl.textContent = '';
+
+    try {
+      // First try to install (if not already installed), then activate
+      const card = document.querySelector(`.mp-card[data-slug="${slug}"]`);
+      const isInstalled = card && card.dataset.installed === 'true';
+
+      let endpoint = isInstalled ? '/admin/marketplace/activate' : '/admin/marketplace/install';
+      let body = { slug: slug, license_key: key };
+
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await resp.json();
+
+      if (data.success) {
+        statusEl.className = 'mp-status-msg success';
+        statusEl.textContent = '✓ ' + data.message;
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        statusEl.className = 'mp-status-msg error';
+        statusEl.textContent = data.error || 'Activation failed.';
+      }
+    } catch (err) {
+      statusEl.className = 'mp-status-msg error';
+      statusEl.textContent = 'Network error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+    }
+  }
+
+  // Close modal on overlay click
+  document.getElementById('licenseModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLicenseModal();
+  });
+</script>

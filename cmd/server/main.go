@@ -40,6 +40,9 @@ func main() {
 	// Create default admin user if none exists
 	models.CreateDefaultAdmin()
 
+	// Create plugin licenses table for marketplace
+	models.CreatePluginLicensesTable()
+
 	// Initialize Auth (session store)
 	auth.Init()
 
@@ -183,6 +186,12 @@ func main() {
 		r.Get("/plugins", handleListPlugins(pm))
 		r.Post("/plugins/{action}/{filename}", handlePluginState(pm))
 		r.Post("/plugins/upload", handleUploadPlugin(pm))
+
+		// Plugin Marketplace
+		r.Get("/marketplace", handleMarketplace(pm))
+		r.Post("/marketplace/install", handleMarketplaceInstall(pm))
+		r.Post("/marketplace/activate", handleMarketplaceActivate(pm))
+		r.Get("/api/marketplace/status", handleMarketplaceStatus(pm))
 
 		// Dashboard Widgets
 		r.Get("/widgets", handleWidgetManagement(pm))

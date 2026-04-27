@@ -49,6 +49,7 @@ func getAdminMenus(pm *pluginmanager.Manager) []plugin.MenuItem {
 			Children: []plugin.MenuItem{
 				{Label: "Users", URL: "/admin/users"},
 				{Label: "Plugins", URL: "/admin/plugins"},
+			{Label: "Plugin Store", URL: "/admin/marketplace"},
 				{Label: "Core Settings", URL: "/admin/settings"},
 			},
 		},
