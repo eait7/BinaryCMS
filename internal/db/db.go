@@ -276,6 +276,7 @@ func safeAlterColumns(db *sql.DB) {
 		`ALTER TABLE pages ADD COLUMN meta_description TEXT DEFAULT ''`,
 		`ALTER TABLE pages ADD COLUMN updated_at DATETIME DEFAULT NULL`,
 		`ALTER TABLE pages ADD COLUMN featured_image TEXT DEFAULT ''`,
+		`ALTER TABLE pages ADD COLUMN full_width BOOLEAN DEFAULT 0`,
 
 		// User columns
 		`ALTER TABLE users ADD COLUMN name TEXT DEFAULT 'System Administrator'`,

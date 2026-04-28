@@ -78,17 +78,87 @@
           });
           const easymde = window.activeEasymde;
 
-          // Init GrapesJS
+
+          // Init GrapesJS with CMS Block Library
           const editorTools = grapesjs.init({
             container: '#gjs',
-            height: '600px',
+            height: '700px',
             width: '100%',
             storageManager: false,
-            panels: { defaults: [] },
             canvas: { styles: [
               'https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css',
+              'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
               {{ if .FrontendStyles }}{{ range .FrontendStyles }}'{{ . }}',{{ end }}{{ end }}
-            ] }
+            ] },
+            assetManager: {
+              upload: '/admin/media/upload',
+              uploadName: 'file',
+              assets: [],
+              autoAdd: true,
+            },
+            styleManager: {
+              sectors: [
+                { name: 'General', open: true, properties: ['float','display','position','top','right','left','bottom'] },
+                { name: 'Dimension', open: false, properties: ['width','height','max-width','min-height','margin','padding'] },
+                { name: 'Typography', open: false, properties: ['font-family','font-size','font-weight','letter-spacing','color','line-height','text-align','text-decoration','text-shadow'] },
+                { name: 'Decorations', open: false, properties: ['background-color','background','border-radius','border','box-shadow','opacity'] },
+                { name: 'Extra', open: false, properties: ['transition','transform','cursor','overflow'] },
+              ],
+            },
+            blockManager: {
+              blocks: [
+                { id: 'hero-section', label: '🎯 Hero Section', category: 'Layout',
+                  content: '<section style="padding:5rem 2rem;text-align:center;background:linear-gradient(135deg,#206bc4 0%,#1a1a2e 100%);color:white;"><h1 style="font-size:3.5rem;font-weight:800;margin-bottom:1rem;">Your Headline Here</h1><p style="font-size:1.25rem;opacity:0.85;max-width:600px;margin:0 auto 2rem;">Add your subheading text here to describe what makes your product or service amazing.</p><a href="#" style="display:inline-block;padding:14px 36px;background:white;color:#206bc4;border-radius:50px;font-weight:700;text-decoration:none;font-size:1.1rem;">Get Started →</a></section>' },
+
+                { id: 'two-columns', label: '📐 Two Columns', category: 'Layout',
+                  content: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;padding:3rem 2rem;"><div style="padding:1.5rem;"><h3>Left Column</h3><p>Your content here...</p></div><div style="padding:1.5rem;"><h3>Right Column</h3><p>Your content here...</p></div></div>' },
+
+                { id: 'three-columns', label: '📊 Three Columns', category: 'Layout',
+                  content: '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;padding:3rem 2rem;"><div style="padding:1.5rem;text-align:center;"><h4>Column 1</h4><p>Content...</p></div><div style="padding:1.5rem;text-align:center;"><h4>Column 2</h4><p>Content...</p></div><div style="padding:1.5rem;text-align:center;"><h4>Column 3</h4><p>Content...</p></div></div>' },
+
+                { id: 'nav-menu', label: '🧭 Navigation', category: 'CMS Blocks',
+                  content: '<nav style="display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(0,0,0,0.06);"><a href="/" style="font-weight:800;font-size:1.3rem;color:#1e293b;text-decoration:none;">YourSite</a><div style="display:flex;gap:1.5rem;"><a href="/" style="color:#64748b;text-decoration:none;font-weight:500;">Home</a><a href="/about" style="color:#64748b;text-decoration:none;font-weight:500;">About</a><a href="/blog" style="color:#64748b;text-decoration:none;font-weight:500;">Blog</a><a href="/contact" style="color:#64748b;text-decoration:none;font-weight:500;">Contact</a></div></nav>' },
+
+                { id: 'footer', label: '🦶 Footer', category: 'CMS Blocks',
+                  content: '<footer style="padding:4rem 2rem 2rem;background:#1a1a2e;color:white;"><div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;max-width:1200px;margin:0 auto;"><div><h4 style="font-weight:800;margin-bottom:1rem;">YourSite</h4><p style="opacity:0.7;line-height:1.6;">Your brand description goes here. Make it compelling and memorable.</p></div><div><h5 style="font-weight:700;margin-bottom:1rem;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.05em;">Product</h5><div style="display:flex;flex-direction:column;gap:0.5rem;"><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;">Features</a><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;">Pricing</a></div></div><div><h5 style="font-weight:700;margin-bottom:1rem;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.05em;">Company</h5><div style="display:flex;flex-direction:column;gap:0.5rem;"><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;">About</a><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;">Blog</a></div></div><div><h5 style="font-weight:700;margin-bottom:1rem;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.05em;">Legal</h5><div style="display:flex;flex-direction:column;gap:0.5rem;"><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;">Privacy</a><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;">Terms</a></div></div></div><div style="text-align:center;margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.1);opacity:0.5;font-size:0.85rem;">© 2026 YourSite. All rights reserved.</div></footer>' },
+
+                { id: 'post-grid', label: '📰 Post Grid', category: 'CMS Blocks',
+                  content: '<section style="padding:4rem 2rem;"><h2 style="text-align:center;font-weight:800;font-size:2.5rem;margin-bottom:3rem;">Latest Posts</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;max-width:1200px;margin:0 auto;"><div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);background:white;"><div style="height:200px;background:linear-gradient(135deg,#e2e8f0,#cbd5e1);"></div><div style="padding:1.5rem;"><h3 style="font-weight:700;margin-bottom:0.5rem;">Post Title</h3><p style="color:#64748b;font-size:0.95rem;">A brief excerpt from the post content that gives readers a preview...</p><a href="#" style="color:#206bc4;font-weight:600;text-decoration:none;">Read More →</a></div></div><div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);background:white;"><div style="height:200px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);"></div><div style="padding:1.5rem;"><h3 style="font-weight:700;margin-bottom:0.5rem;">Post Title</h3><p style="color:#64748b;font-size:0.95rem;">A brief excerpt from the post content that gives readers a preview...</p><a href="#" style="color:#206bc4;font-weight:600;text-decoration:none;">Read More →</a></div></div><div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);background:white;"><div style="height:200px;background:linear-gradient(135deg,#fef3c7,#fde68a);"></div><div style="padding:1.5rem;"><h3 style="font-weight:700;margin-bottom:0.5rem;">Post Title</h3><p style="color:#64748b;font-size:0.95rem;">A brief excerpt from the post content that gives readers a preview...</p><a href="#" style="color:#206bc4;font-weight:600;text-decoration:none;">Read More →</a></div></div></div></section>' },
+
+                { id: 'contact-form', label: '📧 Contact Form', category: 'Components',
+                  content: '<section style="padding:4rem 2rem;background:#f8fafc;"><div style="max-width:600px;margin:0 auto;background:white;border-radius:20px;padding:3rem;box-shadow:0 10px 25px rgba(0,0,0,0.05);"><h2 style="font-weight:800;text-align:center;margin-bottom:2rem;">Get in Touch</h2><form><input type="text" placeholder="Your Name" style="width:100%;padding:14px 16px;margin-bottom:1rem;border:2px solid #e2e8f0;border-radius:10px;font-size:1rem;outline:none;"><input type="email" placeholder="Your Email" style="width:100%;padding:14px 16px;margin-bottom:1rem;border:2px solid #e2e8f0;border-radius:10px;font-size:1rem;outline:none;"><textarea placeholder="Your Message" rows="5" style="width:100%;padding:14px 16px;margin-bottom:1.5rem;border:2px solid #e2e8f0;border-radius:10px;font-size:1rem;outline:none;resize:vertical;"></textarea><button type="submit" style="width:100%;padding:14px;background:#206bc4;color:white;border:none;border-radius:50px;font-weight:700;font-size:1.1rem;cursor:pointer;">Send Message</button></form></div></section>' },
+
+                { id: 'pricing-table', label: '💰 Pricing', category: 'Components',
+                  content: '<section style="padding:4rem 2rem;"><h2 style="text-align:center;font-weight:800;font-size:2.5rem;margin-bottom:1rem;">Pricing</h2><p style="text-align:center;color:#64748b;margin-bottom:3rem;">Choose the plan that fits your needs</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;max-width:1000px;margin:0 auto;"><div style="background:white;border-radius:16px;padding:2.5rem;text-align:center;border:2px solid #e2e8f0;"><h3 style="font-weight:700;">Starter</h3><div style="font-size:3rem;font-weight:800;margin:1rem 0;">$9<span style="font-size:1rem;font-weight:500;color:#64748b;">/mo</span></div><ul style="list-style:none;padding:0;margin-bottom:2rem;"><li style="padding:0.5rem 0;color:#64748b;">5 Projects</li><li style="padding:0.5rem 0;color:#64748b;">10GB Storage</li><li style="padding:0.5rem 0;color:#64748b;">Email Support</li></ul><a href="#" style="display:block;padding:12px;background:#e2e8f0;color:#1e293b;border-radius:50px;font-weight:600;text-decoration:none;">Get Started</a></div><div style="background:#206bc4;border-radius:16px;padding:2.5rem;text-align:center;color:white;transform:scale(1.05);box-shadow:0 20px 40px rgba(32,107,196,0.3);"><div style="background:rgba(255,255,255,0.2);border-radius:50px;padding:4px 16px;font-size:0.8rem;font-weight:600;display:inline-block;margin-bottom:1rem;">POPULAR</div><h3 style="font-weight:700;">Professional</h3><div style="font-size:3rem;font-weight:800;margin:1rem 0;">$29<span style="font-size:1rem;font-weight:500;opacity:0.8;">/mo</span></div><ul style="list-style:none;padding:0;margin-bottom:2rem;"><li style="padding:0.5rem 0;opacity:0.9;">Unlimited Projects</li><li style="padding:0.5rem 0;opacity:0.9;">100GB Storage</li><li style="padding:0.5rem 0;opacity:0.9;">Priority Support</li></ul><a href="#" style="display:block;padding:12px;background:white;color:#206bc4;border-radius:50px;font-weight:600;text-decoration:none;">Get Started</a></div><div style="background:white;border-radius:16px;padding:2.5rem;text-align:center;border:2px solid #e2e8f0;"><h3 style="font-weight:700;">Enterprise</h3><div style="font-size:3rem;font-weight:800;margin:1rem 0;">$99<span style="font-size:1rem;font-weight:500;color:#64748b;">/mo</span></div><ul style="list-style:none;padding:0;margin-bottom:2rem;"><li style="padding:0.5rem 0;color:#64748b;">Everything in Pro</li><li style="padding:0.5rem 0;color:#64748b;">1TB Storage</li><li style="padding:0.5rem 0;color:#64748b;">Dedicated Support</li></ul><a href="#" style="display:block;padding:12px;background:#e2e8f0;color:#1e293b;border-radius:50px;font-weight:600;text-decoration:none;">Contact Sales</a></div></div></section>' },
+
+                { id: 'testimonials', label: '💬 Testimonials', category: 'Components',
+                  content: '<section style="padding:4rem 2rem;background:#f8fafc;"><h2 style="text-align:center;font-weight:800;font-size:2.5rem;margin-bottom:3rem;">What People Say</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;max-width:1100px;margin:0 auto;"><div style="background:white;border-radius:16px;padding:2rem;box-shadow:0 4px 12px rgba(0,0,0,0.04);"><p style="color:#475569;line-height:1.7;margin-bottom:1.5rem;font-style:italic;">"This product completely transformed our workflow. Highly recommended for anyone serious about productivity."</p><div style="display:flex;align-items:center;gap:1rem;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#206bc4,#6366f1);"></div><div><strong>Sarah Johnson</strong><div style="color:#64748b;font-size:0.85rem;">CEO, TechCo</div></div></div></div><div style="background:white;border-radius:16px;padding:2rem;box-shadow:0 4px 12px rgba(0,0,0,0.04);"><p style="color:#475569;line-height:1.7;margin-bottom:1.5rem;font-style:italic;">"The best investment we made this year. Setup was quick and the results were immediate."</p><div style="display:flex;align-items:center;gap:1rem;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#f76707,#f59e0b);"></div><div><strong>Mike Chen</strong><div style="color:#64748b;font-size:0.85rem;">CTO, StartupXYZ</div></div></div></div><div style="background:white;border-radius:16px;padding:2rem;box-shadow:0 4px 12px rgba(0,0,0,0.04);"><p style="color:#475569;line-height:1.7;margin-bottom:1.5rem;font-style:italic;">"Outstanding support team and an incredible product. Five stars across the board."</p><div style="display:flex;align-items:center;gap:1rem;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);"></div><div><strong>Emily Davis</strong><div style="color:#64748b;font-size:0.85rem;">Designer, CreativeLab</div></div></div></div></div></section>' },
+
+                { id: 'feature-cards', label: '✨ Feature Cards', category: 'Components',
+                  content: '<section style="padding:4rem 2rem;"><h2 style="text-align:center;font-weight:800;font-size:2.5rem;margin-bottom:1rem;">Features</h2><p style="text-align:center;color:#64748b;margin-bottom:3rem;max-width:600px;margin-left:auto;margin-right:auto;">Everything you need to build something amazing</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;max-width:1100px;margin:0 auto;"><div style="text-align:center;padding:2rem;"><div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;">⚡</div><h4 style="font-weight:700;margin-bottom:0.5rem;">Lightning Fast</h4><p style="color:#64748b;">Optimized for speed with Go-native performance.</p></div><div style="text-align:center;padding:2rem;"><div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#fef3c7,#fde68a);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;">🔒</div><h4 style="font-weight:700;margin-bottom:0.5rem;">Secure</h4><p style="color:#64748b;">Built with security-first principles at every layer.</p></div><div style="text-align:center;padding:2rem;"><div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;">🎨</div><h4 style="font-weight:700;margin-bottom:0.5rem;">Customizable</h4><p style="color:#64748b;">Full theme control with the built-in visual builder.</p></div></div></section>' },
+
+                { id: 'cta-section', label: '📢 Call to Action', category: 'Components',
+                  content: '<section style="padding:5rem 2rem;background:linear-gradient(135deg,#206bc4,#1a1a2e);text-align:center;color:white;"><h2 style="font-size:2.5rem;font-weight:800;margin-bottom:1rem;">Ready to Get Started?</h2><p style="font-size:1.2rem;opacity:0.85;max-width:500px;margin:0 auto 2rem;">Join thousands of happy customers and start building your dream today.</p><a href="#" style="display:inline-block;padding:16px 40px;background:white;color:#206bc4;border-radius:50px;font-weight:700;text-decoration:none;font-size:1.1rem;margin-right:1rem;">Start Free Trial</a><a href="#" style="display:inline-block;padding:16px 40px;background:transparent;color:white;border-radius:50px;font-weight:700;text-decoration:none;font-size:1.1rem;border:2px solid rgba(255,255,255,0.4);">Learn More</a></section>' },
+
+                { id: 'image-gallery', label: '🖼️ Gallery', category: 'Components',
+                  content: '<section style="padding:4rem 2rem;"><h2 style="text-align:center;font-weight:800;font-size:2.5rem;margin-bottom:3rem;">Gallery</h2><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;max-width:1200px;margin:0 auto;"><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#e2e8f0,#cbd5e1);overflow:hidden;"></div><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);overflow:hidden;"></div><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);overflow:hidden;"></div><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);overflow:hidden;"></div></div></section>' },
+
+                { id: 'text-block', label: '📝 Text Block', category: 'Basic',
+                  content: '<div style="padding:2rem;max-width:800px;margin:0 auto;"><h2 style="font-weight:700;margin-bottom:1rem;">Section Title</h2><p style="line-height:1.8;color:#475569;">Write your content here. This is a simple text block that you can use for any section of your page. Edit the text directly or use the style panel to customize colors, fonts, and spacing.</p></div>' },
+
+                { id: 'divider', label: '— Divider', category: 'Basic',
+                  content: '<hr style="border:none;border-top:1px solid #e2e8f0;margin:2rem auto;max-width:1200px;">' },
+
+                { id: 'spacer', label: '⬜ Spacer', category: 'Basic',
+                  content: '<div style="height:4rem;"></div>' },
+
+                { id: 'button', label: '🔘 Button', category: 'Basic',
+                  content: '<a href="#" style="display:inline-block;padding:12px 32px;background:#206bc4;color:white;border-radius:50px;font-weight:700;text-decoration:none;text-align:center;">Click Me</a>' },
+
+                { id: 'image', label: '🖼 Image', category: 'Basic',
+                  content: '<img src="https://placehold.co/800x400/e2e8f0/64748b?text=Your+Image" style="width:100%;border-radius:12px;" alt="Image">' },
+              ]
+            }
           });
           editorTools.setComponents(rawVal);
           
@@ -166,6 +236,13 @@
                  <input class="form-check-input" type="checkbox" name="show_in_menu" {{ if .Page }}{{ if .Page.ShowInMenu }}checked{{ end }}{{ end }}>
                  <span class="form-check-label fw-bold">Show directly in Header Navigation</span>
                </label>
+            </div>
+            <div class="mb-4">
+               <label class="form-check">
+                 <input class="form-check-input" type="checkbox" name="full_width" {{ if .Page }}{{ if .Page.FullWidth }}checked{{ end }}{{ end }}>
+                 <span class="form-check-label fw-bold">Full Width Layout</span>
+               </label>
+               <small class="form-hint ms-4">Removes the container width limit — content stretches edge to edge.</small>
             </div>
             
             <div class="mb-3">
