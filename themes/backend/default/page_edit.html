@@ -54,8 +54,21 @@
         <!-- Visual Builder -->
         <div class="tab-pane" id="editor-visual">
            <link rel="stylesheet" href="https://unpkg.com/grapesjs/dist/css/grapes.min.css">
+           <link rel="stylesheet" href="https://unpkg.com/grapesjs-preset-webpage/dist/grapesjs-preset-webpage.min.css">
            <script src="https://unpkg.com/grapesjs"></script>
-           <div id="gjs" style="height: 600px; width: 100%;"></div>
+           <script src="https://unpkg.com/grapesjs-preset-webpage"></script>
+           <style>
+             #gjs { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+             .gjs-one-bg { background-color: #f8fafc; }
+             .gjs-two-color { color: #1e293b; }
+             .gjs-three-bg { background-color: #e2e8f0; }
+             .gjs-four-color, .gjs-four-color-h:hover { color: #206bc4; }
+             .gjs-pn-panel { border-bottom: 1px solid #e2e8f0; }
+             .gjs-block { padding: 8px; border-radius: 8px; min-height: auto; }
+             .gjs-block:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+             .gjs-category-title { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; }
+           </style>
+           <div id="gjs" style="height: 700px; width: 100%;"></div>
         </div>
       </div>
       
@@ -85,6 +98,8 @@
             height: '700px',
             width: '100%',
             storageManager: false,
+            plugins: ['grapesjs-preset-webpage'],
+            pluginsOpts: { 'grapesjs-preset-webpage': {} },
             canvas: { styles: [
               'https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css',
               'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
