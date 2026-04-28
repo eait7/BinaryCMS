@@ -60,6 +60,7 @@ func handleNewPage(pm *pluginmanager.Manager) http.HandlerFunc {
 				AuthorID:        user.ID,
 				FeaturedImage:   r.FormValue("featured_image"),
 				RequiredRole:    requiredRoleStr,
+				FullWidth:       r.FormValue("full_width") == "on",
 			}
 			models.CreatePage(page)
 			http.Redirect(w, r, "/admin/pages", http.StatusFound)
@@ -115,6 +116,7 @@ func handleEditPage(pm *pluginmanager.Manager) http.HandlerFunc {
 				MetaDescription: r.FormValue("meta_description"),
 				FeaturedImage:   r.FormValue("featured_image"),
 				RequiredRole:    requiredRoleStr,
+				FullWidth:       r.FormValue("full_width") == "on",
 			}
 			models.UpdatePage(page)
 			http.Redirect(w, r, "/admin/pages", http.StatusSeeOther)

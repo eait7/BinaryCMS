@@ -18,86 +18,81 @@
     {{ end }}
     <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
     <!-- Tabler CSS inside frontend fallback -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family={{ .Settings.font_heading | urlquery }}:wght@400;600;700;800&family={{ .Settings.font_body | urlquery }}:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      @import url('https://rsms.me/inter/inter.css');
       :root {
-        --tblr-primary: {{ .BrandColor }};
-        --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+        --cms-primary: {{ .BrandColor }};
+        --cms-secondary: {{ if .Settings.color_secondary }}{{ .Settings.color_secondary }}{{ else }}#6c757d{{ end }};
+        --cms-accent: {{ if .Settings.color_accent }}{{ .Settings.color_accent }}{{ else }}#f76707{{ end }};
+        --cms-text: {{ if .Settings.color_text }}{{ .Settings.color_text }}{{ else }}#1e293b{{ end }};
+        --cms-bg: {{ if .Settings.color_background }}{{ .Settings.color_background }}{{ else }}#f8fafc{{ end }};
+        --cms-surface: {{ if .Settings.color_surface }}{{ .Settings.color_surface }}{{ else }}#ffffff{{ end }};
+        --cms-font-heading: '{{ if .Settings.font_heading }}{{ .Settings.font_heading }}{{ else }}Inter{{ end }}', sans-serif;
+        --cms-font-body: '{{ if .Settings.font_body }}{{ .Settings.font_body }}{{ else }}Inter{{ end }}', sans-serif;
+        --cms-spacing: {{ if .Settings.spacing_section }}{{ .Settings.spacing_section }}{{ else }}4{{ end }}rem;
+        --cms-card-padding: {{ if .Settings.spacing_card }}{{ .Settings.spacing_card }}{{ else }}1.5{{ end }}rem;
+        --cms-radius: {{ if .Settings.border_radius }}{{ .Settings.border_radius }}{{ else }}0.75{{ end }}rem;
+        --tblr-primary: var(--cms-primary);
       }
-      .text-primary { color: {{ .BrandColor }} !important; }
+      .text-primary { color: var(--cms-primary) !important; }
       body {
-        font-family: var(--tblr-font-sans-serif);
-        font-feature-settings: "cv03", "cv04", "cv11";
+        font-family: var(--cms-font-body);
         letter-spacing: -0.01em;
-        background-color: #f8fafc;
+        background-color: var(--cms-bg);
+        color: var(--cms-text);
       }
       .navbar {
-        background: rgba(255, 255, 255, 0.9) !important;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        {{ if eq (index .Settings "nav_style") "dark" }}
+        background: #1a1a2e !important; color: #fff;
+        {{ else if eq (index .Settings "nav_style") "transparent" }}
+        background: transparent !important; box-shadow: none;
+        {{ else if eq (index .Settings "nav_style") "gradient" }}
+        background: linear-gradient(135deg, var(--cms-primary), var(--cms-accent)) !important; color: #fff;
+        {{ else if eq (index .Settings "nav_style") "solid" }}
+        background: #fff !important; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        {{ else }}
+        background: rgba(255,255,255,0.9) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        {{ end }}
         border-bottom: 1px solid rgba(0,0,0,0.05) !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
       }
-      .navbar-brand { font-weight: 800; letter-spacing: -0.02em; }
-      
+      .navbar-brand { font-weight: 800; letter-spacing: -0.02em; font-family: var(--cms-font-heading); }
+
       .article-header {
-        padding: 4rem 0 2rem;
+        padding: var(--cms-spacing) 0 2rem;
         text-align: center;
       }
       .article-title {
         font-size: 3rem;
         font-weight: 800;
+        font-family: var(--cms-font-heading);
         letter-spacing: -0.03em;
         line-height: 1.2;
-        color: #0f172a;
+        color: var(--cms-text);
         margin-bottom: 1rem;
       }
       .article-content {
-        background: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -2px rgba(0, 0, 0, 0.01);
-        padding: 4rem;
+        background: var(--cms-surface);
+        border-radius: calc(var(--cms-radius) * 2);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.02);
+        padding: var(--cms-spacing);
         font-size: 1.125rem;
         line-height: 1.8;
-        color: #334155;
+        color: var(--cms-text);
         border: 1px solid rgba(0,0,0,0.04);
-        margin-bottom: 4rem;
+        margin-bottom: var(--cms-spacing);
       }
-      .article-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 12px;
-        margin: 2rem 0;
-      }
-      .article-content h2, .article-content h3 {
-        color: #0f172a;
-        font-weight: 700;
-        margin-top: 2.5rem;
-        margin-bottom: 1rem;
-        letter-spacing: -0.02em;
-      }
-      .article-content a {
-        color: var(--tblr-primary);
-        text-decoration: underline;
-        text-underline-offset: 4px;
-        text-decoration-color: color-mix(in srgb, var(--tblr-primary) 30%, transparent);
-        transition: all 0.2s;
-      }
-      .article-content a:hover {
-        text-decoration-color: var(--tblr-primary);
-      }
-      
-      /* Footer */
-      .premium-footer {
-        background: #ffffff;
-        border-top: 1px solid #e2e8f0;
-        padding-top: 4rem;
-      }
-      .footer-title { font-size: 0.875rem; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
-      .footer-link { color: #64748b; text-decoration: none; transition: color 0.2s; font-weight: 500; }
-      .footer-link:hover { color: var(--tblr-primary); }
-      .footer-brand-text { color: #64748b; line-height: 1.6; }
+      .article-content img { max-width: 100%; height: auto; border-radius: var(--cms-radius); margin: 2rem 0; }
+      .article-content h2, .article-content h3 { font-family: var(--cms-font-heading); color: var(--cms-text); font-weight: 700; margin-top: 2.5rem; margin-bottom: 1rem; }
+      .article-content a { color: var(--cms-primary); text-decoration: underline; text-underline-offset: 4px; transition: all 0.2s; }
+      .article-content a:hover { opacity: 0.8; }
+      .full-width .article-content { border-radius: 0; max-width: 100%; padding: var(--cms-spacing) 2rem; }
+
+      .premium-footer { background: var(--cms-surface); border-top: 1px solid #e2e8f0; padding-top: var(--cms-spacing); }
+      .footer-title { font-size: 0.875rem; font-weight: 700; font-family: var(--cms-font-heading); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+      .footer-link { color: var(--cms-secondary); text-decoration: none; transition: color 0.2s; font-weight: 500; }
+      .footer-link:hover { color: var(--cms-primary); }
     </style>
   </head>
   <body>
@@ -129,8 +124,8 @@
         </div>
       </nav>
 
-      <div class="page-wrapper">
-        <div class="container-xl" style="max-width: 800px;">
+      <div class="page-wrapper {{ if .Page.FullWidth }}full-width{{ end }}">
+        <div class="{{ if .Page.FullWidth }}container-fluid px-0{{ else }}container-xl{{ end }}" {{ if not .Page.FullWidth }}style="max-width: 800px;"{{ end }}>
           <!-- Article Header -->
           <header class="article-header">
             <h1 class="article-title">{{ .Page.Title }}</h1>

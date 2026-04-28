@@ -21,6 +21,7 @@ type Page struct {
 	MenuOrder       int
 	AuthorID        int
 	RequiredRole    string
+	FullWidth       bool
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
@@ -99,11 +100,11 @@ func GetMenuPages() ([]Page, error) {
 
 func CreatePage(p Page) error {
 	now := time.Now()
-	query := `INSERT INTO pages (title, slug, content, status, show_in_menu, menu_order, author_id, meta_title, meta_description, featured_image, required_role, created_at, updated_at) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO pages (title, slug, content, status, show_in_menu, menu_order, author_id, meta_title, meta_description, featured_image, required_role, full_width, created_at, updated_at) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := db.DB.Exec(query,
 		p.Title, p.Slug, p.Content, p.Status, p.ShowInMenu, p.MenuOrder,
-		p.AuthorID, p.MetaTitle, p.MetaDescription, p.FeaturedImage, p.RequiredRole, now, now,
+		p.AuthorID, p.MetaTitle, p.MetaDescription, p.FeaturedImage, p.RequiredRole, p.FullWidth, now, now,
 	)
 	return err
 }
@@ -127,8 +128,9 @@ func GetPageBySlug(slug string) (*Page, error) {
 	var showInMenu sql.NullBool
 	var menuOrder sql.NullInt64
 	var authorID sql.NullInt64
-	db.DB.QueryRow("SELECT show_in_menu, menu_order, author_id FROM pages WHERE id = ?", p.ID).
-		Scan(&showInMenu, &menuOrder, &authorID)
+	var fullWidth sql.NullBool
+	db.DB.QueryRow("SELECT show_in_menu, menu_order, author_id, full_width FROM pages WHERE id = ?", p.ID).
+		Scan(&showInMenu, &menuOrder, &authorID, &fullWidth)
 	if showInMenu.Valid {
 		p.ShowInMenu = showInMenu.Bool
 	}
@@ -138,15 +140,18 @@ func GetPageBySlug(slug string) (*Page, error) {
 	if authorID.Valid {
 		p.AuthorID = int(authorID.Int64)
 	}
+	if fullWidth.Valid {
+		p.FullWidth = fullWidth.Bool
+	}
 
 	return p, nil
 }
 
 func UpdatePage(p Page) error {
-	query := `UPDATE pages SET title=?, slug=?, content=?, status=?, show_in_menu=?, menu_order=?, meta_title=?, meta_description=?, featured_image=?, required_role=?, updated_at=? WHERE id=?`
+	query := `UPDATE pages SET title=?, slug=?, content=?, status=?, show_in_menu=?, menu_order=?, meta_title=?, meta_description=?, featured_image=?, required_role=?, full_width=?, updated_at=? WHERE id=?`
 	_, err := db.DB.Exec(query,
 		p.Title, p.Slug, p.Content, p.Status, p.ShowInMenu, p.MenuOrder,
-		p.MetaTitle, p.MetaDescription, p.FeaturedImage, p.RequiredRole, time.Now(), p.ID,
+		p.MetaTitle, p.MetaDescription, p.FeaturedImage, p.RequiredRole, p.FullWidth, time.Now(), p.ID,
 	)
 	return err
 }
