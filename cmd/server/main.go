@@ -145,6 +145,7 @@ func main() {
 		r.Post("/themes", handleThemes(pm))
 		r.Post("/themes/upload", handleUploadTheme(pm))
 		r.Post("/themes/delete/{type}/{name}", handleDeleteTheme(pm))
+		r.Get("/themes/export", handleExportTheme(pm))
 
 		// Media
 		r.Get("/media", handleMediaLibrary(pm))

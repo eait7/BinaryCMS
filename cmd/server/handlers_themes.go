@@ -60,42 +60,49 @@ func handleThemes(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
 			r.ParseForm()
+			formAction := r.FormValue("form_action")
+
+			if formAction == "customizer" {
+				// Save all customizer settings
+				customizerFields := []string{
+					"brand_color", "color_secondary", "color_accent",
+					"color_text", "color_background", "color_surface",
+					"font_heading", "font_body",
+					"spacing_section", "spacing_card", "border_radius",
+					"nav_style", "nav_position",
+				}
+				for _, field := range customizerFields {
+					val := r.FormValue(field)
+					if val != "" {
+						models.SetSetting(field, val)
+					}
+				}
+				theme.InvalidateCache()
+				http.Redirect(w, r, "/admin/themes?success=1", http.StatusFound)
+				return
+			}
+
+			// Standard theme activation
 			frontend := r.FormValue("frontend_theme")
 			backend := r.FormValue("backend_theme")
 			color := r.FormValue("brand_color")
 
 			if frontend != "" {
 				log.Printf("[DEBUG] Themes POST received frontend: %s", frontend)
-				// Auto-provision missing required pages for the activated template
 				jsonPath := filepath.Join("themes", "frontend", frontend, "pages.json")
 				if b, err := os.ReadFile(jsonPath); err == nil {
-					log.Printf("[DEBUG] Found pages.json for %s", frontend)
 					var stubs []models.Page
 					if err := json.Unmarshal(b, &stubs); err == nil {
-						log.Printf("[DEBUG] Successfully unmarshaled %d stubs", len(stubs))
 						for _, stub := range stubs {
 							if _, err := models.GetPageBySlug(stub.Slug); err != nil {
-								log.Printf("[DEBUG] Page '%s' does not exist, creating...", stub.Slug)
-								// Page doesn't exist, dynamically provision it natively
 								stub.Status = "published"
 								if stub.Title == "" {
 									stub.Title = strings.ToUpper(stub.Slug[0:1]) + stub.Slug[1:]
 								}
-								createErr := models.CreatePage(stub)
-								if createErr != nil {
-									log.Printf("[ERROR] Failed to create page '%s': %v", stub.Slug, createErr)
-								} else {
-									log.Printf("[DEBUG] Successfully created page '%s'", stub.Slug)
-								}
-							} else {
-								log.Printf("[DEBUG] Page '%s' already exists, skipping", stub.Slug)
+								models.CreatePage(stub)
 							}
 						}
-					} else {
-						log.Printf("[ERROR] Failed to unmarshal pages.json: %v", err)
 					}
-				} else {
-					log.Printf("[DEBUG] No pages.json found at %s: %v", jsonPath, err)
 				}
 				models.SetSetting("frontend_theme", frontend)
 			}
@@ -106,30 +113,36 @@ func handleThemes(pm *pluginmanager.Manager) http.HandlerFunc {
 				models.SetSetting("brand_color", color)
 			}
 
-			// Invalidate template cache on theme change
 			theme.InvalidateCache()
-
 			http.Redirect(w, r, "/admin/themes?success=1", http.StatusFound)
 			return
 		}
 
-		currentFront := models.GetSetting("frontend_theme")
-		if currentFront == "" {
-			currentFront = "default"
-		}
-		currentBack := models.GetSetting("backend_theme")
-		if currentBack == "" {
-			currentBack = "default"
-		}
-		color := models.GetSetting("brand_color")
-		if color == "" {
-			color = "#206bc4"
+		// Load current settings
+		getS := func(key, def string) string {
+			v := models.GetSetting(key)
+			if v == "" {
+				return def
+			}
+			return v
 		}
 
 		data := map[string]interface{}{
-			"FrontendTheme":  currentFront,
-			"BackendTheme":   currentBack,
-			"BrandColor":     color,
+			"FrontendTheme":  getS("frontend_theme", "default"),
+			"BackendTheme":   getS("backend_theme", "default"),
+			"BrandColor":     getS("brand_color", "#206bc4"),
+			"ColorSecondary": getS("color_secondary", "#6c757d"),
+			"ColorAccent":    getS("color_accent", "#f76707"),
+			"ColorText":      getS("color_text", "#1e293b"),
+			"ColorBackground":getS("color_background", "#f8fafc"),
+			"ColorSurface":   getS("color_surface", "#ffffff"),
+			"FontHeading":    getS("font_heading", "Inter"),
+			"FontBody":       getS("font_body", "Inter"),
+			"SpacingSection": getS("spacing_section", "4"),
+			"SpacingCard":    getS("spacing_card", "1.5"),
+			"BorderRadius":   getS("border_radius", "0.75"),
+			"NavStyle":       getS("nav_style", "glassmorphic"),
+			"NavPosition":    getS("nav_position", "fixed"),
 			"FrontendThemes": getAvailableThemes("frontend"),
 			"BackendThemes":  getAvailableThemes("backend"),
 		}
@@ -279,5 +292,69 @@ func handleDeleteTheme(pm *pluginmanager.Manager) http.HandlerFunc {
 		theme.InvalidateCache()
 
 		http.Redirect(w, r, "/admin/themes?delete=success", http.StatusFound)
+	}
+}
+
+func handleExportTheme(pm *pluginmanager.Manager) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		currentTheme := models.GetSetting("frontend_theme")
+		if currentTheme == "" {
+			currentTheme = "default"
+		}
+
+		themeDir := filepath.Join("themes", "frontend", currentTheme)
+		if _, err := os.Stat(themeDir); os.IsNotExist(err) {
+			http.Error(w, "Theme not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", "attachment; filename=\""+currentTheme+".zip\"")
+
+		zw := zip.NewWriter(w)
+		defer zw.Close()
+
+		filepath.Walk(themeDir, func(path string, info os.FileInfo, err error) error {
+			if err != nil || info.IsDir() {
+				return nil
+			}
+			relPath, _ := filepath.Rel(themeDir, path)
+			f, err := zw.Create(relPath)
+			if err != nil {
+				return nil
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return nil
+			}
+			f.Write(data)
+			return nil
+		})
+
+		// Also include a generated variables.css with current settings
+		getS := func(key, def string) string {
+			v := models.GetSetting(key)
+			if v == "" {
+				return def
+			}
+			return v
+		}
+		cssVars := `:root {
+  --cms-color-primary: ` + getS("brand_color", "#206bc4") + `;
+  --cms-color-secondary: ` + getS("color_secondary", "#6c757d") + `;
+  --cms-color-accent: ` + getS("color_accent", "#f76707") + `;
+  --cms-color-text: ` + getS("color_text", "#1e293b") + `;
+  --cms-color-background: ` + getS("color_background", "#f8fafc") + `;
+  --cms-color-surface: ` + getS("color_surface", "#ffffff") + `;
+  --cms-font-heading: '` + getS("font_heading", "Inter") + `', sans-serif;
+  --cms-font-body: '` + getS("font_body", "Inter") + `', sans-serif;
+  --cms-spacing-section: ` + getS("spacing_section", "4") + `rem;
+  --cms-spacing-card: ` + getS("spacing_card", "1.5") + `rem;
+  --cms-radius: ` + getS("border_radius", "0.75") + `rem;
+}
+`
+		if f, err := zw.Create("variables.css"); err == nil {
+			f.Write([]byte(cssVars))
+		}
 	}
 }
