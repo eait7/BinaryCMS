@@ -19,7 +19,8 @@
     <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
     <!-- Tabler CSS inside frontend fallback -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family={{ .Settings.font_heading | urlquery }}:wght@400;600;700;800&family={{ .Settings.font_body | urlquery }}:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{ $fh := "Inter" }}{{ if .Settings.font_heading }}{{ $fh = .Settings.font_heading }}{{ end }}{{ $fb := "Inter" }}{{ if .Settings.font_body }}{{ $fb = .Settings.font_body }}{{ end }}
+    <link href="https://fonts.googleapis.com/css2?family={{ $fh | urlquery }}:wght@400;600;700;800&family={{ $fb | urlquery }}:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       :root {
         --cms-primary: {{ .BrandColor }};
@@ -43,13 +44,14 @@
         color: var(--cms-text);
       }
       .navbar {
-        {{ if eq (index .Settings "nav_style") "dark" }}
+        {{ $ns := safeIndex .Settings "nav_style" }}
+        {{ if eq $ns "dark" }}
         background: #1a1a2e !important; color: #fff;
-        {{ else if eq (index .Settings "nav_style") "transparent" }}
+        {{ else if eq $ns "transparent" }}
         background: transparent !important; box-shadow: none;
-        {{ else if eq (index .Settings "nav_style") "gradient" }}
+        {{ else if eq $ns "gradient" }}
         background: linear-gradient(135deg, var(--cms-primary), var(--cms-accent)) !important; color: #fff;
-        {{ else if eq (index .Settings "nav_style") "solid" }}
+        {{ else if eq $ns "solid" }}
         background: #fff !important; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         {{ else }}
         background: rgba(255,255,255,0.9) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
