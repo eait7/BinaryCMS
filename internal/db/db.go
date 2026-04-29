@@ -332,4 +332,28 @@ func seedDefaults(db *sql.DB) {
 	for key, value := range defaults {
 		db.Exec("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", key, value)
 	}
+
+	// Seed a default Home page if no pages exist yet
+	var pageCount int
+	db.QueryRow("SELECT COUNT(*) FROM pages").Scan(&pageCount)
+	if pageCount == 0 {
+		homeContent := `<div style="text-align:center;padding:4rem 2rem;">
+<h1 style="font-size:3rem;font-weight:800;margin-bottom:1rem;">Welcome to BinaryCMS</h1>
+<p style="font-size:1.25rem;color:#64748b;max-width:600px;margin:0 auto 2rem;">Your site is ready. Edit this page from the admin panel under <strong>Content → Pages</strong>.</p>
+<a href="/admin" style="display:inline-block;padding:14px 36px;background:#4f46e5;color:white;border-radius:50px;font-weight:700;text-decoration:none;font-size:1.1rem;">Go to Admin Panel →</a>
+</div>`
+
+		result, err := db.Exec(
+			"INSERT INTO pages (title, slug, content, status, show_in_menu, menu_order, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+			"Home", "home", homeContent, "published", 1, 0, 0,
+		)
+		if err == nil {
+			pageID, _ := result.LastInsertId()
+			if pageID > 0 {
+				db.Exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('homepage_type', 'page')")
+				db.Exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('homepage_page_id', ?)", pageID)
+				log.Printf("Seeded default Home page (ID: %d) and set as homepage", pageID)
+			}
+		}
+	}
 }
