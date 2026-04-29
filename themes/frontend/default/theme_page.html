@@ -109,13 +109,21 @@
       <nav class="navbar navbar-expand-md sticky-top">
         <div class="container-xl">
           <a class="navbar-brand d-flex align-items-center" href="/">
-            {{ if .Settings.site_logo_url }}
+            {{ $ldm := safeIndex .Settings "logo_display_mode" }}
+            {{ if eq $ldm "Site Title Only" }}
+              <span style="font-size:1.3rem;">{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>
+            {{ else if .Settings.site_logo_url }}
               <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; width: auto;" alt="{{ .Settings.site_title }}">
+              {{ if ne $ldm "Logo Only" }}
+                <span class="ms-2" style="font-size:1.2rem;">{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>
+              {{ end }}
             {{ else if .Settings.site_logo_icon }}
               <svg class="icon text-primary me-2" style="width: 32px; height: 32px;"><use href="/static/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
-              {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+              {{ if ne $ldm "Logo Only" }}
+                <span>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>
+              {{ end }}
             {{ else }}
-              {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+              <span style="font-size:1.3rem;">{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>
             {{ end }}
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
