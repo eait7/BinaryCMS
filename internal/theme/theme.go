@@ -71,6 +71,15 @@ func AssetFunc(path string) string {
 func GlobalFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"asset": AssetFunc,
+		"urlquery": func(s string) string {
+			return template.URLQueryEscaper(s)
+		},
+		"safeIndex": func(m map[string]string, key string) string {
+			if m == nil {
+				return ""
+			}
+			return m[key]
+		},
 	}
 }
 
