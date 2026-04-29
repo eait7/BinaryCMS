@@ -20,7 +20,13 @@
     <!-- Tabler CSS inside frontend fallback -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
     {{ $fh := "Inter" }}{{ if .Settings.font_heading }}{{ $fh = .Settings.font_heading }}{{ end }}{{ $fb := "Inter" }}{{ if .Settings.font_body }}{{ $fb = .Settings.font_body }}{{ end }}
-    <link href="https://fonts.googleapis.com/css2?family={{ $fh | urlquery }}:wght@400;600;700;800&family={{ $fb | urlquery }}:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <span id="cms-font-data" data-fh="{{ $fh }}" data-fb="{{ $fb }}" style="display:none;"></span>
+    <script>
+      (function(){var d=document.getElementById('cms-font-data'),fh=d.getAttribute('data-fh'),fb=d.getAttribute('data-fb');
+      var l=document.createElement('link');l.rel='stylesheet';
+      l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(fh)+':wght@400;600;700;800&family='+encodeURIComponent(fb)+':wght@400;500;600;700&display=swap';
+      document.head.appendChild(l);})();
+    </script>
     <style>
       :root {
         --cms-primary: {{ .BrandColor }};
@@ -29,8 +35,8 @@
         --cms-text: {{ if .Settings.color_text }}{{ .Settings.color_text }}{{ else }}#1e293b{{ end }};
         --cms-bg: {{ if .Settings.color_background }}{{ .Settings.color_background }}{{ else }}#f8fafc{{ end }};
         --cms-surface: {{ if .Settings.color_surface }}{{ .Settings.color_surface }}{{ else }}#ffffff{{ end }};
-        --cms-font-heading: '{{ if .Settings.font_heading }}{{ .Settings.font_heading }}{{ else }}Inter{{ end }}', sans-serif;
-        --cms-font-body: '{{ if .Settings.font_body }}{{ .Settings.font_body }}{{ else }}Inter{{ end }}', sans-serif;
+        --cms-font-heading: '{{ $fh }}', sans-serif;
+        --cms-font-body: '{{ $fb }}', sans-serif;
         --cms-spacing: {{ if .Settings.spacing_section }}{{ .Settings.spacing_section }}{{ else }}4{{ end }}rem;
         --cms-card-padding: {{ if .Settings.spacing_card }}{{ .Settings.spacing_card }}{{ else }}1.5{{ end }}rem;
         --cms-radius: {{ if .Settings.border_radius }}{{ .Settings.border_radius }}{{ else }}0.75{{ end }}rem;
