@@ -17,6 +17,17 @@ import (
 	"github.com/gomarkdown/markdown"
 )
 
+// renderContent detects if content is raw HTML (from Visual Builder) or Markdown
+// and processes accordingly. HTML content with iframes/tables must not go through
+// the markdown processor as it strips those tags.
+func renderContent(content string) []byte {
+	trimmed := strings.TrimSpace(content)
+	if strings.HasPrefix(trimmed, "<") || strings.Contains(trimmed, "<div") || strings.Contains(trimmed, "<section") || strings.Contains(trimmed, "<style>") || strings.Contains(trimmed, "<iframe") {
+		return []byte(content)
+	}
+	return markdown.ToHTML([]byte(content), nil, nil)
+}
+
 func getFrontendData(r *http.Request, data map[string]interface{}) map[string]interface{} {
 	rawMenuItems, _ := models.GetAllMenuItems()
 	brandColor := models.GetSetting("brand_color")
@@ -92,7 +103,7 @@ func handleFrontendIndex(pm *pluginmanager.Manager) http.HandlerFunc {
 						}
 					}
 
-					htmlContent := markdown.ToHTML([]byte(page.Content), nil, nil)
+					htmlContent := renderContent(page.Content)
 					t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_page.html"))
 					if err != nil {
 						log.Printf("Homepage page template error: %v", err)
@@ -148,7 +159,7 @@ func ServePaginatedPosts(w http.ResponseWriter, r *http.Request, pm *pluginmanag
 	// Convert markdown to HTML
 	var postMap []map[string]interface{}
 	for _, p := range posts {
-		htmlContent := markdown.ToHTML([]byte(p.Content), nil, nil)
+		htmlContent := renderContent(p.Content)
 		postMap = append(postMap, map[string]interface{}{
 			"Post":    p,
 			"Content": template.HTML(htmlContent),
@@ -207,7 +218,7 @@ func handleFrontendPost(pm *pluginmanager.Manager) http.HandlerFunc {
 		return
 	}
 
-	htmlContent := markdown.ToHTML([]byte(post.Content), nil, nil)
+	htmlContent := renderContent(post.Content)
 
 	// Load comments if enabled
 	commentsEnabled := models.GetSetting("comments_enabled") == "true"
@@ -331,7 +342,7 @@ func handleFrontendPage(pm *pluginmanager.Manager) http.HandlerFunc {
 	if strings.HasPrefix(slug, "demo-") {
 		htmlContent = []byte(page.Content)
 	} else {
-		htmlContent = markdown.ToHTML([]byte(page.Content), nil, nil)
+		htmlContent = renderContent(page.Content)
 	}
 
 	data := getFrontendData(r, map[string]interface{}{
