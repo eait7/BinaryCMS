@@ -46,6 +46,28 @@ func handleMediaLibrary(pm *pluginmanager.Manager) http.HandlerFunc {
 	}
 }
 
+// handleMediaJSON returns all uploaded images as JSON for GrapesJS Asset Manager.
+func handleMediaJSON() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var assets []string
+		imgExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
+		files, err := os.ReadDir("uploads")
+		if err == nil {
+			for _, f := range files {
+				if f.IsDir() {
+					continue
+				}
+				ext := strings.ToLower(filepath.Ext(f.Name()))
+				if imgExts[ext] {
+					assets = append(assets, "/uploads/"+f.Name())
+				}
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"data": assets})
+	}
+}
+
 // Allowed media file extensions (SVG excluded for XSS safety).
 var allowedMediaExt = map[string]bool{
 	".jpg": true, ".jpeg": true, ".png": true, ".gif": true,
@@ -65,19 +87,23 @@ func handleMediaUpload(pm *pluginmanager.Manager) http.HandlerFunc {
 		var file io.ReadCloser
 		var hFilename string
 
-		file, fHandler, err := r.FormFile("image")
+		// Try multiple field names: GrapesJS uses "files[]", EasyMDE uses "image", form uses "media_file"
+		file, fHandler, err := r.FormFile("files[]")
+		if err != nil {
+			file, fHandler, err = r.FormFile("image")
+		}
 		if err != nil {
 			file, fHandler, err = r.FormFile("media_file")
-			if err != nil {
-				if strings.Contains(r.Header.Get("Accept"), "application/json") {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusBadRequest)
-					json.NewEncoder(w).Encode(map[string]interface{}{"error": "No file provided"})
-				} else {
-					http.Error(w, "Error retrieving the file", http.StatusBadRequest)
-				}
-				return
+		}
+		if err != nil {
+			if strings.Contains(r.Header.Get("Accept"), "application/json") || strings.Contains(r.Header.Get("Content-Type"), "multipart") {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]interface{}{"error": "No file provided"})
+			} else {
+				http.Error(w, "Error retrieving the file", http.StatusBadRequest)
 			}
+			return
 		}
 		defer file.Close()
 		hFilename = fHandler.Filename
@@ -116,14 +142,12 @@ func handleMediaUpload(pm *pluginmanager.Manager) http.HandlerFunc {
 		io.Copy(dst, file)
 		dst.Close()
 
-		// JSON response for AJAX uploads (EasyMDE)
-		if strings.Contains(r.Header.Get("Accept"), "application/json") {
+		// JSON response for AJAX uploads (GrapesJS and EasyMDE)
+		if strings.Contains(r.Header.Get("Accept"), "application/json") || strings.Contains(r.Header.Get("Content-Type"), "multipart") {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(map[string]interface{}{
-				"data": map[string]string{
-					"filePath": "/uploads/" + hFilename,
-				},
+				"data": []string{"/uploads/" + hFilename},
 			})
 			return
 		}
