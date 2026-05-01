@@ -325,6 +325,20 @@
                </label>
                <small class="form-hint ms-4">Removes the container width limit — content stretches edge to edge.</small>
             </div>
+            <div class="mb-4">
+               <label class="form-check">
+                 <input class="form-check-input" type="checkbox" name="hide_title" {{ if .Page }}{{ if .Page.HideTitle }}checked{{ end }}{{ end }}>
+                 <span class="form-check-label fw-bold">Hide Page Title</span>
+               </label>
+               <small class="form-hint ms-4">Hides the page title on the frontend — useful for visual builder pages with custom headers.</small>
+            </div>
+            <div class="mb-4">
+               <label class="form-check">
+                 <input class="form-check-input" type="checkbox" name="hide_breadcrumbs" {{ if .Page }}{{ if .Page.HideBreadcrumbs }}checked{{ end }}{{ end }}>
+                 <span class="form-check-label fw-bold">Hide Breadcrumbs</span>
+               </label>
+               <small class="form-hint ms-4">Hides the breadcrumb navigation trail on this page.</small>
+            </div>
             
             <div class="mb-3">
               <label class="form-label fw-bold">Access Capabilities</label>

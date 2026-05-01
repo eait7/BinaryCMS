@@ -22,6 +22,8 @@ type Page struct {
 	AuthorID        int
 	RequiredRole    string
 	FullWidth       bool
+	HideTitle       bool
+	HideBreadcrumbs bool
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
@@ -135,6 +137,17 @@ func GetPageByID(id int) (*Page, error) {
 		p.FullWidth = fullWidth.Bool
 	}
 
+	var hideTitle sql.NullBool
+	var hideBreadcrumbs sql.NullBool
+	db.DB.QueryRow("SELECT hide_title, hide_breadcrumbs FROM pages WHERE id = ?", p.ID).
+		Scan(&hideTitle, &hideBreadcrumbs)
+	if hideTitle.Valid {
+		p.HideTitle = hideTitle.Bool
+	}
+	if hideBreadcrumbs.Valid {
+		p.HideBreadcrumbs = hideBreadcrumbs.Bool
+	}
+
 	return p, nil
 }
 
@@ -168,14 +181,25 @@ func GetPageBySlug(slug string) (*Page, error) {
 		p.FullWidth = fullWidth.Bool
 	}
 
+	var hideTitle sql.NullBool
+	var hideBreadcrumbs sql.NullBool
+	db.DB.QueryRow("SELECT hide_title, hide_breadcrumbs FROM pages WHERE id = ?", p.ID).
+		Scan(&hideTitle, &hideBreadcrumbs)
+	if hideTitle.Valid {
+		p.HideTitle = hideTitle.Bool
+	}
+	if hideBreadcrumbs.Valid {
+		p.HideBreadcrumbs = hideBreadcrumbs.Bool
+	}
+
 	return p, nil
 }
 
 func UpdatePage(p Page) error {
-	query := `UPDATE pages SET title=?, slug=?, content=?, status=?, show_in_menu=?, menu_order=?, meta_title=?, meta_description=?, featured_image=?, required_role=?, full_width=?, updated_at=? WHERE id=?`
+	query := `UPDATE pages SET title=?, slug=?, content=?, status=?, show_in_menu=?, menu_order=?, meta_title=?, meta_description=?, featured_image=?, required_role=?, full_width=?, hide_title=?, hide_breadcrumbs=?, updated_at=? WHERE id=?`
 	_, err := db.DB.Exec(query,
 		p.Title, p.Slug, p.Content, p.Status, p.ShowInMenu, p.MenuOrder,
-		p.MetaTitle, p.MetaDescription, p.FeaturedImage, p.RequiredRole, p.FullWidth, time.Now(), p.ID,
+		p.MetaTitle, p.MetaDescription, p.FeaturedImage, p.RequiredRole, p.FullWidth, p.HideTitle, p.HideBreadcrumbs, time.Now(), p.ID,
 	)
 	return err
 }

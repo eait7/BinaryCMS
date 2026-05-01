@@ -142,10 +142,22 @@
 
       <div class="page-wrapper {{ if .Page.FullWidth }}full-width{{ end }}">
         <div class="{{ if .Page.FullWidth }}container-fluid px-0{{ else }}container-xl{{ end }}" {{ if not .Page.FullWidth }}style="max-width: 800px;"{{ end }}>
+          <!-- Breadcrumbs -->
+          {{ if not .Page.HideBreadcrumbs }}
+          <nav aria-label="breadcrumb" style="padding: 1rem 0 0;">
+            <ol style="list-style:none;display:flex;gap:0.5rem;padding:0;margin:0 0 0.5rem;font-size:0.85rem;">
+              <li><a href="/" style="color:#64748b;text-decoration:none;">Home</a></li>
+              <li style="color:#cbd5e1;">›</li>
+              <li style="color:#1e293b;font-weight:600;">{{ .Page.Title }}</li>
+            </ol>
+          </nav>
+          {{ end }}
           <!-- Article Header -->
+          {{ if not .Page.HideTitle }}
           <header class="article-header">
             <h1 class="article-title">{{ .Page.Title }}</h1>
           </header>
+          {{ end }}
 
           <!-- Article Content -->
           <article class="article-content">

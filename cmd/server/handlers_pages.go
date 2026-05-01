@@ -61,6 +61,8 @@ func handleNewPage(pm *pluginmanager.Manager) http.HandlerFunc {
 				FeaturedImage:   r.FormValue("featured_image"),
 				RequiredRole:    requiredRoleStr,
 				FullWidth:       r.FormValue("full_width") == "on",
+				HideTitle:       r.FormValue("hide_title") == "on",
+				HideBreadcrumbs: r.FormValue("hide_breadcrumbs") == "on",
 			}
 			models.CreatePage(page)
 			http.Redirect(w, r, "/admin/pages", http.StatusFound)
@@ -117,6 +119,8 @@ func handleEditPage(pm *pluginmanager.Manager) http.HandlerFunc {
 				FeaturedImage:   r.FormValue("featured_image"),
 				RequiredRole:    requiredRoleStr,
 				FullWidth:       r.FormValue("full_width") == "on",
+				HideTitle:       r.FormValue("hide_title") == "on",
+				HideBreadcrumbs: r.FormValue("hide_breadcrumbs") == "on",
 			}
 			models.UpdatePage(page)
 			http.Redirect(w, r, "/admin/pages", http.StatusSeeOther)
