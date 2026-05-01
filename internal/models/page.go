@@ -111,7 +111,31 @@ func CreatePage(p Page) error {
 
 func GetPageByID(id int) (*Page, error) {
 	row := db.DB.QueryRow("SELECT "+pageSelectColumns+" FROM pages WHERE id = ?", id)
-	return scanPage(row)
+	p, err := scanPage(row)
+	if err != nil {
+		return nil, err
+	}
+
+	var showInMenu sql.NullBool
+	var menuOrder sql.NullInt64
+	var authorID sql.NullInt64
+	var fullWidth sql.NullBool
+	db.DB.QueryRow("SELECT show_in_menu, menu_order, author_id, full_width FROM pages WHERE id = ?", p.ID).
+		Scan(&showInMenu, &menuOrder, &authorID, &fullWidth)
+	if showInMenu.Valid {
+		p.ShowInMenu = showInMenu.Bool
+	}
+	if menuOrder.Valid {
+		p.MenuOrder = int(menuOrder.Int64)
+	}
+	if authorID.Valid {
+		p.AuthorID = int(authorID.Int64)
+	}
+	if fullWidth.Valid {
+		p.FullWidth = fullWidth.Bool
+	}
+
+	return p, nil
 }
 
 func GetPageBySlug(slug string) (*Page, error) {
