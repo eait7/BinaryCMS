@@ -107,9 +107,23 @@
             ] },
             assetManager: {
               upload: '/admin/media/upload',
-              uploadName: 'file',
+              uploadName: 'files[]',
               assets: [],
               autoAdd: true,
+              uploadFile: function(e) {
+                var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+                var formData = new FormData();
+                for (var i = 0; i < files.length; i++) {
+                  formData.append('files[]', files[i]);
+                }
+                fetch('/admin/media/upload', { method: 'POST', body: formData })
+                  .then(r => r.json())
+                  .then(result => {
+                    if (result.data) {
+                      result.data.forEach(url => editorTools.AssetManager.add(url));
+                    }
+                  });
+              }
             },
             styleManager: {
               sectors: [
@@ -156,7 +170,7 @@
                   content: '<section style="padding:5rem 2rem;background:linear-gradient(135deg,#206bc4,#1a1a2e);text-align:center;color:white;"><h2 style="font-size:2.5rem;font-weight:800;margin-bottom:1rem;">Ready to Get Started?</h2><p style="font-size:1.2rem;opacity:0.85;max-width:500px;margin:0 auto 2rem;">Join thousands of happy customers and start building your dream today.</p><a href="#" style="display:inline-block;padding:16px 40px;background:white;color:#206bc4;border-radius:50px;font-weight:700;text-decoration:none;font-size:1.1rem;margin-right:1rem;">Start Free Trial</a><a href="#" style="display:inline-block;padding:16px 40px;background:transparent;color:white;border-radius:50px;font-weight:700;text-decoration:none;font-size:1.1rem;border:2px solid rgba(255,255,255,0.4);">Learn More</a></section>' },
 
                 { id: 'image-gallery', label: '🖼️ Gallery', category: 'Components',
-                  content: '<section style="padding:4rem 2rem;"><h2 style="text-align:center;font-weight:800;font-size:2.5rem;margin-bottom:3rem;">Gallery</h2><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;max-width:1200px;margin:0 auto;"><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#e2e8f0,#cbd5e1);overflow:hidden;"></div><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);overflow:hidden;"></div><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);overflow:hidden;"></div><div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);overflow:hidden;"></div></div></section>' },
+                  content: '<section style="padding:4rem 2rem;"><h2 style="text-align:center;font-weight:800;font-size:2.5rem;margin-bottom:3rem;">Gallery</h2><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;max-width:1200px;margin:0 auto;"><img src="https://placehold.co/400x400/e2e8f0/64748b?text=Image+1" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;" alt="Gallery image 1"><img src="https://placehold.co/400x400/dbeafe/3b82f6?text=Image+2" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;" alt="Gallery image 2"><img src="https://placehold.co/400x400/fef3c7/d97706?text=Image+3" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;" alt="Gallery image 3"><img src="https://placehold.co/400x400/dcfce7/16a34a?text=Image+4" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;" alt="Gallery image 4"></div></section>' },
 
                 { id: 'text-block', label: '📝 Text Block', category: 'Basic',
                   content: '<div style="padding:2rem;max-width:800px;margin:0 auto;"><h2 style="font-weight:700;margin-bottom:1rem;">Section Title</h2><p style="line-height:1.8;color:#475569;">Write your content here. This is a simple text block that you can use for any section of your page. Edit the text directly or use the style panel to customize colors, fonts, and spacing.</p></div>' },
@@ -221,6 +235,13 @@
             }
           });
           editorTools.setComponents(rawVal);
+
+          // Load existing media library into Asset Manager
+          fetch('/admin/media/json').then(r => r.json()).then(result => {
+            if (result.data) {
+              result.data.forEach(url => editorTools.AssetManager.add(url));
+            }
+          }).catch(() => {});
           
           let activeTab = 'basic';
           

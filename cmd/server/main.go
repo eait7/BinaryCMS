@@ -149,6 +149,7 @@ func main() {
 
 		// Media
 		r.Get("/media", handleMediaLibrary(pm))
+		r.Get("/media/json", handleMediaJSON())
 		r.Post("/media/upload", handleMediaUpload(pm))
 		r.Post("/media/delete/{filename}", handleMediaDelete(pm))
 
