@@ -19,6 +19,7 @@
     <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
     <!-- Tabler CSS inside frontend fallback -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link href="/static/vb-responsive.css" rel="stylesheet"/>
     {{ $fh := "Inter" }}{{ if .Settings.font_heading }}{{ $fh = .Settings.font_heading }}{{ end }}{{ $fb := "Inter" }}{{ if .Settings.font_body }}{{ $fb = .Settings.font_body }}{{ end }}
     <span id="cms-font-data" data-fh="{{ $fh }}" data-fb="{{ $fb }}" style="display:none;"></span>
     <script>
