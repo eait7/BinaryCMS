@@ -14,5 +14,4 @@ if [ -f "$STAGED" ]; then
         echo "⚠️  Failed to apply staged update, starting with existing binary."
     fi
 fi
-
-exec gosu gocms "$BINARY" "$@"
+exec "$BINARY" "$@"

@@ -18,7 +18,7 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 # Ensure SQLite runtime binaries exist
-RUN apt-get update && apt-get install -y ca-certificates libsqlite3-0 gosu && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates libsqlite3-0 && rm -rf /var/lib/apt/lists/*
 
 # Create restricted system user
 RUN groupadd -r gocms && useradd --no-log-init -r -g gocms gocms
@@ -34,6 +34,9 @@ COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
 RUN mkdir -p /app/uploads /app/data /app/plugins /app/plugins_data \
     && chown -R gocms:gocms /app \
     && chmod +x /app/entrypoint.sh /app/gocms_server
+
+# Switch to non-root user
+USER gocms
 
 EXPOSE 8080
 ENTRYPOINT ["/app/entrypoint.sh"]
