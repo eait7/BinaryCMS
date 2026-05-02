@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    {{ if .Settings.site_favicon_url }}
+    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+    {{ else if .Settings.site_favicon_icon }}
+    <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
+    {{ end }}
     <title>My Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet"/>
     <style>
