@@ -78,7 +78,13 @@ func (m *Manager) LoadPlugins(dir string) error {
 		}
 	}
 	if b, err := json.MarshalIndent(allActive, "", "  "); err == nil {
-		os.WriteFile("backend_menus_available.json", b, 0644)
+		menuPath := "backend_menus_available.json"
+		if _, err := os.Stat("/app/data"); err == nil {
+			menuPath = "/app/data/backend_menus_available.json"
+		} else if _, err := os.Stat("data"); err == nil {
+			menuPath = "data/backend_menus_available.json"
+		}
+		os.WriteFile(menuPath, b, 0644)
 	}
 
 	return nil

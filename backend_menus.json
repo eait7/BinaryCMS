@@ -6,71 +6,37 @@
     "Children": null
   },
   {
-    "Label": "Appearance",
-    "URL": "/admin/themes",
-    "Icon": "palette",
+    "Label": "Content",
+    "URL": "",
+    "Icon": "file-text",
     "Children": [
-      {
-        "Label": "Themes",
-        "URL": "/admin/themes",
-        "Icon": "palette",
-        "Children": null
-      },
-      {
-        "Label": "Pages",
-        "URL": "/admin/pages",
-        "Icon": "file-description",
-        "Children": null
-      },
-      {
-        "Label": "Tags",
-        "URL": "/admin/tags",
-        "Icon": "tags",
-        "Children": null
-      },
-      {
-        "Label": "Posts",
-        "URL": "/admin/posts",
-        "Icon": "file-text",
-        "Children": null
-      },
-      {
-        "Label": "Categories",
-        "URL": "/admin/categories",
-        "Icon": "category",
-        "Children": null
-      },
-      {
-        "Label": "Menus",
-        "URL": "/admin/menus",
-        "Icon": "list-details",
-        "Children": null
-      },
-      {
-        "Label": "Comments",
-        "URL": "/admin/comments",
-        "Icon": "message-circle",
-        "Children": null
-      },
-      {
-        "Label": "Media",
-        "URL": "/admin/media",
-        "Icon": "photo",
-        "Children": null
-      }
+      { "Label": "Posts", "URL": "/admin/posts", "Icon": "" },
+      { "Label": "Pages", "URL": "/admin/pages", "Icon": "" },
+      { "Label": "Categories", "URL": "/admin/categories", "Icon": "" },
+      { "Label": "Tags", "URL": "/admin/tags", "Icon": "" },
+      { "Label": "Comments", "URL": "/admin/comments", "Icon": "" }
     ]
   },
   {
-    "Label": "Core Settings",
-    "URL": "/admin/settings",
+    "Label": "Design & Media",
+    "URL": "",
+    "Icon": "palette",
+    "Children": [
+      { "Label": "Media", "URL": "/admin/media", "Icon": "" },
+      { "Label": "Menus", "URL": "/admin/menus", "Icon": "" },
+      { "Label": "Appearance", "URL": "/admin/themes", "Icon": "" }
+    ]
+  },
+  {
+    "Label": "System",
+    "URL": "",
     "Icon": "settings",
     "Children": [
-      {
-        "Label": "Plugins",
-        "URL": "/admin/plugins",
-        "Icon": "puzzle",
-        "Children": null
-      }
+      { "Label": "Users", "URL": "/admin/users", "Icon": "" },
+      { "Label": "Plugins", "URL": "/admin/plugins", "Icon": "" },
+      { "Label": "Plugin Store", "URL": "/admin/marketplace", "Icon": "" },
+      { "Label": "Core Settings", "URL": "/admin/settings", "Icon": "" },
+      { "Label": "AI Provider Settings", "URL": "/admin/plugin/content_ai", "Icon": "robot" }
     ]
   }
 ]

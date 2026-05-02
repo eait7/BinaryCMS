@@ -52,6 +52,7 @@
           </div>
         </div>
 
+        {{ if ne .Settings.hide_footer "true" }}
         <footer class="footer footer-transparent d-print-none mt-auto">
           <div class="container-xl">
             <div class="text-center text-muted py-3">
@@ -59,6 +60,7 @@
             </div>
           </div>
         </footer>
+        {{ end }}
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js" defer></script>

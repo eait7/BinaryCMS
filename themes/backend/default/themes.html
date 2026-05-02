@@ -152,6 +152,19 @@
                 </select>
               </div>
 
+              <h4 class="fw-bold mb-3 d-flex align-items-center">
+                <span class="badge bg-secondary-lt me-2 p-2 rounded-circle" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;">👇</span>
+                Footer Layout
+              </h4>
+              <div class="mb-4">
+                <label class="form-label small fw-semibold text-muted">Footer Visibility</label>
+                <select name="hide_footer" class="form-select form-select-sm" onchange="updatePreview()">
+                  {{ $hf := .HideFooter }}
+                  <option value="false" {{ if eq $hf "false" }}selected{{ end }}>Show Footer</option>
+                  <option value="true" {{ if eq $hf "true" }}selected{{ end }}>Hide Footer</option>
+                </select>
+              </div>
+
               <!-- Mini Live Preview -->
               <h4 class="fw-bold mb-2 d-flex align-items-center">
                 <span class="badge bg-purple-lt me-2 p-2 rounded-circle" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;">👁</span>
@@ -294,6 +307,7 @@ function updatePreview() {
   const surface = f.querySelector('[name="color_surface"]').value;
   const radius = f.querySelector('[name="border_radius"]').value;
   const navStyle = f.querySelector('[name="nav_style"]').value;
+  const hideFooter = f.querySelector('[name="hide_footer"]').value;
   const fontH = f.querySelector('[name="font_heading"]').value;
   const fontB = f.querySelector('[name="font_body"]').value;
 
@@ -323,8 +337,13 @@ function updatePreview() {
   });
 
   const footer = document.getElementById('mp-footer');
-  footer.style.background = '#1a1a2e';
-  footer.style.color = '#fff';
+  if (hideFooter === "true") {
+    footer.style.display = 'none';
+  } else {
+    footer.style.display = 'block';
+    footer.style.background = '#1a1a2e';
+    footer.style.color = '#fff';
+  }
 
   // Sync text inputs with color pickers
   f.querySelectorAll('.input-group').forEach(g => {

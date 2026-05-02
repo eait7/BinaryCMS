@@ -57,7 +57,15 @@ func getAdminMenus(pm *pluginmanager.Manager) []plugin.MenuItem {
 	}
 	menus = append(menus, pm.GetAdminMenus()...)
 
-	b, err := os.ReadFile("backend_menus.json")
+	menuPath := "data/backend_menus.json"
+	b, err := os.ReadFile(menuPath)
+	if err != nil {
+		menuPath = "backend_menus.json"
+		if _, statErr := os.Stat("/app/data"); statErr == nil {
+			menuPath = "/app/data/backend_menus.json"
+		}
+		b, err = os.ReadFile(menuPath)
+	}
 	if err == nil {
 		var layout []plugin.MenuItem
 		json.Unmarshal(b, &layout)

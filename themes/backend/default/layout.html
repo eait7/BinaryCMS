@@ -108,7 +108,7 @@
           
           <!-- Live Site Configuration Header -->
           <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
-            <a href="https://binarycms.com" target="_blank" rel="noopener" class="d-flex align-items-center text-decoration-none text-body">
+            <a href="{{ if .Settings.site_url }}{{ .Settings.site_url }}{{ else }}/{{ end }}" target="_blank" rel="noopener" class="d-flex align-items-center text-decoration-none text-body">
               {{ if .Settings.site_logo_url }}
                 <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}36{{ end }}px !important; max-height: none;" alt="{{ .Settings.site_title }}">
                 {{ if eq .Settings.logo_display_mode "logo_title" }}
