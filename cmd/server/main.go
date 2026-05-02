@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ez8/gocms/internal/auth"
+	"github.com/ez8/gocms/internal/corelock"
 	"github.com/ez8/gocms/internal/db"
 	"github.com/ez8/gocms/internal/handlers"
 	"github.com/ez8/gocms/internal/models"
@@ -24,12 +26,65 @@ var (
 )
 
 func main() {
+	// =====================
+	// Core Lock CLI Commands (must be first — before any init)
+	// =====================
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "--lock-core":
+			fmt.Println("🔒 Generating core.lock manifest...")
+			os.MkdirAll("data", 0755)
+			if err := corelock.GenerateLock(GitCommit); err != nil {
+				log.Fatalf("Failed to generate core lock: %v", err)
+			}
+			os.Exit(0)
+		case "--verify-core":
+			fmt.Println("🔍 Verifying core integrity...")
+			violations, err := corelock.VerifyLock()
+			if err != nil {
+				log.Fatalf("Verification error: %v", err)
+			}
+			if len(violations) == 0 {
+				fmt.Println("✅ Core integrity verified — all files match.")
+				os.Exit(0)
+			}
+			fmt.Printf("❌ CORE INTEGRITY VIOLATED — %d file(s) affected:\n", len(violations))
+			for _, v := range violations {
+				fmt.Printf("   ⚠ [%s] %s\n", v.Reason, v.File)
+			}
+			os.Exit(1)
+		}
+	}
+
+	// =====================
+	// Core Lock Startup Check
+	// =====================
+	if corelock.HasLockFile() {
+		if os.Getenv("GOCMS_CORE_UNLOCK") == "true" {
+			log.Println("⚠️  CORE LOCK BYPASSED — running in UNLOCK mode (GOCMS_CORE_UNLOCK=true)")
+		} else {
+			violations, err := corelock.VerifyLock()
+			if err != nil {
+				log.Fatalf("❌ Core lock verification failed: %v", err)
+			}
+			if len(violations) > 0 {
+				log.Printf("❌ CORE INTEGRITY VIOLATED — %d file(s) have been tampered with:", len(violations))
+				for _, v := range violations {
+					log.Printf("   ⚠ [%s] %s", v.Reason, v.File)
+				}
+				log.Fatal("🛑 Server startup BLOCKED. Set GOCMS_CORE_UNLOCK=true to bypass, or run --lock-core to re-lock after authorized changes.")
+			}
+			log.Println("✅ Core integrity verified — all files match core.lock")
+		}
+	}
+
 	// Pass build info to the updater
 	handlers.GitCommit = GitCommit
 	handlers.BuildTime = BuildTime
 
 	// Ensure data directory exists
 	os.MkdirAll("data", 0755)
+
 
 	// Determine Database Path based on environment
 	dbPath := "cms.db"
