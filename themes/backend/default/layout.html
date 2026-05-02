@@ -352,7 +352,7 @@
         window.installUpdate = function(url) {
           const btn = document.querySelector('#update-notification-card button');
           btn.disabled = true;
-          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Installing...';
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Downloading update...';
 
           fetch('/admin/api/updater/install', {
             method: 'POST',
@@ -360,38 +360,53 @@
             body: JSON.stringify({download_url: url})
           })
           .then(r => {
-            if(!r.ok) throw new Error("Server rejected update request");
+            if(!r.ok) {
+              return r.json().then(errData => {
+                throw new Error(errData.error || "Server rejected update request");
+              }).catch(e => { throw e; });
+            }
             return r.json();
           })
           .then(data => {
             if (data.success) {
               btn.classList.remove('btn-primary');
               btn.classList.add('btn-success');
-              btn.innerHTML = 'Restarting Server...';
+              btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Restarting server...';
               
               // Poll for server to come back up
               let attempts = 0;
               const checkAlive = setInterval(() => {
                 attempts++;
-                fetch('/admin')
+                if (attempts <= 3) {
+                  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Server restarting...';
+                }
+                fetch('/admin', { cache: 'no-store' })
                   .then(res => {
                     if (res.ok) {
                       clearInterval(checkAlive);
-                      window.location.reload();
+                      btn.innerHTML = '✅ Update complete! Reloading...';
+                      setTimeout(() => window.location.reload(), 500);
                     }
                   }).catch(e => {
                     if (attempts > 30) {
                       clearInterval(checkAlive);
-                      alert("Server took too long to reboot. Please refresh manually.");
+                      btn.innerHTML = '⚠️ Please refresh manually';
+                      btn.disabled = false;
                     }
                   });
-              }, 1000);
+              }, 2000);
             }
           })
           .catch(e => {
-            alert("Update failed: " + e.message);
-            btn.disabled = false;
-            btn.innerHTML = 'Install 1-Click Update';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-danger');
+            btn.innerHTML = '❌ ' + e.message;
+            setTimeout(() => {
+              btn.classList.remove('btn-danger');
+              btn.classList.add('btn-primary');
+              btn.disabled = false;
+              btn.innerHTML = 'Install 1-Click Update';
+            }, 5000);
           });
         };
       });

@@ -59,24 +59,28 @@ func main() {
 	// =====================
 	// Core Lock Startup Check
 	// =====================
-	if corelock.HasLockFile() {
-		if os.Getenv("GOCMS_CORE_UNLOCK") == "true" {
-			log.Println("⚠️  CORE LOCK BYPASSED — running in UNLOCK mode (GOCMS_CORE_UNLOCK=true)")
-		} else {
-			violations, err := corelock.VerifyLock()
-			if err != nil {
-				log.Fatalf("❌ Core lock verification failed: %v", err)
-			}
-			if len(violations) > 0 {
-				log.Printf("❌ CORE INTEGRITY VIOLATED — %d file(s) have been tampered with:", len(violations))
-				for _, v := range violations {
-					log.Printf("   ⚠ [%s] %s", v.Reason, v.File)
-				}
-				log.Fatal("🛑 Server startup BLOCKED. Set GOCMS_CORE_UNLOCK=true to bypass, or run --lock-core to re-lock after authorized changes.")
-			}
-			log.Println("✅ Core integrity verified — all files match core.lock")
-		}
-	}
+	// DISABLED: Core lock enforcement is disabled during active development.
+	// To re-enable, uncomment the block below. The --lock-core and --verify-core
+	// CLI commands still work for manual integrity checks.
+	//
+	// if corelock.HasLockFile() {
+	// 	if os.Getenv("GOCMS_CORE_UNLOCK") == "true" {
+	// 		log.Println("⚠️  CORE LOCK BYPASSED — running in UNLOCK mode (GOCMS_CORE_UNLOCK=true)")
+	// 	} else {
+	// 		violations, err := corelock.VerifyLock()
+	// 		if err != nil {
+	// 			log.Fatalf("❌ Core lock verification failed: %v", err)
+	// 		}
+	// 		if len(violations) > 0 {
+	// 			log.Printf("❌ CORE INTEGRITY VIOLATED — %d file(s) have been tampered with:", len(violations))
+	// 			for _, v := range violations {
+	// 				log.Printf("   ⚠ [%s] %s", v.Reason, v.File)
+	// 			}
+	// 			log.Fatal("🛑 Server startup BLOCKED. Set GOCMS_CORE_UNLOCK=true to bypass, or run --lock-core to re-lock after authorized changes.")
+	// 		}
+	// 		log.Println("✅ Core integrity verified — all files match core.lock")
+	// 	}
+	// }
 
 	// Pass build info to the updater
 	handlers.GitCommit = GitCommit

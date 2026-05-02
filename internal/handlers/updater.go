@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/ez8/gocms/internal/models"
@@ -104,12 +103,11 @@ func CheckUpdate(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// Local/development build: check if we previously installed an update
 			if installedVersion == "" {
-				// First run — check if asset is newer than 10 minutes (avoid showing on fresh CI-built installs)
+				// First run — check if asset is newer than 10 minutes
 				if assetUpdatedAt != "" {
 					assetTime, err := time.Parse(time.RFC3339, assetUpdatedAt)
 					if err == nil {
 						// Only show update if the release asset is less than 7 days old
-						// This prevents perpetual "update available" on old releases
 						if time.Since(assetTime) < 7*24*time.Hour {
 							updateAvailable = true
 						}
@@ -159,8 +157,10 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Updater: Downloading new core binary from %s", req.DownloadURL)
 	resp, err := http.Get(req.DownloadURL)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		log.Printf("Updater error: Failed to download binary: %v", err)
-		http.Error(w, `{"error": "Failed to download update"}`, http.StatusInternalServerError)
+		log.Printf("Updater error: Failed to download binary: %v (status: %d)", err, resp.StatusCode)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to download update from GitHub"})
 		return
 	}
 	defer resp.Body.Close()
@@ -169,15 +169,19 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 	out, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		log.Printf("Updater error: Failed to create temp file: %v", err)
-		http.Error(w, `{"error": "Failed to prepare update"}`, http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to prepare update file"})
 		return
 	}
-	
+
 	written, err := io.Copy(out, resp.Body)
 	out.Close()
 	if err != nil {
 		log.Printf("Updater error: Failed to write temp file: %v", err)
-		http.Error(w, `{"error": "Failed to save update"}`, http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to save update"})
 		return
 	}
 
@@ -185,33 +189,49 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 	if written < 1024*1024 {
 		os.Remove(tmpPath)
 		log.Printf("Updater error: Downloaded file too small (%d bytes), likely not a valid binary", written)
-		http.Error(w, `{"error": "Downloaded file appears invalid"}`, http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Downloaded file appears invalid (too small)"})
 		return
 	}
+
+	log.Printf("Updater: Downloaded %d bytes successfully", written)
 
 	// 2. Identify current executable path
 	exe, err := os.Executable()
 	if err != nil {
 		log.Printf("Updater error: Cannot resolve executable: %v", err)
-		http.Error(w, `{"error": "Cannot resolve executable path"}`, http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Cannot resolve current binary path"})
 		return
 	}
 
 	// 3. Hot-swap the binary
+	// First try to remove the old binary
 	if err := os.Remove(exe); err != nil && !os.IsNotExist(err) {
+		// If we can't remove, try renaming as backup
 		os.Rename(exe, exe+".old")
 	}
 
+	// Move new binary into place
 	if err := os.Rename(tmpPath, exe); err != nil {
-		// Cross-device link fails in Docker, use cp
-		exec.Command("cp", tmpPath, exe).Run()
+		// Cross-device link fails in Docker (/tmp is different filesystem), use cp
+		log.Printf("Updater: Rename failed (cross-device), falling back to cp: %v", err)
+		cpCmd := exec.Command("cp", tmpPath, exe)
+		if cpErr := cpCmd.Run(); cpErr != nil {
+			log.Printf("Updater error: cp also failed: %v", cpErr)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to replace binary"})
+			return
+		}
 		os.Remove(tmpPath)
 	}
 
 	os.Chmod(exe, 0755)
 
 	// 4. Record the installed version so we don't show the notification again
-	// Fetch the release info to get the asset timestamp
 	releaseResp, err := http.Get("https://api.github.com/repos/eait7/binarycms/releases/latest")
 	if err == nil {
 		defer releaseResp.Body.Close()
@@ -227,21 +247,19 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("Updater: Binary successfully swapped at %s (%d bytes). Triggering reboot.", exe, written)
+	log.Printf("Updater: Binary successfully swapped at %s (%d bytes). Triggering restart.", exe, written)
 
-	// Send success response before exiting
+	// 5. Send success response before restarting
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"message": "Update installed. System is restarting...",
 	})
 
-	// 5. Restart the server
+	// 6. Restart — exit cleanly and let Docker/systemd restart the process
 	go func() {
-		time.Sleep(2 * time.Second)
-		if err := syscall.Exec(exe, os.Args, os.Environ()); err != nil {
-			log.Printf("Updater: syscall.Exec failed: %v. Exiting for container restart.", err)
-			os.Exit(0) // Let Docker/systemd restart it
-		}
+		time.Sleep(1 * time.Second)
+		log.Println("Updater: Shutting down for restart...")
+		os.Exit(0) // Docker restart policy or systemd will bring us back with the new binary
 	}()
 }
