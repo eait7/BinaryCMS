@@ -1,0 +1,188 @@
+/* ============================================
+   BinaryCMS Visual Builder — Responsive CSS
+   Breakpoints: 768px (tablet), 480px (phone)
+   ============================================ */
+
+/* --- TABLET (≤ 768px) --- */
+@media (max-width: 768px) {
+
+  /* Grid collapses */
+  .vb-grid-2,
+  .vb-grid-3,
+  .vb-flip,
+  .vb-zigzag,
+  .vb-steps {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .vb-grid-4,
+  .vb-team,
+  .vb-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .vb-sidebar,
+  .vb-split {
+    grid-template-columns: 1fr !important;
+  }
+
+  .vb-footer {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Hero / heading font sizes */
+  .vb-hero h1,
+  .vb-hero > h1 {
+    font-size: 2.2rem !important;
+  }
+
+  .vb-hero h2 {
+    font-size: 2rem !important;
+  }
+
+  .vb-hero p {
+    font-size: 1.05rem !important;
+  }
+
+  .vb-heading {
+    font-size: 2rem !important;
+  }
+
+  /* Section padding reduction */
+  .vb-section {
+    padding: 3rem 1.5rem !important;
+  }
+
+  .vb-hero {
+    padding: 3.5rem 1.5rem !important;
+  }
+
+  /* Masonry gallery */
+  .vb-masonry {
+    column-count: 2 !important;
+  }
+
+  /* Pricing — remove the scale effect */
+  .vb-pricing .vb-grid-3 > *:nth-child(2) {
+    transform: none !important;
+  }
+
+  /* Typing header */
+  .vb-typing {
+    font-size: 1.8rem !important;
+  }
+
+  /* Table wrapper — horizontal scroll */
+  .vb-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vb-table-wrap table {
+    min-width: 600px;
+  }
+
+  /* Nav bar stack */
+  .vb-nav {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    text-align: center;
+  }
+
+  .vb-nav > div {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  /* Cookie banner */
+  .vb-cookie {
+    flex-direction: column !important;
+    text-align: center;
+  }
+
+  /* Marquee slow down */
+  .vb-marquee > div {
+    animation-duration: 30s !important;
+  }
+}
+
+
+/* --- PHONE (≤ 480px) --- */
+@media (max-width: 480px) {
+
+  /* Everything to single column */
+  .vb-grid-2,
+  .vb-grid-3,
+  .vb-grid-4,
+  .vb-team,
+  .vb-flip,
+  .vb-zigzag,
+  .vb-steps,
+  .vb-footer {
+    grid-template-columns: 1fr !important;
+  }
+
+  .vb-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Hero fonts smaller */
+  .vb-hero h1,
+  .vb-hero > h1 {
+    font-size: 1.8rem !important;
+  }
+
+  .vb-hero h2 {
+    font-size: 1.6rem !important;
+  }
+
+  .vb-hero p {
+    font-size: 1rem !important;
+  }
+
+  .vb-heading {
+    font-size: 1.6rem !important;
+  }
+
+  /* Section padding tighter */
+  .vb-section {
+    padding: 2rem 1rem !important;
+  }
+
+  .vb-hero {
+    padding: 2.5rem 1rem !important;
+  }
+
+  /* Masonry single column */
+  .vb-masonry {
+    column-count: 1 !important;
+  }
+
+  /* Typing header */
+  .vb-typing {
+    font-size: 1.3rem !important;
+  }
+
+  /* Stats counter numbers */
+  .vb-stats > div > div:first-child {
+    font-size: 2rem !important;
+  }
+
+  /* Marquee even slower */
+  .vb-marquee > div {
+    animation-duration: 40s !important;
+  }
+
+  /* CTA buttons stack */
+  .vb-hero a {
+    display: block !important;
+    margin: 0.5rem auto !important;
+    max-width: 280px;
+  }
+
+  /* Team member avatars smaller */
+  .vb-team > div > div:first-child {
+    width: 80px !important;
+    height: 80px !important;
+  }
+}
