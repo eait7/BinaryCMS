@@ -36,6 +36,7 @@ func handleAddMenuPage(pm *pluginmanager.Manager) http.HandlerFunc {
 			pageIDStr := r.FormValue("page_id")
 			orderStr := r.FormValue("menu_order")
 			location := r.FormValue("location")
+			openNewTab := r.FormValue("open_new_tab") == "on"
 
 			order, _ := strconv.Atoi(orderStr)
 			pageID, _ := strconv.Atoi(pageIDStr)
@@ -43,7 +44,7 @@ func handleAddMenuPage(pm *pluginmanager.Manager) http.HandlerFunc {
 			page, err := models.GetPageByID(pageID)
 			if err == nil {
 				url := "/" + page.Slug
-				models.CreateMenuItem(page.Title, url, order, location)
+				models.CreateMenuItem(page.Title, url, order, location, openNewTab)
 			}
 		}
 		http.Redirect(w, r, "/admin/menus", http.StatusFound)
@@ -57,10 +58,11 @@ func handleAddMenuLink(pm *pluginmanager.Manager) http.HandlerFunc {
 			url := r.FormValue("url")
 			orderStr := r.FormValue("menu_order")
 			location := r.FormValue("location")
+			openNewTab := r.FormValue("open_new_tab") == "on"
 
 			order, _ := strconv.Atoi(orderStr)
 			if label != "" && url != "" {
-				models.CreateMenuItem(label, url, order, location)
+				models.CreateMenuItem(label, url, order, location, openNewTab)
 			}
 		}
 		http.Redirect(w, r, "/admin/menus", http.StatusFound)
@@ -99,5 +101,27 @@ func handleReorderMenus(pm *pluginmanager.Manager) http.HandlerFunc {
 			}
 		}
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+// handleEditMenuItem allows editing a menu item's label, URL, and new-tab setting.
+func handleEditMenuItem(pm *pluginmanager.Manager) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid ID", http.StatusBadRequest)
+			return
+		}
+
+		label := r.FormValue("label")
+		url := r.FormValue("url")
+		openNewTab := r.FormValue("open_new_tab") == "on"
+
+		if label != "" && url != "" {
+			models.UpdateMenuItem(id, label, url, openNewTab)
+		}
+
+		http.Redirect(w, r, "/admin/menus", http.StatusFound)
 	}
 }

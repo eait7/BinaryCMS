@@ -289,6 +289,7 @@ func safeAlterColumns(db *sql.DB) {
 		// Menu columns
 		`ALTER TABLE menu_items ADD COLUMN parent_id INTEGER DEFAULT 0`,
 		`ALTER TABLE menu_items ADD COLUMN location TEXT DEFAULT 'header'`,
+		`ALTER TABLE menu_items ADD COLUMN open_new_tab BOOLEAN DEFAULT 0`,
 
 		// User management columns
 		`ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''`,

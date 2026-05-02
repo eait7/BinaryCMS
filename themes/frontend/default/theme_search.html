@@ -20,7 +20,18 @@
           </h1>
           <nav class="navbar-nav ms-auto">
             {{ range .MenuItems }}
-            <a class="nav-link" href="{{ .URL }}">{{ .Label }}</a>
+              {{ if .Children }}
+              <div class="nav-item dropdown">
+                <a href="{{ .URL }}" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">{{ .Label }}</a>
+                <div class="dropdown-menu dropdown-menu-end">
+                  {{ range .Children }}
+                  <a href="{{ .URL }}" class="dropdown-item"{{ if .OpenNewTab }} target="_blank"{{ end }}>{{ .Label }}</a>
+                  {{ end }}
+                </div>
+              </div>
+              {{ else }}
+              <a class="nav-link" href="{{ .URL }}"{{ if .OpenNewTab }} target="_blank"{{ end }}>{{ .Label }}</a>
+              {{ end }}
             {{ end }}
           </nav>
         </div>
