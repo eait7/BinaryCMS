@@ -3,6 +3,11 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  {{ if .Settings.site_favicon_url }}
+  <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+  {{ else if .Settings.site_favicon_icon }}
+  <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
+  {{ end }}
   {{ if .Page.MetaDescription }}<meta name="description" content="{{ .Page.MetaDescription }}"/>{{ end }}
   <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
   <!-- Optional Tailwind CSS if desired, or Tabler core. We've been using Tabler. -->
