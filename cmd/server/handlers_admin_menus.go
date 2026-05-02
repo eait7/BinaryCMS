@@ -68,7 +68,14 @@ func handleSaveAdminMenuArrangement(pm *pluginmanager.Manager) http.HandlerFunc 
 			return
 		}
 
-		if err := os.WriteFile("backend_menus.json", b, 0644); err != nil {
+		menuPath := "backend_menus.json"
+		if _, err := os.Stat("/app/data"); err == nil {
+			menuPath = "/app/data/backend_menus.json"
+		} else if _, err := os.Stat("data"); err == nil {
+			menuPath = "data/backend_menus.json"
+		}
+
+		if err := os.WriteFile(menuPath, b, 0644); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to write file: " + err.Error()})
@@ -86,7 +93,13 @@ func handleSaveAdminMenuArrangement(pm *pluginmanager.Manager) http.HandlerFunc 
 // handleResetAdminMenuArrangement removes the custom layout, reverting to defaults.
 func handleResetAdminMenuArrangement(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		os.Remove("backend_menus.json")
+		menuPath := "backend_menus.json"
+		if _, err := os.Stat("/app/data"); err == nil {
+			menuPath = "/app/data/backend_menus.json"
+		} else if _, err := os.Stat("data"); err == nil {
+			menuPath = "data/backend_menus.json"
+		}
+		os.Remove(menuPath)
 		theme.InvalidateCache()
 
 		w.Header().Set("Content-Type", "application/json")

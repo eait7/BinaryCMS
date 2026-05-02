@@ -137,7 +137,7 @@ func isRateLimited(ip string) bool {
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	ip := r.RemoteAddr
 	if isRateLimited(ip) {
-		http.Error(w, "Too many login attempts. Please try again later.", http.StatusTooManyRequests)
+		renderLoginError(w, "Too many login attempts. Please try again later.", http.StatusTooManyRequests)
 		return
 	}
 
@@ -146,14 +146,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Basic input validation
 	if username == "" || password == "" {
-		http.Error(w, "Username and password are required", http.StatusBadRequest)
+		renderLoginError(w, "Username and password are required", http.StatusBadRequest)
 		return
 	}
 
 	// Sanitize username - only allow alphanumeric, underscore, hyphen, dot
 	validUsername := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 	if !validUsername.MatchString(username) {
-		http.Error(w, "Invalid username format", http.StatusBadRequest)
+		renderLoginError(w, "Invalid username format", http.StatusBadRequest)
 		return
 	}
 
@@ -177,7 +177,17 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Record failed attempt
 	loginAttempts[ip] = append(loginAttempts[ip], time.Now())
-	http.Error(w, "Forbidden - Incorrect Username or Password", http.StatusForbidden)
+	renderLoginError(w, "Forbidden - Incorrect Username or Password", http.StatusForbidden)
+}
+
+func renderLoginError(w http.ResponseWriter, errMsg string, statusCode int) {
+	w.WriteHeader(statusCode)
+	t, err := template.ParseFiles(theme.GetBackendPath("login.html"))
+	if err != nil {
+		http.Error(w, errMsg, statusCode)
+		return
+	}
+	t.Execute(w, map[string]interface{}{"Error": errMsg})
 }
 
 // SetSession creates an authenticated session for a user (used by registration auto-login).

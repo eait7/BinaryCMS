@@ -69,7 +69,7 @@ func handleThemes(pm *pluginmanager.Manager) http.HandlerFunc {
 					"color_text", "color_background", "color_surface",
 					"font_heading", "font_body",
 					"spacing_section", "spacing_card", "border_radius",
-					"nav_style", "nav_position",
+					"nav_style", "nav_position", "hide_footer",
 				}
 				for _, field := range customizerFields {
 					val := r.FormValue(field)
@@ -143,6 +143,7 @@ func handleThemes(pm *pluginmanager.Manager) http.HandlerFunc {
 			"BorderRadius":   getS("border_radius", "0.75"),
 			"NavStyle":       getS("nav_style", "glassmorphic"),
 			"NavPosition":    getS("nav_position", "fixed"),
+			"HideFooter":     getS("hide_footer", "false"),
 			"FrontendThemes": getAvailableThemes("frontend"),
 			"BackendThemes":  getAvailableThemes("backend"),
 		}

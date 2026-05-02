@@ -4,7 +4,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>Go CMS - Login</title>
+    <title>BinaryCMS - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
     <style>
       @import url('https://rsms.me/inter/inter.css');
@@ -24,8 +24,13 @@
     <div class="page page-center">
       <div class="container container-tight py-4">
         <div class="text-center mb-4">
-          <a href="." class="navbar-brand navbar-brand-autodark"><img src="https://api.dicebear.com/9.x/avataaars/svg?seed=GoCMS" height="36" alt=""> Go CMS</a>
+          <a href="." class="navbar-brand navbar-brand-autodark"><img src="https://binarycms.com/uploads/BinaryCMS88.png" height="36" alt=""> BinaryCMS</a>
         </div>
+        {{ if .Error }}
+        <div class="alert alert-danger" role="alert">
+          {{ .Error }}
+        </div>
+        {{ end }}
         <form class="card card-md" action="/login" method="POST" autocomplete="off" novalidate>
           <div class="card-body">
             <h2 class="card-title text-center mb-4">Login to your account</h2>

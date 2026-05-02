@@ -31,8 +31,16 @@ func main() {
 	// Ensure data directory exists
 	os.MkdirAll("data", 0755)
 
-	// Initialize Database in the persistent volume
-	err := db.Init("data/cms.db")
+	// Determine Database Path based on environment
+	dbPath := "cms.db"
+	if _, err := os.Stat("/app/data"); err == nil {
+		dbPath = "/app/data/cms.db"
+	}
+	if envDbPath := os.Getenv("DB_PATH"); envDbPath != "" {
+		dbPath = envDbPath
+	}
+
+	err := db.Init(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}

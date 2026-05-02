@@ -166,6 +166,7 @@
         </div>
 
         <!-- Premium Footer -->
+        {{ if ne .Settings.hide_footer "true" }}
         <footer class="premium-footer pb-4 mt-auto">
           <div class="container-xl">
             <div class="row g-5 mb-5">
@@ -222,6 +223,7 @@
             </div>
           </div>
         </footer>
+        {{ end }}
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
