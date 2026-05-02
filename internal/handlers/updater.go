@@ -196,51 +196,45 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Updater: Downloaded %d bytes successfully", written)
 
-	// 2. Identify current executable path
-	exe, err := os.Executable()
-	if err != nil {
-		log.Printf("Updater error: Cannot resolve executable: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Cannot resolve current binary path"})
-		return
+	// 3. Stage the new binary for next restart
+	// Linux prevents overwriting a running binary ("text file busy"), so we save
+	// the update to data/gocms_server_next. The entrypoint.sh wrapper applies it
+	// on the next container restart.
+	stagedPath := "data/gocms_server_next"
+	if err := os.Rename(tmpPath, stagedPath); err != nil {
+		// Cross-device: /tmp may be a different filesystem
+		log.Printf("Updater: Rename to staged path failed, using file copy: %v", err)
+		srcFile, err := os.Open(tmpPath)
+		if err != nil {
+			log.Printf("Updater error: Cannot open temp file: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to stage update"})
+			return
+		}
+		dstFile, err := os.OpenFile(stagedPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
+			srcFile.Close()
+			log.Printf("Updater error: Cannot create staged file: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Cannot write to data directory"})
+			return
+		}
+		_, err = io.Copy(dstFile, srcFile)
+		srcFile.Close()
+		dstFile.Close()
+		os.Remove(tmpPath)
+		if err != nil {
+			log.Printf("Updater error: Failed to copy to staged path: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to stage update file"})
+			return
+		}
 	}
-
-	// 3. Overwrite the current binary in-place
-	// In Docker, the /app/ directory is owned by root so we can't remove/rename files.
-	// But since the binary file itself is owned by gocms, we can overwrite its contents directly.
-	src, err := os.Open(tmpPath)
-	if err != nil {
-		log.Printf("Updater error: Cannot open downloaded file: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Cannot read downloaded update"})
-		return
-	}
-	defer src.Close()
-
-	dst, err := os.OpenFile(exe, os.O_WRONLY|os.O_TRUNC, 0755)
-	if err != nil {
-		log.Printf("Updater error: Cannot open executable for writing: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Cannot write to binary (permission denied)"})
-		return
-	}
-
-	copied, err := io.Copy(dst, src)
-	dst.Close()
-	if err != nil {
-		log.Printf("Updater error: Failed to overwrite binary: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed writing update to binary"})
-		return
-	}
-
-	os.Remove(tmpPath)
-	os.Chmod(exe, 0755)
-	log.Printf("Updater: Overwrote binary at %s (%d bytes)", exe, copied)
+	os.Chmod(stagedPath, 0755)
+	log.Printf("Updater: Staged new binary at %s (%d bytes)", stagedPath, written)
 
 	// 4. Record the installed version so we don't show the notification again
 	releaseResp, err := http.Get("https://api.github.com/repos/eait7/binarycms/releases/latest")
@@ -258,7 +252,7 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("Updater: Binary successfully swapped at %s (%d bytes). Triggering restart.", exe, written)
+	log.Printf("Updater: Binary successfully staged at %s (%d bytes). Triggering restart.", stagedPath, written)
 
 	// 5. Send success response before restarting
 	w.Header().Set("Content-Type", "application/json")

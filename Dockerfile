@@ -18,22 +18,22 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 # Ensure SQLite runtime binaries exist
-RUN apt-get update && apt-get install -y ca-certificates libsqlite3-0 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates libsqlite3-0 gosu && rm -rf /var/lib/apt/lists/*
 
 # Create restricted system user
 RUN groupadd -r gocms && useradd --no-log-init -r -g gocms gocms
 
-# Extract compiled server wrapper
+# Extract compiled server and assets
 COPY --from=builder /app/gocms_server /app/gocms_server
 COPY --from=builder /app/themes /app/themes
 COPY --from=builder /app/static /app/static
+COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
 
-# Construct mapped persistence layers cleanly and set ownership
+# Construct mapped persistence layers and set full ownership to gocms
+# gocms must own /app so the self-updater can replace the binary
 RUN mkdir -p /app/uploads /app/data /app/plugins /app/plugins_data \
-    && chown -R gocms:gocms /app/uploads /app/data /app/plugins /app/plugins_data /app/themes /app/gocms_server
-
-# Switch to non-root user
-USER gocms
+    && chown -R gocms:gocms /app \
+    && chmod +x /app/entrypoint.sh /app/gocms_server
 
 EXPOSE 8080
-ENTRYPOINT ["/app/gocms_server"]
+ENTRYPOINT ["/app/entrypoint.sh"]
