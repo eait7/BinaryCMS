@@ -102,6 +102,28 @@
       .footer-title { font-size: 0.875rem; font-weight: 700; font-family: var(--cms-font-heading); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
       .footer-link { color: var(--cms-secondary); text-decoration: none; transition: color 0.2s; font-weight: 500; }
       .footer-link:hover { color: var(--cms-primary); }
+
+      /* Dropdown Menus */
+      @media (min-width: 768px) {
+        .navbar .dropdown:hover > .dropdown-menu { display: block; margin-top: 0; }
+      }
+      .dropdown-menu {
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+        border-radius: var(--cms-radius, 0.75rem);
+        padding: 0.5rem 0;
+        min-width: 200px;
+        animation: cmsFadeDropdown 0.2s ease;
+      }
+      @keyframes cmsFadeDropdown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+      .dropdown-item {
+        padding: 0.6rem 1.25rem;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.15s ease;
+      }
+      .dropdown-item:hover { background: var(--cms-primary, #206bc4); color: white; }
+      .dropdown-toggle::after { margin-left: 0.35em; vertical-align: 0.15em; }
     </style>
   </head>
   <body>
@@ -134,7 +156,18 @@
             <div class="navbar-nav ms-auto flex-row align-items-center">
               <a href="/" class="nav-link px-3">Home</a>
               {{ range .MenuItems }}
-              <a href="{{ .URL }}" class="nav-link px-3">{{ .Label }}</a>
+                {{ if .Children }}
+                <div class="nav-item dropdown">
+                  <a href="{{ .URL }}" class="nav-link dropdown-toggle px-3" data-bs-toggle="dropdown" aria-expanded="false">{{ .Label }}</a>
+                  <div class="dropdown-menu dropdown-menu-end animate-dropdown">
+                    {{ range .Children }}
+                    <a href="{{ .URL }}" class="dropdown-item"{{ if .OpenNewTab }} target="_blank" rel="noopener"{{ end }}>{{ .Label }}{{ if .OpenNewTab }} <small class="ms-1 text-muted">↗</small>{{ end }}</a>
+                    {{ end }}
+                  </div>
+                </div>
+                {{ else }}
+                <a href="{{ .URL }}" class="nav-link px-3"{{ if .OpenNewTab }} target="_blank" rel="noopener"{{ end }}>{{ .Label }}</a>
+                {{ end }}
               {{ end }}
             </div>
           </div>

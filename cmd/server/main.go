@@ -222,6 +222,7 @@ func main() {
 		r.Post("/menus/add_link", handleAddMenuLink(pm))
 		r.Post("/menus/reorder", handleReorderMenus(pm))
 		r.Post("/menus/delete/{id}", handleDeleteMenu(pm))
+		r.Post("/menus/edit/{id}", handleEditMenuItem(pm))
 
 		// Admin Menu Arrangement (navbar drag-and-drop)
 		r.Get("/arrange-menus", handleAdminMenuArrange(pm))
