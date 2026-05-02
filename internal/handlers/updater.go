@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -207,29 +206,41 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Hot-swap the binary
-	// First try to remove the old binary
-	if err := os.Remove(exe); err != nil && !os.IsNotExist(err) {
-		// If we can't remove, try renaming as backup
-		os.Rename(exe, exe+".old")
+	// 3. Overwrite the current binary in-place
+	// In Docker, the /app/ directory is owned by root so we can't remove/rename files.
+	// But since the binary file itself is owned by gocms, we can overwrite its contents directly.
+	src, err := os.Open(tmpPath)
+	if err != nil {
+		log.Printf("Updater error: Cannot open downloaded file: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Cannot read downloaded update"})
+		return
+	}
+	defer src.Close()
+
+	dst, err := os.OpenFile(exe, os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		log.Printf("Updater error: Cannot open executable for writing: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Cannot write to binary (permission denied)"})
+		return
 	}
 
-	// Move new binary into place
-	if err := os.Rename(tmpPath, exe); err != nil {
-		// Cross-device link fails in Docker (/tmp is different filesystem), use cp
-		log.Printf("Updater: Rename failed (cross-device), falling back to cp: %v", err)
-		cpCmd := exec.Command("cp", tmpPath, exe)
-		if cpErr := cpCmd.Run(); cpErr != nil {
-			log.Printf("Updater error: cp also failed: %v", cpErr)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to replace binary"})
-			return
-		}
-		os.Remove(tmpPath)
+	copied, err := io.Copy(dst, src)
+	dst.Close()
+	if err != nil {
+		log.Printf("Updater error: Failed to overwrite binary: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed writing update to binary"})
+		return
 	}
 
+	os.Remove(tmpPath)
 	os.Chmod(exe, 0755)
+	log.Printf("Updater: Overwrote binary at %s (%d bytes)", exe, copied)
 
 	// 4. Record the installed version so we don't show the notification again
 	releaseResp, err := http.Get("https://api.github.com/repos/eait7/binarycms/releases/latest")
