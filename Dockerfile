@@ -30,7 +30,7 @@ COPY --from=builder /app/static /app/static
 
 # Construct mapped persistence layers cleanly and set ownership
 RUN mkdir -p /app/uploads /app/data /app/plugins /app/plugins_data \
-    && chown -R gocms:gocms /app/uploads /app/data /app/plugins /app/plugins_data /app/themes
+    && chown -R gocms:gocms /app/uploads /app/data /app/plugins /app/plugins_data /app/themes /app/gocms_server
 
 # Switch to non-root user
 USER gocms
