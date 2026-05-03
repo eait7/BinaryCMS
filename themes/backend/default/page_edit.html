@@ -310,7 +310,49 @@
               ]
             }
           });
-          editorTools.setComponents(rawVal);
+          // Extract <style> blocks and inject into canvas iframe natively (bypasses GrapesJS CSS parser which strips var(), @keyframes, etc.)
+          function injectCssIntoCanvas(css) {
+              var doc = editorTools.Canvas.getDocument();
+              if (doc && doc.head) {
+                  // Remove any previously injected custom style
+                  var old = doc.getElementById('cms-custom-css');
+                  if (old) old.remove();
+                  var style = doc.createElement('style');
+                  style.id = 'cms-custom-css';
+                  style.innerHTML = css;
+                  doc.head.appendChild(style);
+              }
+          }
+
+          function loadContentIntoEditor(raw) {
+              var css = '';
+              var styleRe = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+              var m;
+              while ((m = styleRe.exec(raw)) !== null) { css += m[1] + '\n'; }
+              var html = raw.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').trim();
+              // Force animation-hidden elements visible in editor canvas
+              css += '\n.br, [data-aos], .fade-in, .opacity-0 { opacity: 1 !important; transform: none !important; visibility: visible !important; }\n';
+              editorTools.setComponents(html);
+              // Inject raw CSS into iframe after a short delay to ensure canvas is ready
+              setTimeout(function() { injectCssIntoCanvas(css); }, 500);
+          }
+
+          loadContentIntoEditor(rawVal);
+
+          // Also re-inject on any canvas frame reload
+          editorTools.on('canvas:frame:load', function() {
+              var doc = editorTools.Canvas.getDocument();
+              var existing = doc && doc.getElementById('cms-custom-css');
+              if (!existing) {
+                  // Re-extract and inject
+                  var css = '';
+                  var styleRe = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+                  var m;
+                  while ((m = styleRe.exec(rawVal)) !== null) { css += m[1] + '\n'; }
+                  css += '\n.br, [data-aos], .fade-in, .opacity-0 { opacity: 1 !important; transform: none !important; visibility: visible !important; }\n';
+                  injectCssIntoCanvas(css);
+              }
+          });
 
           // Load existing media library into Asset Manager
           fetch('/admin/media/json').then(r => r.json()).then(result => {
@@ -326,7 +368,7 @@
              el.addEventListener('shown.bs.tab', event => {
                 const target = event.target.getAttribute('href');
                 if (target === '#editor-visual' && activeTab === 'basic') {
-                   editorTools.setComponents(easymde.value());
+                   loadContentIntoEditor(easymde.value());
                    activeTab = 'visual';
                 } else if (target === '#editor-basic' && activeTab === 'visual') {
                    const html = editorTools.getHtml();
