@@ -29,7 +29,8 @@ func (p *AnalyticsPlugin) HookBeforeFrontPageRender(content string) string {
 	(function() {
 		try {
 			var area = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
-			fetch('/api/plugin/advanced_analytics/track?area=' + encodeURIComponent(area), {
+			var pageUrl = window.location.pathname;
+			fetch('/api/plugin/advanced_analytics/track?area=' + encodeURIComponent(area) + '&page=' + encodeURIComponent(pageUrl), {
 				method: 'GET',
 				cache: 'no-cache'
 			});
@@ -100,13 +101,15 @@ func (p *AnalyticsPlugin) HookAdminRoute(route string) string {
 			area := q.Get("area")
 			ip := q.Get("_client_ip")
 			ua := q.Get("_user_agent")
+			pageUrl := q.Get("page")
+			if pageUrl == "" { pageUrl = "/" }
 			now := time.Now().UTC().Format(time.RFC3339)
 
 			osName, browserName := parseUserAgent(ua)
 			if area == "" { area = "Unknown" }
 
-			_, err = p.db.Exec(`INSERT INTO advanced_visits (time, area, os, browser, ip, user_agent) VALUES (?, ?, ?, ?, ?, ?)`, 
-				now, area, osName, browserName, ip, ua)
+			_, err = p.db.Exec(`INSERT INTO advanced_visits (time, area, os, browser, ip, user_agent, page_url) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+				now, area, osName, browserName, ip, ua, pageUrl)
 			if err != nil {
 				log.Println("Advanced Analytics DB Error:", err)
 			}
@@ -232,24 +235,77 @@ func (p *AnalyticsPlugin) renderDashboard(dtRange string) string {
 	rowsTrend.Close()
 
 	// 6. Recent Detailed Log Table
-	rowsLog, _ := p.db.Query(fmt.Sprintf("SELECT time, area, os, browser, ip FROM advanced_visits WHERE time >= %s ORDER BY time DESC LIMIT 25", timeConstraint))
-	var tRows string
+	rowsLog, _ := p.db.Query(fmt.Sprintf("SELECT time, area, os, browser, ip, page_url FROM advanced_visits WHERE time >= %s ORDER BY time DESC LIMIT 200", timeConstraint))
+	
+	type visitGroup struct {
+		LatestTime  string
+		Area        string
+		OSVal       string
+		Browser     string
+		IP          string
+		Pages       []string
+	}
+	var groups []*visitGroup
+	groupMap := make(map[string]*visitGroup)
+
 	for rowsLog.Next() {
 		var tm, area, osVal, browser, ip string
-		rowsLog.Scan(&tm, &area, &osVal, &browser, &ip)
+		var pageUrl sql.NullString
+		rowsLog.Scan(&tm, &area, &osVal, &browser, &ip, &pageUrl)
 		
-		pdTimestamp, _ := time.Parse(time.RFC3339, tm)
+		pUrl := pageUrl.String
+		if pUrl == "" { pUrl = "/" }
+
+		if g, exists := groupMap[ip]; exists {
+			g.Pages = append(g.Pages, pUrl)
+		} else {
+			g := &visitGroup{
+				LatestTime: tm,
+				Area:       area,
+				OSVal:      osVal,
+				Browser:    browser,
+				IP:         ip,
+				Pages:      []string{pUrl},
+			}
+			groups = append(groups, g)
+			groupMap[ip] = g
+		}
+	}
+	rowsLog.Close()
+
+	var tRows string
+	for _, g := range groups {
+		pdTimestamp, _ := time.Parse(time.RFC3339, g.LatestTime)
+		
+		pageHtml := ""
+		if len(g.Pages) == 1 {
+			pageHtml = fmt.Sprintf(`<a href="%s" target="_blank" class="text-reset">%s</a>`, g.Pages[0], g.Pages[0])
+		} else {
+			listItems := ""
+			for _, p := range g.Pages {
+				listItems += fmt.Sprintf(`<li><a class="dropdown-item" href="%s" target="_blank">%s</a></li>`, p, p)
+			}
+			pageHtml = fmt.Sprintf(`
+			<div class="dropdown">
+				<button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">%d Pages Viewed</button>
+				<ul class="dropdown-menu">
+					%s
+				</ul>
+			</div>`, len(g.Pages), listItems)
+		}
+
 		tRows += fmt.Sprintf(`
 		<tr>
 			<td class="text-muted">%s</td>
 			<td><strong>%s</strong></td>
+			<td>%s</td>
 			<td><span class="badge bg-blue-lt">%s</span></td>
 			<td><span class="badge bg-purple-lt">%s</span></td>
 			<td><a href="https://dnschecker.org/ip-location.php?ip=%s" target="_blank" class="text-reset">%s</a></td>
-		</tr>`, pdTimestamp.Format("Jan 02, 15:04"), area, osVal, browser, ip, ip)
+		</tr>`, pdTimestamp.Format("Jan 02, 15:04"), g.Area, pageHtml, g.OSVal, g.Browser, g.IP, g.IP)
 	}
-	rowsLog.Close()
-	if tRows == "" { tRows = `<tr><td colspan="5" class="text-center text-muted">No visits matching this timeframe.</td></tr>` }
+
+	if tRows == "" { tRows = `<tr><td colspan="6" class="text-center text-muted">No visits matching this timeframe.</td></tr>` }
 
 	// Ensure empty charts don't break JS
 	if len(trendSeries) == 0 { trendLabels = []string{`"No Data"`}; trendSeries = []string{"0"} }
@@ -288,7 +344,7 @@ func (p *AnalyticsPlugin) renderDashboard(dtRange string) string {
 			<div class="card card-sm">
 				<div class="card-body">
 					<div class="d-flex align-items-center">
-						<div class="subheader">Total Visits</div>
+						<div class="subheader">Total Page Views</div>
 					</div>
 					<div class="h1 mb-3">%d</div>
 					<div class="d-flex mb-2"><div class="text-muted">In selected timeframe</div></div>
@@ -376,6 +432,7 @@ func (p *AnalyticsPlugin) renderDashboard(dtRange string) string {
 					<tr>
 						<th>Timestamp (UTC)</th>
 						<th>Area / Timezone</th>
+						<th>Page Viewed</th>
 						<th>Device OS</th>
 						<th>Browser Engine</th>
 						<th>Remote IP Address</th>
@@ -482,6 +539,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not initialize DB:", err)
 	}
+	// Auto-migrate to add page_url if it doesn't exist
+	db.Exec(`ALTER TABLE advanced_visits ADD COLUMN page_url TEXT DEFAULT '/'`)
 
 	var pluginMap = map[string]hplugin.Plugin{
 		"cms_plugin": &plugin.CMSPluginDef{Impl: &AnalyticsPlugin{db: db}},

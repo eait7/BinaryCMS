@@ -11,3 +11,4 @@ server_local
 .DS_Store
 uploads/
 plugins_src/marketplace_hub/
+data/

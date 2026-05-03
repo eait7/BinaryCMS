@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -706,6 +707,22 @@ func handlePluginPublicRoute(pm *pluginmanager.Manager) http.HandlerFunc {
 					fullRoute += "&__signature=" + url.QueryEscape(sig)
 				}
 			}
+		}
+
+		// Natively inject IP and User Agent for plugin analytics
+		ip := r.Header.Get("X-Forwarded-For")
+		if ip == "" {
+			ip = r.RemoteAddr
+		}
+		if strings.Contains(ip, ":") {
+			ip = strings.Split(ip, ":")[0]
+		}
+		ua := r.UserAgent()
+
+		if strings.Contains(fullRoute, "?") {
+			fullRoute += fmt.Sprintf("&_client_ip=%s&_user_agent=%s", url.QueryEscape(ip), url.QueryEscape(ua))
+		} else {
+			fullRoute += fmt.Sprintf("?_client_ip=%s&_user_agent=%s", url.QueryEscape(ip), url.QueryEscape(ua))
 		}
 		html := pm.RenderAdminRoute(fullRoute)
 
