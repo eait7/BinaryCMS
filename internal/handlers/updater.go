@@ -142,11 +142,26 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Download the new binary to a temporary file
+	// 1. Determine the path of the currently running binary
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Printf("Updater error: Cannot determine executable path: %v", err)
+		http.Error(w, `{"error": "Cannot determine executable path"}`, http.StatusInternalServerError)
+		return
+	}
+	log.Printf("Updater: Current executable: %s", execPath)
+
+	// 2. Download the new binary to a temp file in the same directory as the binary
+	// (same filesystem ensures os.Rename is atomic and doesn't cross device boundaries)
+	tmpPath := execPath + ".update_tmp"
 	log.Printf("Updater: Downloading new core binary from %s", req.DownloadURL)
 	resp, err := http.Get(req.DownloadURL)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		log.Printf("Updater error: Failed to download binary: %v (status: %d)", err, resp.StatusCode)
+		statusCode := 0
+		if resp != nil {
+			statusCode = resp.StatusCode
+		}
+		log.Printf("Updater error: Failed to download binary: %v (status: %d)", err, statusCode)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to download update from GitHub"})
@@ -154,19 +169,19 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	tmpPath := "/tmp/gocms_server_update"
 	out, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
-		log.Printf("Updater error: Failed to create temp file: %v", err)
+		log.Printf("Updater error: Failed to create temp file at %s: %v", tmpPath, err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to prepare update file"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to prepare update file — check write permissions"})
 		return
 	}
 
 	written, err := io.Copy(out, resp.Body)
 	out.Close()
 	if err != nil {
+		os.Remove(tmpPath)
 		log.Printf("Updater error: Failed to write temp file: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -183,50 +198,22 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "Downloaded file appears invalid (too small)"})
 		return
 	}
+	log.Printf("Updater: Downloaded %d bytes successfully to %s", written, tmpPath)
 
-	log.Printf("Updater: Downloaded %d bytes successfully", written)
-
-	// 3. Stage the new binary for next restart
-	// Linux prevents overwriting a running binary ("text file busy"), so we save
-	// the update to data/gocms_server_next. The entrypoint.sh wrapper applies it
-	// on the next container restart.
-	stagedPath := "data/gocms_server_next"
-	if err := os.Rename(tmpPath, stagedPath); err != nil {
-		// Cross-device: /tmp may be a different filesystem
-		log.Printf("Updater: Rename to staged path failed, using file copy: %v", err)
-		srcFile, err := os.Open(tmpPath)
-		if err != nil {
-			log.Printf("Updater error: Cannot open temp file: %v", err)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to stage update"})
-			return
-		}
-		dstFile, err := os.OpenFile(stagedPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-		if err != nil {
-			srcFile.Close()
-			log.Printf("Updater error: Cannot create staged file: %v", err)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Cannot write to data directory"})
-			return
-		}
-		_, err = io.Copy(dstFile, srcFile)
-		srcFile.Close()
-		dstFile.Close()
+	// 3. Atomically rename the new binary over the current executable.
+	// On Linux, renaming onto a running binary is safe — the OS keeps the old
+	// inode mapped in memory, and only new exec() calls pick up the new file.
+	if err := os.Rename(tmpPath, execPath); err != nil {
 		os.Remove(tmpPath)
-		if err != nil {
-			log.Printf("Updater error: Failed to copy to staged path: %v", err)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to stage update file"})
-			return
-		}
+		log.Printf("Updater error: Failed to replace binary at %s: %v", execPath, err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to replace binary — permission denied. Ensure the process owns the executable file."})
+		return
 	}
-	os.Chmod(stagedPath, 0755)
-	log.Printf("Updater: Staged new binary at %s (%d bytes)", stagedPath, written)
+	log.Printf("Updater: Binary successfully replaced at %s (%d bytes).", execPath, written)
 
-	// 4. Record the installed version so we don't show the notification again
+	// 4. Record the installed version so the update notice goes away
 	releaseResp, err := http.Get("https://api.github.com/repos/eait7/binarycms/releases/latest")
 	if err == nil {
 		defer releaseResp.Body.Close()
@@ -242,8 +229,6 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("Updater: Binary successfully staged at %s (%d bytes). Triggering restart.", stagedPath, written)
-
 	// 5. Send success response before restarting
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -251,10 +236,12 @@ func InstallUpdate(w http.ResponseWriter, r *http.Request) {
 		"message": "Update installed. System is restarting...",
 	})
 
-	// 6. Restart — exit cleanly and let Docker/systemd restart the process
+	// 6. Exit cleanly — Docker's restart policy (unless-stopped) will re-launch
+	// the container, which will exec the newly placed binary directly.
 	go func() {
 		time.Sleep(1 * time.Second)
 		log.Println("Updater: Shutting down for restart...")
-		os.Exit(0) // Docker restart policy or systemd will bring us back with the new binary
+		os.Exit(0)
 	}()
 }
+
