@@ -222,6 +222,13 @@ func handleFrontendPost(pm *pluginmanager.Manager) http.HandlerFunc {
 
 	htmlContent := renderContent(post.Content)
 
+	// Calculate reading time (avg 200 words per minute)
+	wordCount := len(strings.Fields(post.Content))
+	readingTime := wordCount / 200
+	if readingTime < 1 {
+		readingTime = 1
+	}
+
 	// Load comments if enabled
 	commentsEnabled := models.GetSetting("comments_enabled") == "true"
 	var comments []models.Comment
@@ -232,6 +239,28 @@ func handleFrontendPost(pm *pluginmanager.Manager) http.HandlerFunc {
 	// Load post categories and tags
 	categories, _ := models.GetPostCategories(post.ID)
 	tags, _ := models.GetPostTags(post.ID)
+
+	// Fetch related posts from the first category
+	var relatedPosts []map[string]interface{}
+	if len(categories) > 0 {
+		catPosts, _ := models.GetPostsByCategory(categories[0].ID)
+		for _, rp := range catPosts {
+			if rp.ID != post.ID && rp.Status == "published" && len(relatedPosts) < 3 {
+				rpHTML := renderContent(rp.Content)
+				relatedPosts = append(relatedPosts, map[string]interface{}{
+					"Post":    rp,
+					"Content": template.HTML(rpHTML),
+				})
+			}
+		}
+	}
+
+	// Build request URL for OG tags
+	scheme := "https"
+	if r.TLS == nil {
+		scheme = "http"
+	}
+	requestURL := scheme + "://" + r.Host + r.URL.Path
 
 	t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_post.html"))
 	if err != nil {
@@ -246,6 +275,9 @@ func handleFrontendPost(pm *pluginmanager.Manager) http.HandlerFunc {
 		"CommentsEnabled": commentsEnabled,
 		"Categories":      categories,
 		"Tags":            tags,
+		"ReadingTime":     readingTime,
+		"RelatedPosts":    relatedPosts,
+		"RequestURL":      requestURL,
 	})
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, data); err != nil {
