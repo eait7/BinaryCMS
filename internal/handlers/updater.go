@@ -14,8 +14,9 @@ import (
 
 // Injected by ldflags at CI build time
 var (
-	GitCommit = "development"
-	BuildTime = "unknown"
+	CoreVersion = "v1.0.0" // Hardcoded semantic version
+	GitCommit   = "development"
+	BuildTime   = "unknown"
 )
 
 type GitHubRelease struct {
@@ -53,7 +54,7 @@ func CheckUpdate(w http.ResponseWriter, r *http.Request) {
 		// No releases found or rate limited
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(UpdaterCheckResponse{
-			CurrentVersion:  GitCommit,
+			CurrentVersion:  CoreVersion,
 			BuildTime:       BuildTime,
 			UpdateAvailable: false,
 		})
@@ -76,44 +77,33 @@ func CheckUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Determine if update is available using multiple strategies:
-	// 1. Check if we already installed this exact release (saved in DB)
-	// 2. Compare build timestamps
-	// 3. For development builds, compare asset updated time with last known install
 	updateAvailable := false
 
 	if downloadURL != "" {
-		// Check if user already installed this version
-		installedVersion := models.GetSetting("installed_release_asset_time")
-
-		if installedVersion != "" && installedVersion == assetUpdatedAt {
-			// Already installed this exact release asset
-			updateAvailable = false
-		} else if BuildTime != "unknown" && BuildTime != "" {
-			// CI-built binary: compare build time against release publish time
-			pubTime, errP := time.Parse(time.RFC3339, release.PublishedAt)
-			bldTime, errB := time.Parse(time.RFC3339, BuildTime)
-			if errP == nil && errB == nil {
-				// Only show update if the release is newer than our build + tolerance
-				if pubTime.After(bldTime.Add(15 * time.Minute)) {
+		if release.TagName == "latest" {
+			// Legacy rolling release fallback
+			installedVersion := models.GetSetting("installed_release_asset_time")
+			if installedVersion != "" && installedVersion == assetUpdatedAt {
+				updateAvailable = false
+			} else if BuildTime != "unknown" && BuildTime != "" {
+				pubTime, errP := time.Parse(time.RFC3339, release.PublishedAt)
+				bldTime, errB := time.Parse(time.RFC3339, BuildTime)
+				if errP == nil && errB == nil && pubTime.After(bldTime.Add(15*time.Minute)) {
+					updateAvailable = true
+				}
+			} else {
+				if installedVersion == "" && assetUpdatedAt != "" {
+					assetTime, err := time.Parse(time.RFC3339, assetUpdatedAt)
+					if err == nil && time.Since(assetTime) < 7*24*time.Hour {
+						updateAvailable = true
+					}
+				} else if installedVersion != assetUpdatedAt {
 					updateAvailable = true
 				}
 			}
 		} else {
-			// Local/development build: check if we previously installed an update
-			if installedVersion == "" {
-				// First run — check if asset is newer than 10 minutes
-				if assetUpdatedAt != "" {
-					assetTime, err := time.Parse(time.RFC3339, assetUpdatedAt)
-					if err == nil {
-						// Only show update if the release asset is less than 7 days old
-						if time.Since(assetTime) < 7*24*time.Hour {
-							updateAvailable = true
-						}
-					}
-				}
-			} else if installedVersion != assetUpdatedAt {
-				// We installed a previous version but a newer asset is available
+			// Semantic versioning
+			if release.TagName != CoreVersion && release.TagName != "" {
 				updateAvailable = true
 			}
 		}
@@ -121,7 +111,7 @@ func CheckUpdate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(UpdaterCheckResponse{
-		CurrentVersion:  GitCommit,
+		CurrentVersion:  CoreVersion,
 		BuildTime:       BuildTime,
 		UpdateAvailable: updateAvailable,
 		LatestRelease:   release.TagName,
