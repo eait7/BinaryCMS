@@ -286,7 +286,12 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(raw)
-      }).then(function() { window.location.reload(); });
+      }).then(function(resp) {
+        if (resp.ok) { window.location.reload(); }
+        else { alert('Save failed: HTTP ' + resp.status); }
+      }).catch(function(err) {
+        alert('Save failed: ' + err.message);
+      });
     };
   });
   </script>
