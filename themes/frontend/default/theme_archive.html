@@ -53,9 +53,9 @@
             {{ range .Posts }}
             <div class="card mb-3 shadow-sm border-0 rounded-3">
               <div class="card-body">
-                <h3 class="mb-1"><a href="/post/{{ .Slug }}" class="text-decoration-none">{{ .Title }}</a></h3>
-                <div class="text-muted small mb-2">{{ .CreatedAt.Format "January 2, 2006" }}</div>
-                {{ if .Excerpt }}<p class="text-muted">{{ .Excerpt }}</p>{{ end }}
+                <h3 class="mb-1"><a href="/post/{{ .Post.Slug }}" class="text-decoration-none">{{ .Post.Title }}</a></h3>
+                <div class="text-muted small mb-2">{{ .Post.CreatedAt.Format "January 2, 2006" }}</div>
+                {{ if .Post.Excerpt }}<p class="text-muted">{{ .Post.Excerpt }}</p>{{ end }}
               </div>
             </div>
             {{ else }}

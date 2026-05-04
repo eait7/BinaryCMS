@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -235,6 +236,15 @@ func handleFrontendCategory(pm *pluginmanager.Manager) http.HandlerFunc {
 
 		posts, _ := models.GetPostsByCategory(category.ID)
 
+		var postMap []map[string]interface{}
+		for _, p := range posts {
+			htmlContent := renderContent(p.Content)
+			postMap = append(postMap, map[string]interface{}{
+				"Post":    p,
+				"Content": template.HTML(htmlContent),
+			})
+		}
+
 		t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_archive.html"))
 		if err != nil {
 			// Fallback to index template
@@ -242,7 +252,7 @@ func handleFrontendCategory(pm *pluginmanager.Manager) http.HandlerFunc {
 		}
 		t.Execute(w, getFrontendData(r, map[string]interface{}{
 			"Category":    category,
-			"Posts":       posts,
+			"Posts":       postMap,
 			"ArchiveType": "Category",
 			"ArchiveTitle": category.Name,
 		}))
@@ -269,13 +279,22 @@ func handleFrontendTag(pm *pluginmanager.Manager) http.HandlerFunc {
 
 		posts, _ := models.GetPostsByTag(foundTag.ID)
 
+		var postMap []map[string]interface{}
+		for _, p := range posts {
+			htmlContent := renderContent(p.Content)
+			postMap = append(postMap, map[string]interface{}{
+				"Post":    p,
+				"Content": template.HTML(htmlContent),
+			})
+		}
+
 		t, err := theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_archive.html"))
 		if err != nil {
 			t, _ = theme.ParseTemplateWithFuncs(theme.GetFrontendPath("theme_index.html"))
 		}
 		t.Execute(w, getFrontendData(r, map[string]interface{}{
 			"Tag":          foundTag,
-			"Posts":        posts,
+			"Posts":        postMap,
 			"ArchiveType":  "Tag",
 			"ArchiveTitle": foundTag.Name,
 		}))
