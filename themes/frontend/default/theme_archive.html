@@ -8,75 +8,412 @@
     {{ else if .Settings.site_favicon_icon }}
     <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
     {{ end }}
-    <title>{{ .ArchiveType }}: {{ .ArchiveTitle }} - {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet"/>
+    <title>{{ .ArchiveTitle }} — {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
+    <meta name="description" content="{{ .ArchiveTitle }} — Browse all articles on {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}.">
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="{{ .ArchiveTitle }} — {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}" />
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link href="/static/vb-responsive.css" rel="stylesheet"/>
     <style>
       @import url('https://rsms.me/inter/inter.css');
-      :root { --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, sans-serif; }
-      body { font-feature-settings: "cv03", "cv04", "cv11"; background-color: #f6f8fb; }
+      :root {
+        --tblr-primary: {{ .BrandColor }};
+        --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      }
+      .text-primary { color: {{ .BrandColor }} !important; }
+      body {
+        font-family: var(--tblr-font-sans-serif);
+        font-feature-settings: "cv03", "cv04", "cv11";
+        letter-spacing: -0.01em;
+        background-color: #f8fafc;
+      }
+
+      /* Premium Navbar */
+      .navbar {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+      .navbar-brand { font-weight: 800; letter-spacing: -0.02em; }
+      .nav-link { font-weight: 500; transition: color 0.2s ease; }
+      .nav-link:hover { color: var(--tblr-primary) !important; }
+
+      /* Dropdown Menus */
+      .nav-item.dropdown { position: relative; }
+      .nav-item.dropdown .dropdown-toggle { cursor: pointer; }
+      .nav-item.dropdown .dropdown-toggle::after { display: inline-block; margin-left: 0.3em; vertical-align: 0.15em; content: ""; border-top: 0.3em solid; border-right: 0.3em solid transparent; border-left: 0.3em solid transparent; transition: transform 0.2s ease; }
+      .nav-item.dropdown:hover .dropdown-toggle::after { transform: rotate(180deg); }
+      .nav-item.dropdown .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 180px; padding: 0.5rem 0; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); z-index: 1000; }
+      .nav-item.dropdown:hover .dropdown-menu { display: block; }
+      .dropdown-menu .dropdown-item { padding: 0.5rem 1.25rem; font-weight: 500; color: #334155; transition: all 0.15s ease; }
+      .dropdown-menu .dropdown-item:hover { background: color-mix(in srgb, var(--tblr-primary) 8%, transparent); color: var(--tblr-primary); }
+
+      /* Blog Hero */
+      .blog-hero {
+        position: relative;
+        padding: 4rem 0 3rem;
+        background: radial-gradient(circle at top right, color-mix(in srgb, var(--tblr-primary) 12%, transparent), transparent 50%),
+                    radial-gradient(circle at bottom left, color-mix(in srgb, var(--tblr-primary) 8%, transparent), transparent 50%);
+        text-align: center;
+      }
+      .blog-hero h1 {
+        font-size: 2.75rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1.1;
+        background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .blog-hero p {
+        font-size: 1.1rem;
+        color: #64748b;
+        max-width: 500px;
+        margin: 0.75rem auto 0;
+      }
+
+      /* Post Card Grid */
+      .post-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 2rem;
+      }
+      @media (max-width: 768px) {
+        .post-grid { grid-template-columns: 1fr; }
+      }
+
+      /* Post Cards */
+      .post-card {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.04);
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.5s ease forwards;
+      }
+      .post-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px -8px rgba(0,0,0,0.08), 0 8px 16px -4px rgba(0,0,0,0.03);
+        border-color: color-mix(in srgb, var(--tblr-primary) 25%, transparent);
+      }
+      .post-card:nth-child(1) { animation-delay: 0.05s; }
+      .post-card:nth-child(2) { animation-delay: 0.1s; }
+      .post-card:nth-child(3) { animation-delay: 0.15s; }
+      .post-card:nth-child(4) { animation-delay: 0.2s; }
+      .post-card:nth-child(5) { animation-delay: 0.25s; }
+      .post-card:nth-child(6) { animation-delay: 0.3s; }
+
+      @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .post-card-image {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+        background: linear-gradient(135deg, color-mix(in srgb, var(--tblr-primary) 15%, #e2e8f0), color-mix(in srgb, var(--tblr-primary) 5%, #f1f5f9));
+      }
+      .post-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .post-card:hover .post-card-image img {
+        transform: scale(1.05);
+      }
+      .post-card-image .placeholder-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: color-mix(in srgb, var(--tblr-primary) 40%, transparent);
+        opacity: 0.5;
+      }
+      .post-card-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+      .post-card-category {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--tblr-primary);
+        margin-bottom: 0.5rem;
+      }
+      .post-card-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+        line-height: 1.35;
+      }
+      .post-card-title a {
+        color: #0f172a;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .post-card-title a:hover { color: var(--tblr-primary); }
+      .post-card-excerpt {
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        flex-grow: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .post-card-meta {
+        margin-top: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        font-weight: 500;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+      }
+      .post-card-meta svg { flex-shrink: 0; }
+
+      /* Pagination */
+      .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 3rem;
+      }
+      .pagination-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        background: #fff;
+      }
+      .pagination-btn:hover {
+        border-color: var(--tblr-primary);
+        color: var(--tblr-primary);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--tblr-primary) 15%, transparent);
+        transform: translateY(-2px);
+      }
+
+      /* Footer */
+      .premium-footer {
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 4rem;
+        margin-top: 5rem;
+      }
+      .footer-title { font-size: 0.875rem; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+      .footer-link { color: #64748b; text-decoration: none; transition: color 0.2s; font-weight: 500; }
+      .footer-link:hover { color: var(--tblr-primary); }
+      .footer-brand-text { color: #64748b; line-height: 1.6; }
     </style>
   </head>
   <body>
     <div class="page">
-      <header class="navbar navbar-expand-md d-print-none sticky-top bg-white border-bottom shadow-sm">
-        <div class="container-xl py-2">
-          <h1 class="navbar-brand pe-0 pe-md-3">
-            <a href="/" class="fw-bold text-decoration-none">🚀 {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</a>
-          </h1>
-          <nav class="navbar-nav ms-auto">
-            {{ range .MenuItems }}
-            {{ if .Children }}
-            <div class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="{{ .URL }}">{{ .Label }}</a>
-              <div class="dropdown-menu">
-                {{ range .Children }}
-                <a href="{{ .URL }}" class="dropdown-item">{{ .Label }}</a>
-                {{ end }}
-              </div>
-            </div>
+      <!-- Premium Navbar -->
+      <nav class="navbar navbar-expand-md sticky-top">
+        <div class="container-xl">
+          <a class="navbar-brand d-flex align-items-center" href="/">
+            {{ if .Settings.site_logo_url }}
+              <img src="{{ .Settings.site_logo_url }}" style="height: {{ if .Settings.logo_size }}{{ .Settings.logo_size }}{{ else }}32{{ end }}px !important; width: auto;" alt="{{ .Settings.site_title }}">
+            {{ else if .Settings.site_logo_icon }}
+              <svg class="icon text-primary me-2" style="width: 32px; height: 32px;"><use href="/static/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
+              {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
             {{ else }}
-            <a class="nav-link" href="{{ .URL }}">{{ .Label }}</a>
+              {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
             {{ end }}
-            {{ end }}
-          </nav>
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbar-menu">
+            <div class="navbar-nav ms-auto flex-row align-items-center">
+              <a href="/" class="nav-link px-3">Home</a>
+              {{ range .MenuItems }}
+              {{ if .Children }}
+              <div class="nav-item dropdown">
+                <a href="{{ .URL }}" class="nav-link dropdown-toggle px-3">{{ .Label }}</a>
+                <div class="dropdown-menu">
+                  {{ range .Children }}
+                  <a href="{{ .URL }}" class="dropdown-item">{{ .Label }}</a>
+                  {{ end }}
+                </div>
+              </div>
+              {{ else }}
+              <a href="{{ .URL }}" class="nav-link px-3">{{ .Label }}</a>
+              {{ end }}
+              {{ end }}
+            </div>
+          </div>
         </div>
-      </header>
+      </nav>
 
       <div class="page-wrapper">
-        <div class="page-body mt-4">
-          <div class="container-xl" style="max-width: 800px;">
-            <div class="mb-4">
-              <span class="badge bg-primary-lt text-uppercase">{{ .ArchiveType }}</span>
-              <h1 class="fw-bold mt-2">{{ .ArchiveTitle }}</h1>
+        <!-- Blog Hero Section -->
+        <section class="blog-hero">
+          <div class="container-xl">
+            <span class="badge bg-primary-lt text-uppercase mb-3 px-3 py-2 rounded-pill fw-bold" style="letter-spacing: 0.08em; font-size: 0.7rem;">{{ .ArchiveType }}</span>
+            <h1>{{ .ArchiveTitle }}</h1>
+            {{ if .Settings.site_tagline }}
+            <p>{{ .Settings.site_tagline }}</p>
+            {{ end }}
+            {{ if .TotalPosts }}
+            <div class="mt-3">
+              <span class="text-muted small fw-medium">{{ .TotalPosts }} article{{ if gt .TotalPosts 1 }}s{{ end }} published</span>
             </div>
-            
-            {{ range .Posts }}
-            <div class="card mb-3 shadow-sm border-0 rounded-3">
-              <div class="card-body">
-                <h3 class="mb-1"><a href="/post/{{ .Post.Slug }}" class="text-decoration-none">{{ .Post.Title }}</a></h3>
-                <div class="text-muted small mb-2">{{ .Post.CreatedAt.Format "January 2, 2006" }}</div>
-                {{ if .Post.Excerpt }}<p class="text-muted">{{ .Post.Excerpt }}</p>{{ end }}
-              </div>
+            {{ end }}
+          </div>
+        </section>
+
+        <!-- Post Cards Grid -->
+        <div class="page-body mt-0" style="padding-top: 2rem;">
+          <div class="container-xl">
+            {{ if .Posts }}
+            <div class="post-grid">
+              {{ range .Posts }}
+              <article class="post-card">
+                <a href="/post/{{ .Post.Slug }}" class="text-decoration-none">
+                  <div class="post-card-image">
+                    {{ if .Post.FeaturedImage }}
+                    <img src="{{ .Post.FeaturedImage }}" alt="{{ .Post.Title }}" loading="lazy">
+                    {{ else }}
+                    <div class="placeholder-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg>
+                    </div>
+                    {{ end }}
+                  </div>
+                </a>
+                <div class="post-card-body">
+                  {{ if .Post.Categories }}
+                  <span class="post-card-category">{{ range $i, $c := .Post.Categories }}{{ if $i }}, {{ end }}{{ $c.Name }}{{ end }}</span>
+                  {{ end }}
+                  <h3 class="post-card-title"><a href="/post/{{ .Post.Slug }}">{{ .Post.Title }}</a></h3>
+                  {{ if .Post.Excerpt }}
+                  <p class="post-card-excerpt">{{ .Post.Excerpt }}</p>
+                  {{ else }}
+                  <div class="post-card-excerpt">{{ .Content }}</div>
+                  {{ end }}
+                  <div class="post-card-meta">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /></svg>
+                    <time datetime="{{ .Post.CreatedAt }}">{{ .Post.CreatedAt.Format "January 2, 2006" }}</time>
+                  </div>
+                </div>
+              </article>
+              {{ end }}
             </div>
+
+            <!-- Pagination -->
+            {{ if or .HasPrev .HasNext }}
+            <div class="pagination-wrapper">
+              {{ if .HasPrev }}
+              <a href="?page={{ .PrevPage }}" class="pagination-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+                Previous
+              </a>
+              {{ end }}
+              {{ if .HasNext }}
+              <a href="?page={{ .NextPage }}" class="pagination-btn">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M5 12l14 0"/><path d="M19 12l-6 6"/><path d="M19 12l-6 -6"/></svg>
+              </a>
+              {{ end }}
+            </div>
+            {{ end }}
+
             {{ else }}
-            <div class="card border-0 shadow-sm rounded-3">
-              <div class="card-body text-center py-5 text-muted">
-                No posts found in this {{ .ArchiveType }}.
+            <div class="text-center py-5">
+              <div class="mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="text-muted" width="64" height="64" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6l0 13" /><path d="M12 6l0 13" /><path d="M21 6l0 13" /></svg>
               </div>
+              <h3 class="text-muted fw-bold">No posts yet</h3>
+              <p class="text-muted">Check back soon for fresh content.</p>
             </div>
             {{ end }}
           </div>
         </div>
 
+        <!-- Premium Footer -->
         {{ if ne .Settings.hide_footer "true" }}
-        <footer class="footer footer-transparent d-print-none mt-auto">
-          <div class="container-xl text-center text-muted py-3">
-            {{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS{{ end }}
+        <footer class="premium-footer pb-4">
+          <div class="container-xl">
+            <div class="row g-5 mb-5">
+              <div class="col-12 col-lg-4">
+                <a class="navbar-brand d-inline-flex align-items-center mb-3" href="/">
+                  {{ if .Settings.site_logo_url }}
+                    <img src="{{ .Settings.site_logo_url }}" style="height: 32px;" alt="{{ .Settings.site_title }}">
+                  {{ else if .Settings.site_logo_icon }}
+                    <svg class="icon text-primary me-2" style="width: 24px; height: 24px;"><use href="/static/tabler-sprite.svg#tabler-{{ .Settings.site_logo_icon }}" /></svg>
+                    {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+                  {{ else }}
+                    {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}
+                  {{ end }}
+                </a>
+                <p class="footer-brand-text pe-lg-4">{{ .Settings.footer_brand_text }}</p>
+              </div>
+              
+              <div class="col-6 col-sm-4 col-lg-2 ms-lg-auto">
+                <h6 class="footer-title">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Product{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu1 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-4 col-lg-2">
+                <h6 class="footer-title">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu2 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
+
+              <div class="col-6 col-sm-4 col-lg-2">
+                <h6 class="footer-title">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
+                <ul class="list-unstyled mb-0">
+                  {{ range .FooterMenu3 }}
+                  <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
+                  {{ end }}
+                </ul>
+              </div>
+            </div>
+            
+            <div class="border-top border-light pt-4 d-flex flex-column flex-md-row align-items-center justify-content-between">
+              <div class="text-muted small fw-medium mb-3 mb-md-0">
+                {{ if .Settings.custom_footer }}{{ .Settings.custom_footer }}{{ else }}&copy; 2026 BinaryCMS. Open source, MIT licensed.{{ end }}
+              </div>
+              <a href="/admin" class="btn btn-light btn-sm text-muted fw-medium border-0 rounded-pill px-3 shadow-sm d-inline-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings me-1 text-primary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                Administration
+              </a>
+            </div>
           </div>
         </footer>
         {{ end }}
       </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
   </body>
 </html>
