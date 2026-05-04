@@ -251,5 +251,45 @@
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <script>
+      // Scroll-reveal: adds .v to .br elements when they enter the viewport
+      (function() {
+        var io = new IntersectionObserver(function(entries) {
+          entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('v'); io.unobserve(e.target); } });
+        }, { threshold: 0.08 });
+        document.querySelectorAll('.br').forEach(function(el) { io.observe(el); });
+      })();
+
+      // Counter animation for elements with data-c attribute
+      (function() {
+        var io2 = new IntersectionObserver(function(entries) {
+          entries.forEach(function(e) {
+            if (!e.isIntersecting) return;
+            io2.unobserve(e.target);
+            var el = e.target;
+            var target = parseInt(el.getAttribute('data-c') || '0', 10);
+            var suffix = el.getAttribute('data-s') || '';
+            var prefix = el.getAttribute('data-pr') || '';
+            var duration = 1800;
+            var start = null;
+            function step(ts) {
+              if (!start) start = ts;
+              var progress = Math.min((ts - start) / duration, 1);
+              var eased = 1 - Math.pow(1 - progress, 3);
+              el.textContent = prefix + Math.round(eased * target) + suffix;
+              if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+          });
+        }, { threshold: 0.3 });
+        document.querySelectorAll('[data-c]').forEach(function(el) { io2.observe(el); });
+      })();
+
+      // Marquee / ticker: clone content to ensure seamless loop
+      document.querySelectorAll('.btk').forEach(function(ticker) {
+        var content = ticker.innerHTML;
+        ticker.innerHTML = content + content;
+      });
+    </script>
   </body>
 </html>
