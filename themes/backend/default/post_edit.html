@@ -159,7 +159,8 @@
                    loadContentIntoEditor(easymde.value());
                    activeTab = 'visual';
                 } else if (target === '#editor-basic' && activeTab === 'visual') {
-                   const html = editorTools.getHtml();
+                   let html = editorTools.getHtml();
+                   html = html.replace(/<\/?body[^>]*>/gi, '').replace(/<\/?html[^>]*>/gi, '').replace(/<\/?head[^>]*>/gi, '').trim();
                    const grapesCss = editorTools.getCss();
                    let out = html;
                    let finalCss = rawCustomCss;
@@ -175,7 +176,8 @@
              if(activeTab === 'basic'){
                  document.getElementById('hidden-content').value = easymde.value();
              } else {
-                 const html = editorTools.getHtml();
+                 let html = editorTools.getHtml();
+                 html = html.replace(/<\/?body[^>]*>/gi, '').replace(/<\/?html[^>]*>/gi, '').replace(/<\/?head[^>]*>/gi, '').trim();
                  const grapesCss = editorTools.getCss();
                  let out = html;
                  let finalCss = rawCustomCss;
