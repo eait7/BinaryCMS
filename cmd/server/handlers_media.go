@@ -142,8 +142,8 @@ func handleMediaUpload(pm *pluginmanager.Manager) http.HandlerFunc {
 		io.Copy(dst, file)
 		dst.Close()
 
-		// JSON response for AJAX uploads (GrapesJS and EasyMDE)
-		if strings.Contains(r.Header.Get("Accept"), "application/json") || strings.Contains(r.Header.Get("Content-Type"), "multipart") {
+		// JSON response for AJAX uploads (GrapesJS, EasyMDE, and native API)
+		if strings.Contains(r.Header.Get("Accept"), "application/json") {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(map[string]interface{}{

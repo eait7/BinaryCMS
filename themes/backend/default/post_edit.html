@@ -262,11 +262,12 @@
                   <label class="form-label fw-bold">Featured Image URL</label>
                   <div class="input-group mb-3">
                      <input type="text" id="featured_image" name="featured_image" class="form-control" value="{{ if .Post }}{{ .Post.FeaturedImage }}{{ end }}" placeholder="https://example.com/image.jpg" oninput="document.getElementById('og-preview').src = this.value; document.getElementById('og-preview-box').style.display = 'block';">
-                     <button class="btn btn-outline-secondary bg-white" type="button" onclick="uploadFeaturedImage()">
+                     <button class="btn btn-outline-secondary bg-white" type="button" onclick="uploadFeaturedImage(this)">
                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
                        Upload
                      </button>
                   </div>
+                  <input type="file" id="featured_image_file" accept="image/*" style="display: none;">
                   <small class="form-hint mb-4">This image will appear correctly structured on WhatsApp, Twitter, and Facebook.</small>
                   
                   <div class="card border shadow-sm">
@@ -340,15 +341,58 @@
       document.getElementById('og-desc-preview').innerText = e.target.value || 'Description...';
   });
   
-  function uploadFeaturedImage() {
-     const p = prompt("Enter image URL directly, or this can be tied to the media manager via the API in the future:");
-     if(p) {
-        document.getElementById('featured_image').value = p;
-        document.getElementById('og-preview').src = p;
-        document.getElementById('og-preview').style.display = 'block';
-        const empty = document.getElementById('og-empty');
-        if(empty) empty.style.display = 'none';
-     }
+  function uploadFeaturedImage(btn) {
+     const fileInput = document.getElementById('featured_image_file');
+     const imgInput = document.getElementById('featured_image');
+     const preview = document.getElementById('og-preview');
+     const previewBox = document.getElementById('og-preview-box');
+     const emptyText = document.getElementById('og-empty');
+     
+     // Remove previous listeners to prevent multiple uploads if clicked multiple times
+     const newFileInput = fileInput.cloneNode(true);
+     fileInput.parentNode.replaceChild(newFileInput, fileInput);
+     
+     newFileInput.addEventListener('change', async function() {
+        if(this.files && this.files[0]) {
+            const file = this.files[0];
+            const formData = new FormData();
+            formData.append('media_file', file);
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Uploading...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/admin/media/upload', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if(data.error) {
+                    alert('Upload Error: ' + data.error);
+                } else if(data.data && data.data.length > 0) {
+                    const imgUrl = data.data[0];
+                    imgInput.value = imgUrl;
+                    imgInput.dispatchEvent(new Event('input'));
+                    
+                    preview.src = imgUrl;
+                    preview.style.display = 'block';
+                    previewBox.style.display = 'block';
+                    if(emptyText) emptyText.style.display = 'none';
+                }
+            } catch (err) {
+                alert('Network error while uploading image.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+     });
+     
+     newFileInput.click();
   }
 
   // --- Page Health Diagnostics ---
