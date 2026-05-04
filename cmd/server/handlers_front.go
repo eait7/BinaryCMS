@@ -191,6 +191,8 @@ func ServePaginatedPosts(w http.ResponseWriter, r *http.Request, pm *pluginmanag
 		"HasNext":     pageNum < totalPages,
 		"PrevPage":    pageNum - 1,
 		"NextPage":    pageNum + 1,
+		"ArchiveType":  "Blog",
+		"ArchiveTitle": "Latest Posts",
 	})
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, data); err != nil {
