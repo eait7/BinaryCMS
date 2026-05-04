@@ -124,15 +124,18 @@
               }
           }
 
+          let rawCustomCss = '';
+
           function loadContentIntoEditor(raw) {
               var css = '';
               var styleRe = /<style[^>]*>([\s\S]*?)<\/style>/gi;
               var m;
               while ((m = styleRe.exec(raw)) !== null) { css += m[1] + '\n'; }
+              rawCustomCss = css;
               var html = raw.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').trim();
-              css += '\n.br, [data-aos], .fade-in, .opacity-0 { opacity: 1 !important; transform: none !important; visibility: visible !important; }\n';
+              var devCss = css + '\n.br, [data-aos], .fade-in, .opacity-0 { opacity: 1 !important; transform: none !important; visibility: visible !important; }\n';
               editorTools.setComponents(html);
-              setTimeout(function() { injectCssIntoCanvas(css); }, 500);
+              setTimeout(function() { injectCssIntoCanvas(devCss); }, 500);
           }
 
           loadContentIntoEditor(rawVal);
@@ -141,12 +144,9 @@
               var doc = editorTools.Canvas.getDocument();
               var existing = doc && doc.getElementById('cms-custom-css');
               if (!existing) {
-                  var css = '';
-                  var styleRe = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-                  var m;
-                  while ((m = styleRe.exec(rawVal)) !== null) { css += m[1] + '\n'; }
-                  css += '\n.br, [data-aos], .fade-in, .opacity-0 { opacity: 1 !important; transform: none !important; visibility: visible !important; }\n';
-                  injectCssIntoCanvas(css);
+                  var css = rawCustomCss;
+                  var devCss = css + '\n.br, [data-aos], .fade-in, .opacity-0 { opacity: 1 !important; transform: none !important; visibility: visible !important; }\n';
+                  injectCssIntoCanvas(devCss);
               }
           });
            
@@ -160,9 +160,11 @@
                    activeTab = 'visual';
                 } else if (target === '#editor-basic' && activeTab === 'visual') {
                    const html = editorTools.getHtml();
-                   const css = editorTools.getCss();
+                   const grapesCss = editorTools.getCss();
                    let out = html;
-                   if(css && css.trim()) out = `<style>${css}</style>\n${html}`;
+                   let finalCss = rawCustomCss;
+                   if(grapesCss && grapesCss.trim()) finalCss += '\n' + grapesCss;
+                   if(finalCss && finalCss.trim()) out = `<style>${finalCss}</style>\n${html}`;
                    easymde.value(out);
                    activeTab = 'basic';
                 }
@@ -174,9 +176,11 @@
                  document.getElementById('hidden-content').value = easymde.value();
              } else {
                  const html = editorTools.getHtml();
-                 const css = editorTools.getCss();
+                 const grapesCss = editorTools.getCss();
                  let out = html;
-                 if(css && css.trim()) out = `<style>${css}</style>\n${html}`;
+                 let finalCss = rawCustomCss;
+                 if(grapesCss && grapesCss.trim()) finalCss += '\n' + grapesCss;
+                 if(finalCss && finalCss.trim()) out = `<style>${finalCss}</style>\n${html}`;
                  document.getElementById('hidden-content').value = out;
              }
           });
