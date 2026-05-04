@@ -30,10 +30,11 @@ COPY --from=builder /app/static /app/static
 COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
 
 # Construct mapped persistence layers and set full ownership to gocms
-# gocms must own /app so the self-updater can replace the binary
+# gocms must own /app/gocms_server so the self-updater can rename onto it
 RUN mkdir -p /app/uploads /app/data /app/plugins /app/plugins_data \
     && chown -R gocms:gocms /app \
-    && chmod +x /app/entrypoint.sh /app/gocms_server
+    && chmod +x /app/entrypoint.sh /app/gocms_server \
+    && chown gocms:gocms /app/gocms_server
 
 # Switch to non-root user
 USER gocms
