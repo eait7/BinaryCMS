@@ -159,146 +159,110 @@
   </div>
   
   <style>
-    .dd-item { transition: transform 0.15s ease; }
-    .dd-item.dragging { opacity: 0.4; }
-    .dd-item.drag-over-above { border-top: 3px solid #206bc4 !important; }
-    .dd-item.drag-over-below { border-bottom: 3px solid #206bc4 !important; }
-    .dd-item.drag-over-nest { box-shadow: inset 0 0 0 2px #206bc4 !important; }
+    .dd-list { list-style: none; padding-left: 0; margin: 0; }
+    .dd-list .dd-list { padding-left: 40px; margin-top: 0.5rem; }
     .dd-handle.dd3-handle { cursor: grab; }
     .dd-handle.dd3-handle:active { cursor: grabbing; }
     .dd3-content { user-select: none; }
-    .dd-list { list-style: none; padding-left: 0; }
-    .dd-list .dd-list { padding-left: 40px; margin-top: 0.5rem; }
-    .dd-placeholder { height: 48px; border: 2px dashed #206bc4; border-radius: 8px; background: #eff6ff; margin-bottom: 0.5rem; }
+    .dd-item.sortable-ghost { opacity: 0.3; }
+    .dd-item.sortable-chosen { box-shadow: 0 4px 12px rgba(32,107,196,0.2); }
+    .sortable-drag { opacity: 0.9 !important; }
+    .dd-list.sortable-fallback { display: none; }
+    .child-drop-zone { min-height: 8px; transition: min-height 0.2s ease; }
+    .child-drop-zone.sortable-ghost-active { min-height: 40px; border: 2px dashed #206bc4; border-radius: 8px; background: #eff6ff; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <script>
   document.addEventListener('DOMContentLoaded', function() {
-    let draggedEl = null;
-    let draggedId = null;
 
-    // Attach drag events to all nestable blocks
-    document.querySelectorAll('.nestable-block').forEach(function(container) {
-      initDragDrop(container);
-    });
+    function initSortable(listEl, opts) {
+      if (!listEl) return;
+      new Sortable(listEl, Object.assign({
+        animation: 150,
+        handle: '.dd3-handle',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        fallbackOnBody: true,
+        swapThreshold: 0.65,
+        filter: '[data-id="0"]',
+        onMove: function(evt) {
+          // Prevent dropping onto the locked Home item
+          if (evt.related && evt.related.dataset && evt.related.dataset.id === '0') {
+            return false;
+          }
+        }
+      }, opts));
+    }
 
-    function initDragDrop(container) {
-      const items = container.querySelectorAll('.dd-item[data-id]');
-      items.forEach(function(item) {
-        // Only allow dragging from the handle (skip locked Home item with data-id="0")
-        const handle = item.querySelector('.dd3-handle');
-        if (!handle || item.dataset.id === '0') return;
+    // Header: top-level list (allows nesting via group)
+    var headerList = document.querySelector('#nestable-header > .dd-list');
+    if (headerList) {
+      initSortable(headerList, {
+        group: { name: 'header', pull: true, put: true },
+        onEnd: function() { initChildLists(); }
+      });
+      // Init child lists inside header items
+      initChildLists();
+    }
 
-        item.setAttribute('draggable', 'true');
-
-        // Only initiate drag from the grip handle
-        handle.addEventListener('mousedown', function() { item.classList.add('drag-ready'); });
-        document.addEventListener('mouseup', function() { item.classList.remove('drag-ready'); });
-
-        item.addEventListener('dragstart', function(e) {
-          if (!item.classList.contains('drag-ready')) { e.preventDefault(); return; }
-          draggedEl = item;
-          draggedId = item.dataset.id;
-          item.classList.add('dragging');
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', draggedId);
-        });
-
-        item.addEventListener('dragend', function() {
-          if (draggedEl) draggedEl.classList.remove('dragging');
-          draggedEl = null;
-          draggedId = null;
-          // Remove all drag indicators
-          document.querySelectorAll('.drag-over-above, .drag-over-below, .drag-over-nest').forEach(function(el) {
-            el.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-nest');
+    function initChildLists() {
+      document.querySelectorAll('#nestable-header > .dd-list > .dd-item[data-id]').forEach(function(item) {
+        if (item.dataset.id === '0') return;
+        var childList = item.querySelector(':scope > .dd-list');
+        if (!childList) {
+          childList = document.createElement('ol');
+          childList.className = 'dd-list';
+          item.appendChild(childList);
+        }
+        // Make each child list sortable (can receive from header group)
+        if (!childList._sortableInitialized) {
+          initSortable(childList, {
+            group: { name: 'header', pull: true, put: function(to) {
+              // Max 1 level of nesting - don't allow nested items to have children
+              return to.el.parentElement.closest('.dd-list').parentElement.classList.contains('nestable-block');
+            }},
           });
-        });
-
-        item.addEventListener('dragover', function(e) {
-          e.preventDefault();
-          if (!draggedEl || draggedEl === item) return;
-          e.dataTransfer.dropEffect = 'move';
-
-          const rect = item.getBoundingClientRect();
-          const y = e.clientY - rect.top;
-          const height = rect.height;
-          const isHeader = item.closest('#nestable-header') !== null;
-
-          // Clear previous indicators on this item
-          item.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-nest');
-
-          if (y < height * 0.3) {
-            item.classList.add('drag-over-above');
-          } else if (y > height * 0.7) {
-            item.classList.add('drag-over-below');
-          } else if (isHeader && !item.closest('.dd-list .dd-list')) {
-            // Allow nesting only in header, and only for top-level items
-            item.classList.add('drag-over-nest');
-          } else {
-            item.classList.add('drag-over-below');
-          }
-        });
-
-        item.addEventListener('dragleave', function() {
-          item.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-nest');
-        });
-
-        item.addEventListener('drop', function(e) {
-          e.preventDefault();
-          if (!draggedEl || draggedEl === item) return;
-
-          const isAbove = item.classList.contains('drag-over-above');
-          const isNest = item.classList.contains('drag-over-nest');
-
-          item.classList.remove('drag-over-above', 'drag-over-below', 'drag-over-nest');
-
-          if (isNest) {
-            // Nest as child — find or create child ol.dd-list
-            let childList = item.querySelector(':scope > ol.dd-list');
-            if (!childList) {
-              childList = document.createElement('ol');
-              childList.className = 'dd-list';
-              item.appendChild(childList);
-            }
-            childList.appendChild(draggedEl);
-          } else if (isAbove) {
-            item.parentNode.insertBefore(draggedEl, item);
-          } else {
-            // Insert below
-            if (item.nextSibling) {
-              item.parentNode.insertBefore(draggedEl, item.nextSibling);
-            } else {
-              item.parentNode.appendChild(draggedEl);
-            }
-          }
-
-          // Re-initialize drag events after DOM change
-          initDragDrop(draggedEl.closest('.nestable-block'));
-        });
+          childList._sortableInitialized = true;
+        }
       });
     }
 
-    // Serialize a nestable container into the expected JSON format
+    // Footer lists: flat only (no nesting)
+    ['nestable-footer1', 'nestable-footer2', 'nestable-footer3'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var list = el.querySelector('.dd-list');
+      if (list) {
+        initSortable(list, {
+          group: { name: id, pull: false, put: false }
+        });
+      }
+    });
+
+    // Serialize
     function serializeList(container) {
       var items = [];
       var topList = container.querySelector(':scope > ol.dd-list');
       if (!topList) return items;
       topList.querySelectorAll(':scope > li.dd-item').forEach(function(li) {
         var id = parseInt(li.dataset.id);
-        if (id === 0) return; // skip locked Home
+        if (id === 0 || isNaN(id)) return;
         var obj = { id: id };
         var childList = li.querySelector(':scope > ol.dd-list');
         if (childList) {
-          obj.children = [];
+          var children = [];
           childList.querySelectorAll(':scope > li.dd-item').forEach(function(child) {
-            obj.children.push({ id: parseInt(child.dataset.id) });
+            var cid = parseInt(child.dataset.id);
+            if (!isNaN(cid)) children.push({ id: cid });
           });
+          if (children.length > 0) obj.children = children;
         }
         items.push(obj);
       });
       return items;
     }
 
-    // Save menu layout
     window.saveMenuLayout = function() {
       var lists = [
         { el: document.getElementById('nestable-header'), loc: 'header' },
@@ -306,7 +270,6 @@
         { el: document.getElementById('nestable-footer2'), loc: 'footer_2' },
         { el: document.getElementById('nestable-footer3'), loc: 'footer_3' }
       ];
-
       var raw = [];
       lists.forEach(function(l) {
         if (!l.el) return;
@@ -319,14 +282,11 @@
           raw.push(i);
         });
       });
-
       fetch('/admin/menus/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(raw)
-      }).then(function() {
-        window.location.reload();
-      });
+      }).then(function() { window.location.reload(); });
     };
   });
   </script>
