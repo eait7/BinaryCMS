@@ -16,6 +16,11 @@
     {{ else }}
     <meta name="twitter:card" content="summary" />
     {{ end }}
+    {{ if .Settings.site_favicon_url }}
+    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
+    {{ else if .Settings.site_favicon_icon }}
+    <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
+    {{ end }}
     <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
     <!-- Tabler CSS inside frontend fallback -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
