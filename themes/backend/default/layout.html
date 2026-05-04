@@ -297,7 +297,7 @@
         <footer class="footer footer-transparent d-print-none text-center py-3 mt-auto">
           <div class="container-xl">
             <div class="text-muted small">
-              Powered by <a href="https://binarycms.com" target="_blank" class="link-secondary fw-bold" rel="noopener">BinaryCMS</a>
+              Powered by <a href="https://binarycms.com" target="_blank" class="link-secondary fw-bold" rel="noopener">BinaryCMS</a> {{ if .CurrentVersion }}{{ .CurrentVersion }}{{ end }}
             </div>
           </div>
         </footer>
@@ -332,7 +332,7 @@
                       <div class="col-auto"><span class="status-dot status-dot-animated bg-red d-block"></span></div>
                       <div class="col text-truncate">
                         <span class="text-body d-block fw-bold mb-1">New Core Update Available!</span>
-                        <div class="d-block text-muted text-truncate mt-n1 mb-2">Version: ${data.latest_release} (${data.release_notes})</div>
+                        <div class="d-block text-muted text-truncate mt-n1 mb-2">Current: ${data.current_version} ➔ Update: ${data.latest_release}</div>
                         <button class="btn btn-sm btn-primary w-100" onclick="installUpdate('${data.download_url}')">
                           Install 1-Click Update
                         </button>

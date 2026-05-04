@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/ez8/gocms/internal/auth"
+	"github.com/ez8/gocms/internal/handlers"
 	"github.com/ez8/gocms/internal/models"
 	"github.com/ez8/gocms/internal/pluginmanager"
 	"github.com/ez8/gocms/internal/theme"
@@ -171,6 +172,7 @@ func renderAdminPage(w http.ResponseWriter, r *http.Request, title string, conte
 		"TopRightWidget":  template.HTML(pm.GetAdminTopRightWidgets()),
 		"User":            user,
 		"PendingComments": pendingComments,
+		"CurrentVersion":  handlers.CoreVersion,
 	}
 	if err := t.Execute(w, data); err != nil {
 		log.Printf("Layout execute error: %v", err)
