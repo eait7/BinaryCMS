@@ -3,11 +3,6 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    {{ if .Settings.site_favicon_url }}
-    <link rel="icon" href="{{ .Settings.site_favicon_url }}">
-    {{ else if .Settings.site_favicon_icon }}
-    <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
-    {{ end }}
     <title>Search: {{ .Query }} - {{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</title>
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet"/>
     <style>
@@ -25,18 +20,18 @@
           </h1>
           <nav class="navbar-nav ms-auto">
             {{ range .MenuItems }}
-              {{ if .Children }}
-              <div class="nav-item dropdown">
-                <a href="{{ .URL }}" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">{{ .Label }}</a>
-                <div class="dropdown-menu dropdown-menu-end">
-                  {{ range .Children }}
-                  <a href="{{ .URL }}" class="dropdown-item"{{ if .OpenNewTab }} target="_blank"{{ end }}>{{ .Label }}</a>
-                  {{ end }}
-                </div>
+            {{ if .Children }}
+            <div class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="{{ .URL }}">{{ .Label }}</a>
+              <div class="dropdown-menu">
+                {{ range .Children }}
+                <a href="{{ .URL }}" class="dropdown-item">{{ .Label }}</a>
+                {{ end }}
               </div>
-              {{ else }}
-              <a class="nav-link" href="{{ .URL }}"{{ if .OpenNewTab }} target="_blank"{{ end }}>{{ .Label }}</a>
-              {{ end }}
+            </div>
+            {{ else }}
+            <a class="nav-link" href="{{ .URL }}">{{ .Label }}</a>
+            {{ end }}
             {{ end }}
           </nav>
         </div>
