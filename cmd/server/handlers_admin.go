@@ -17,6 +17,7 @@ import (
 
 	"github.com/ez8/gocms/internal/auth"
 	"github.com/ez8/gocms/internal/handlers"
+	"github.com/ez8/gocms/internal/marketplace"
 	"github.com/ez8/gocms/internal/models"
 	"github.com/ez8/gocms/internal/pluginmanager"
 	"github.com/ez8/gocms/internal/theme"
@@ -52,7 +53,6 @@ func getAdminMenus(pm *pluginmanager.Manager) []plugin.MenuItem {
 			Children: []plugin.MenuItem{
 				{Label: "Users", URL: "/admin/users"},
 				{Label: "Plugins", URL: "/admin/plugins"},
-			{Label: "Plugin Store", URL: "/admin/marketplace"},
 				{Label: "Core Settings", URL: "/admin/settings"},
 			},
 		},
@@ -502,7 +502,9 @@ type PluginDisplay struct {
 
 func handleListPlugins(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// ── Installed plugins from disk ──────────────────────────────────────
 		var displays []PluginDisplay
+		installedMap := make(map[string]bool) // slug → installed
 
 		files, err := os.ReadDir("plugins")
 		if err == nil {
@@ -516,16 +518,40 @@ func handleListPlugins(pm *pluginmanager.Manager) http.HandlerFunc {
 				}
 				active := !strings.HasSuffix(name, ".disabled")
 				displayName := strings.TrimSuffix(name, ".disabled")
-
 				displays = append(displays, PluginDisplay{
 					Filename: name,
 					Name:     displayName,
 					Active:   active,
 				})
+				// Both slug and filename without .disabled are used as keys
+				installedMap[displayName] = true
 			}
 		}
 
-		content, err := renderTemplate("plugins.html", map[string]interface{}{"Plugins": displays})
+		// ── Plugin Store catalog from hub ────────────────────────────────────
+		hubURL := models.GetSetting("marketplace_hub_url")
+		if hubURL == "" {
+			hubURL = "https://binarycms.com/api/plugin/marketplace-hub"
+		}
+		siteURL := models.GetSetting("site_url")
+		client := marketplace.NewHubClient(hubURL, siteURL)
+
+		catalog, fetchErr := client.FetchCatalog()
+		var fetchErrMsg string
+		if fetchErr != nil {
+			fetchErrMsg = fetchErr.Error()
+		}
+
+		licenseMap := models.GetPluginLicenseMap()
+
+		// ── Render merged template ───────────────────────────────────────────
+		content, err := renderTemplate("plugins.html", map[string]interface{}{
+			"Plugins":          displays,
+			"StoreCatalog":     catalog,
+			"InstalledPlugins": installedMap,
+			"LicenseMap":       licenseMap,
+			"FetchError":       fetchErrMsg,
+		})
 		if err != nil {
 			log.Printf("Plugins template error: %v", err)
 			http.Error(w, "Template error", http.StatusInternalServerError)

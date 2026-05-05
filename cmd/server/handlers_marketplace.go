@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -12,66 +11,9 @@ import (
 	"github.com/ez8/gocms/internal/marketplace"
 	"github.com/ez8/gocms/internal/models"
 	"github.com/ez8/gocms/internal/pluginmanager"
-	"github.com/ez8/gocms/internal/theme"
 )
 
-// handleMarketplace renders the plugin store page.
-func handleMarketplace(pm *pluginmanager.Manager) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		hubURL := models.GetSetting("marketplace_hub_url")
-		if hubURL == "" {
-			hubURL = "https://binarycms.com/api/plugin/marketplace-hub"
-		}
-
-		siteURL := models.GetSetting("site_url")
-
-		client := marketplace.NewHubClient(hubURL, siteURL)
-		catalog, err := client.FetchCatalog()
-		if err != nil {
-			log.Printf("Marketplace: Failed to fetch catalog: %v", err)
-			// Still render the page, just with empty catalog and an error message
-			catalog = nil
-		}
-
-		// Build a set of locally installed plugin filenames for "Installed" badges
-		installedPlugins := make(map[string]bool)
-		files, _ := os.ReadDir("plugins")
-		for _, f := range files {
-			if f.IsDir() {
-				continue
-			}
-			name := f.Name()
-			name = strings.TrimSuffix(name, ".disabled")
-			name = strings.TrimSuffix(name, ".deleted")
-			installedPlugins[name] = true
-		}
-
-		// Build license map for activation status
-		licenseMap := models.GetPluginLicenseMap()
-
-		t, terr := theme.ParseTemplateWithFuncs(theme.GetBackendPath("marketplace.html"))
-		if terr != nil {
-			log.Printf("Marketplace template error: %v", terr)
-			http.Error(w, "Template error", http.StatusInternalServerError)
-			return
-		}
-
-		data := map[string]interface{}{
-			"Plugins":          catalog,
-			"InstalledPlugins": installedPlugins,
-			"LicenseMap":       licenseMap,
-			"HubURL":           hubURL,
-			"FetchError":       err != nil,
-		}
-
-		var buf strings.Builder
-		t.Execute(&buf, data)
-
-		renderAdminPage(w, r, "Plugin Store", template.HTML(buf.String()), "", pm)
-	}
-}
-
-// handleMarketplaceInstall handles POST /admin/marketplace/install
+// handleMarketplaceInstall handles POST /admin/plugins/store/install
 func handleMarketplaceInstall(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -173,7 +115,7 @@ func handleMarketplaceInstall(pm *pluginmanager.Manager) http.HandlerFunc {
 	}
 }
 
-// handleMarketplaceActivate handles POST /admin/marketplace/activate
+// handleMarketplaceActivate handles POST /admin/plugins/store/activate
 func handleMarketplaceActivate(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

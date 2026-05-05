@@ -267,11 +267,14 @@ func main() {
 		r.Post("/plugins/{action}/{filename}", handlePluginState(pm))
 		r.Post("/plugins/upload", handleUploadPlugin(pm))
 
-		// Plugin Marketplace
-		r.Get("/marketplace", handleMarketplace(pm))
-		r.Post("/marketplace/install", handleMarketplaceInstall(pm))
-		r.Post("/marketplace/activate", handleMarketplaceActivate(pm))
-		r.Get("/api/marketplace/status", handleMarketplaceStatus(pm))
+		// Plugin Store — API endpoints (merged under /plugins)
+		r.Post("/plugins/store/install", handleMarketplaceInstall(pm))
+		r.Post("/plugins/store/activate", handleMarketplaceActivate(pm))
+		r.Get("/api/plugins/store/status", handleMarketplaceStatus(pm))
+		// Permanent redirect: /admin/marketplace → /admin/plugins (backward compat)
+		r.Get("/marketplace", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/admin/plugins", http.StatusMovedPermanently)
+		})
 
 		// Dashboard Widgets
 		r.Get("/widgets", handleWidgetManagement(pm))
