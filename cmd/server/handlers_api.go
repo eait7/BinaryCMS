@@ -35,7 +35,9 @@ func handleAPIPost() http.HandlerFunc {
 
 func handleAPIPages() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		pages, err := models.GetAllPages(true)
+		// GetPublicPages filters to published + no required_role to prevent
+		// leaking restricted page content to unauthenticated API consumers.
+		pages, err := models.GetPublicPages()
 		if err != nil {
 			http.Error(w, "Failed to get pages", http.StatusInternalServerError)
 			return
@@ -50,6 +52,11 @@ func handleAPIPage() http.HandlerFunc {
 		slug := chi.URLParam(r, "slug")
 		page, err := models.GetPageBySlug(slug)
 		if err != nil || page.Status != "published" {
+			http.Error(w, "Page not found", http.StatusNotFound)
+			return
+		}
+		// Block access to role-restricted pages via the public API.
+		if page.RequiredRole != "" {
 			http.Error(w, "Page not found", http.StatusNotFound)
 			return
 		}

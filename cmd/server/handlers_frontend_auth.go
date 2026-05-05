@@ -26,6 +26,13 @@ func handleFrontendRegister(pm *pluginmanager.Manager) http.HandlerFunc {
 		data := getFrontendData(r, nil)
 
 		if r.Method == "POST" {
+			// Rate limit: 10 registration attempts per IP per hour.
+			ip := auth.RealClientIP(r)
+			if auth.IsRegistrationRateLimited(ip) {
+				http.Error(w, "Too many registration attempts. Please try again later.", http.StatusTooManyRequests)
+				return
+			}
+
 			name := strings.TrimSpace(r.FormValue("name"))
 			email := strings.TrimSpace(r.FormValue("email"))
 			password := r.FormValue("password")

@@ -80,6 +80,32 @@ func GetAllPages(onlyPublished bool) ([]Page, error) {
 	return pages, nil
 }
 
+// GetPublicPages returns only published pages that have no role restriction.
+// Used by the public /api/pages endpoint to prevent leaking restricted content.
+func GetPublicPages() ([]Page, error) {
+	query := "SELECT " + pageSelectColumns + " FROM pages" +
+		" WHERE status = 'published' AND (required_role = '' OR required_role IS NULL)" +
+		" ORDER BY created_at DESC"
+
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var pages []Page
+	for rows.Next() {
+		p, err := scanPage(rows)
+		if err != nil {
+			log.Println("Error scanning public page:", err)
+			continue
+		}
+		pages = append(pages, *p)
+	}
+	return pages, nil
+}
+
+
 // GetMenuPages returns published pages marked for menu display.
 func GetMenuPages() ([]Page, error) {
 	rows, err := db.DB.Query("SELECT id, title, slug, menu_order FROM pages WHERE status = 'published' AND show_in_menu = 1 ORDER BY menu_order ASC")
