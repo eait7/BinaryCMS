@@ -5,10 +5,12 @@ import (
 	"encoding/hex"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ez8/gocms/internal/models"
@@ -19,13 +21,135 @@ import (
 
 var store *sessions.CookieStore
 
-// loginAttempts tracks brute-force attempts per IP
-var loginAttempts = make(map[string][]time.Time)
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+
+// rateLimitEntry tracks attempt timestamps and lockout state for one IP.
+type rateLimitEntry struct {
+	mu          sync.Mutex
+	attempts    []time.Time
+	lockedUntil time.Time
+}
+
+var (
+	loginMu      sync.Mutex
+	loginLimits  = make(map[string]*rateLimitEntry)
+
+	registrationMu     sync.Mutex
+	registrationLimits = make(map[string]*rateLimitEntry)
+)
+
+// RealClientIP extracts the actual client IP from a request.
+// It respects the X-Real-IP header set by Caddy/nginx, stripping any port.
+func RealClientIP(r *http.Request) string {
+	if xr := r.Header.Get("X-Real-IP"); xr != "" {
+		return strings.TrimSpace(strings.Split(xr, ",")[0])
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
+// isLoginRateLimited checks whether an IP has exceeded the login attempt threshold.
+// Allows 10 attempts per 60 seconds; locks out for 10 minutes after threshold breach.
+func isLoginRateLimited(ip string) bool {
+	loginMu.Lock()
+	e, ok := loginLimits[ip]
+	if !ok {
+		e = &rateLimitEntry{}
+		loginLimits[ip] = e
+	}
+	loginMu.Unlock()
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	now := time.Now()
+
+	// Still locked out?
+	if now.Before(e.lockedUntil) {
+		return true
+	}
+
+	// Prune attempts outside the 60-second window.
+	cutoff := now.Add(-60 * time.Second)
+	var recent []time.Time
+	for _, t := range e.attempts {
+		if t.After(cutoff) {
+			recent = append(recent, t)
+		}
+	}
+	e.attempts = recent
+
+	if len(recent) >= 10 {
+		// Trigger a 10-minute lockout.
+		e.lockedUntil = now.Add(10 * time.Minute)
+		return true
+	}
+	return false
+}
+
+// recordLoginAttempt records a failed login for an IP.
+func recordLoginAttempt(ip string) {
+	loginMu.Lock()
+	e, ok := loginLimits[ip]
+	if !ok {
+		e = &rateLimitEntry{}
+		loginLimits[ip] = e
+	}
+	loginMu.Unlock()
+
+	e.mu.Lock()
+	e.attempts = append(e.attempts, time.Now())
+	e.mu.Unlock()
+}
+
+// clearLoginAttempts resets the counter for an IP on successful login.
+func clearLoginAttempts(ip string) {
+	loginMu.Lock()
+	delete(loginLimits, ip)
+	loginMu.Unlock()
+}
+
+// IsRegistrationRateLimited checks whether an IP has exceeded the registration
+// attempt threshold: 10 attempts per hour.
+func IsRegistrationRateLimited(ip string) bool {
+	registrationMu.Lock()
+	e, ok := registrationLimits[ip]
+	if !ok {
+		e = &rateLimitEntry{}
+		registrationLimits[ip] = e
+	}
+	registrationMu.Unlock()
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	now := time.Now()
+	cutoff := now.Add(-1 * time.Hour)
+	var recent []time.Time
+	for _, t := range e.attempts {
+		if t.After(cutoff) {
+			recent = append(recent, t)
+		}
+	}
+	e.attempts = recent
+
+	if len(recent) >= 10 {
+		return true
+	}
+	// Record this attempt.
+	e.attempts = append(e.attempts, now)
+	return false
+}
+
+// ── Session Store ─────────────────────────────────────────────────────────────
 
 func Init() {
 	secret := os.Getenv("GOCMS_SESSION_SECRET")
 	if secret == "" {
-		// Generate a random 32-byte key if none is configured
+		// Generate a random 32-byte key if none is configured.
 		b := make([]byte, 32)
 		if _, err := rand.Read(b); err != nil {
 			log.Fatalf("Failed to generate session secret: %v", err)
@@ -38,12 +162,14 @@ func Init() {
 	isProd := os.Getenv("ENV") == "production"
 	store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   86400 * 30, // 30 days
+		MaxAge:   86400 * 7,             // 7 days (was 30 — admin sessions should not be eternal)
 		HttpOnly: true,
 		Secure:   isProd,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode, // was Lax — Strict prevents CSRF via cross-site navigations
 	}
 }
+
+// ── Password Utilities ────────────────────────────────────────────────────────
 
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
@@ -54,6 +180,8 @@ func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
+
+// ── Middleware ────────────────────────────────────────────────────────────────
 
 // RequireLogin redirects unauthenticated users to the login page.
 func RequireLogin(next http.Handler) http.Handler {
@@ -117,40 +245,24 @@ func LoginHandlerTemplate(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, nil)
 }
 
-// isRateLimited checks if an IP has exceeded login attempts (5 per minute).
-func isRateLimited(ip string) bool {
-	now := time.Now()
-	cutoff := now.Add(-1 * time.Minute)
-
-	// Prune old entries
-	var recent []time.Time
-	for _, t := range loginAttempts[ip] {
-		if t.After(cutoff) {
-			recent = append(recent, t)
-		}
-	}
-	loginAttempts[ip] = recent
-
-	return len(recent) >= 5
-}
-
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	ip := r.RemoteAddr
-	if isRateLimited(ip) {
-		renderLoginError(w, "Too many login attempts. Please try again later.", http.StatusTooManyRequests)
+	ip := RealClientIP(r)
+	if isLoginRateLimited(ip) {
+		w.Header().Set("Retry-After", "600")
+		renderLoginError(w, "Too many login attempts. Please try again in 10 minutes.", http.StatusTooManyRequests)
 		return
 	}
 
 	username := strings.TrimSpace(r.FormValue("username"))
 	password := r.FormValue("password")
 
-	// Basic input validation
+	// Basic input validation.
 	if username == "" || password == "" {
 		renderLoginError(w, "Username and password are required", http.StatusBadRequest)
 		return
 	}
 
-	// Sanitize username - only allow alphanumeric, underscore, hyphen, dot
+	// Sanitize username — only allow alphanumeric, underscore, hyphen, dot.
 	validUsername := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 	if !validUsername.MatchString(username) {
 		renderLoginError(w, "Invalid username format", http.StatusBadRequest)
@@ -158,15 +270,18 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if u, ok := models.CheckUserLogin(username, password); ok {
+		// Successful login — clear brute-force counter.
+		clearLoginAttempts(ip)
+
 		session, _ := store.Get(r, "session-name")
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = u.ID
 		session.Save(r, w)
 
-		// Update last login timestamp
+		// Update last login timestamp.
 		models.UpdateUserLastLogin(u.ID)
 
-		// Redirect subscribers to frontend, admin/staff to backend
+		// Redirect subscribers to frontend, admin/staff to backend.
 		if u.Role == "subscriber" {
 			http.Redirect(w, r, "/my-account", http.StatusFound)
 		} else {
@@ -175,8 +290,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Record failed attempt
-	loginAttempts[ip] = append(loginAttempts[ip], time.Now())
+	// Record failed attempt.
+	recordLoginAttempt(ip)
 	renderLoginError(w, "Forbidden - Incorrect Username or Password", http.StatusForbidden)
 }
 

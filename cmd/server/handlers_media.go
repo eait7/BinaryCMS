@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -10,7 +12,6 @@ import (
 
 	"github.com/ez8/gocms/internal/pluginmanager"
 	"github.com/go-chi/chi/v5"
-	"io"
 )
 
 type MediaFile struct {
@@ -113,7 +114,7 @@ func handleMediaUpload(pm *pluginmanager.Manager) http.HandlerFunc {
 		// Sanitize filename to prevent path traversal
 		hFilename = filepath.Base(hFilename)
 
-		// Extension allowlist check
+		// Extension allowlist check.
 		ext := strings.ToLower(filepath.Ext(hFilename))
 		if !allowedMediaExt[ext] {
 			if strings.Contains(r.Header.Get("Accept"), "application/json") {
@@ -124,6 +125,40 @@ func handleMediaUpload(pm *pluginmanager.Manager) http.HandlerFunc {
 				http.Error(w, "Forbidden file format", http.StatusForbidden)
 			}
 			return
+		}
+
+		// Magic byte verification: detect actual content type from file header
+		// and confirm it matches the declared extension. This prevents polyglot
+		// files (e.g. a PHP script renamed to .jpg) from being uploaded.
+		magicBuf := make([]byte, 512)
+		n, _ := file.Read(magicBuf)
+		detectedType := http.DetectContentType(magicBuf[:n])
+		// Rebuild the reader so the full file is still written to disk.
+		file = io.NopCloser(io.MultiReader(bytes.NewReader(magicBuf[:n]), file))
+
+		allowedMimeByExt := map[string]string{
+			".jpg":  "image/jpeg",
+			".jpeg": "image/jpeg",
+			".png":  "image/png",
+			".gif":  "image/gif",
+			".webp": "image/", // webp detected as "image/webp" or "image/"
+			".pdf":  "application/pdf",
+			".mp4":  "video/",
+			".mp3":  "audio/",
+			".csv":  "text/",
+			".txt":  "text/",
+		}
+		if expectedPrefix, ok := allowedMimeByExt[ext]; ok {
+			if !strings.HasPrefix(detectedType, expectedPrefix) {
+				if strings.Contains(r.Header.Get("Accept"), "application/json") {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusBadRequest)
+					json.NewEncoder(w).Encode(map[string]interface{}{"error": "File content does not match extension"})
+				} else {
+					http.Error(w, "File content does not match extension", http.StatusBadRequest)
+				}
+				return
+			}
 		}
 
 		destPath := filepath.Join("uploads", hFilename)

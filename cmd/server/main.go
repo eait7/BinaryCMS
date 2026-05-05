@@ -139,9 +139,19 @@ func main() {
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("X-Content-Type-Options", "nosniff")
-			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+			w.Header().Set("X-Frame-Options", "DENY") // was SAMEORIGIN — admin panels should never be framed
 			w.Header().Set("X-XSS-Protection", "1; mode=block")
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+			w.Header().Set("Content-Security-Policy",
+				"default-src 'self'; "+
+					"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "+
+					"style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://rsms.me https://fonts.googleapis.com; "+
+					"font-src 'self' https://cdn.jsdelivr.net https://rsms.me https://fonts.gstatic.com; "+
+					"img-src 'self' data: blob: https://binarycms.com; "+
+					"connect-src 'self'; "+
+					"frame-ancestors 'none';",
+			)
 			next.ServeHTTP(w, r)
 		})
 	})
