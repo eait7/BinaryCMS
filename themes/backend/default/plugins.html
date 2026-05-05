@@ -1,6 +1,53 @@
+<style>
+  /* ── Plugin Store Grid ─────────────────────────────────────────────────── */
+  .store-section-title {
+    font-size: 1.15rem; font-weight: 700; margin: 2rem 0 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .store-section-title svg { color: var(--tblr-primary); }
+  .store-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
+  .mp-search-bar { position: relative; min-width: 220px; }
+  .mp-search-bar input { padding-left: 2.4rem; }
+  .mp-search-bar .si { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--tblr-secondary); pointer-events: none; }
+  .mp-filter-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .mp-filter-tabs .btn.active { background: var(--tblr-primary); color: #fff; border-color: var(--tblr-primary); }
+
+  .mp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
+  .mp-card { border: 1px solid var(--tblr-border-color); border-radius: 10px; overflow: hidden; background: var(--tblr-card-bg); transition: transform .18s, box-shadow .18s; }
+  .mp-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.1); }
+  .mp-thumb { width: 100%; height: 160px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; position: relative; }
+  .mp-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .mp-thumb svg { width: 52px; height: 52px; color: rgba(255,255,255,.85); }
+  .mp-badge { position: absolute; padding: 3px 11px; border-radius: 20px; font-weight: 600; font-size: .75rem; }
+  .mp-badge-price  { top: 10px; right: 10px; }
+  .mp-badge-free   { background: #10b981; color: #fff; }
+  .mp-badge-paid   { background: #3b82f6; color: #fff; }
+  .mp-badge-inst   { top: 10px; left: 10px; background: rgba(0,0,0,.55); color: #4ade80; backdrop-filter: blur(4px); }
+  .mp-body { padding: 1rem 1.1rem; }
+  .mp-body h4 { margin: 0 0 .2rem; font-size: 1rem; font-weight: 600; }
+  .mp-body .mp-author { color: var(--tblr-secondary); font-size: .82rem; margin-bottom: .45rem; }
+  .mp-body .mp-desc { color: var(--tblr-secondary); font-size: .85rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mp-foot { padding: .65rem 1.1rem; border-top: 1px solid var(--tblr-border-color); display: flex; justify-content: space-between; align-items: center; }
+  .mp-foot .mp-dl { font-size: .78rem; color: var(--tblr-secondary); }
+  .mp-empty { text-align: center; padding: 3rem 2rem; color: var(--tblr-secondary); }
+  .mp-empty svg { width: 56px; height: 56px; margin-bottom: 1rem; opacity: .35; }
+
+  /* ── License Modal ─────────────────────────────────────────────────────── */
+  .mp-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); backdrop-filter: blur(3px); z-index: 1055; align-items: center; justify-content: center; }
+  .mp-overlay.show { display: flex; }
+  .mp-modal { background: var(--tblr-card-bg); border-radius: 12px; padding: 2rem; max-width: 460px; width: 92%; box-shadow: 0 20px 60px rgba(0,0,0,.28); }
+  .mp-modal h4 { margin: 0 0 .4rem; }
+  .mp-modal .sub { color: var(--tblr-secondary); font-size: .88rem; margin-bottom: 1.25rem; }
+  .mp-lic-input { font-family: 'SF Mono','Monaco','Inconsolata',monospace; font-size: 1rem; text-align: center; letter-spacing: 2px; text-transform: uppercase; }
+  .mp-msg { margin-top: .85rem; padding: .65rem .9rem; border-radius: 6px; font-size: .88rem; display: none; }
+  .mp-msg.err  { display:block; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+  .mp-msg.ok   { display:block; background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+  .mp-actions  { display:flex; gap:.65rem; justify-content:flex-end; margin-top:1.25rem; }
+</style>
+
 <div class="row row-cards">
 
-
+  {{/* ══════════════════ SECTION 1: INSTALLED PLUGINS ══════════════════ */}}
   <div class="col-12">
     <div class="card">
       <div class="card-header">
@@ -28,24 +75,24 @@
               </td>
               <td class="text-end">
                 <div class="btn-list flex-nowrap justify-content-end">
-                    {{ if .Active }}
-                    <form action="/admin/plugins/deactivate/{{ .Filename }}" method="POST" style="display:inline;">
-                      <button type="submit" class="btn btn-sm btn-ghost-warning">Deactivate</button>
-                    </form>
-                    {{ else }}
-                    <form action="/admin/plugins/activate/{{ .Filename }}" method="POST" style="display:inline;">
-                      <button type="submit" class="btn btn-sm btn-ghost-success">Activate</button>
-                    </form>
-                    {{ end }}
-                    <form action="/admin/plugins/delete/{{ .Filename }}" method="POST" style="display:inline;">
-                      <button type="submit" class="btn btn-sm btn-ghost-danger">Delete</button>
-                    </form>
+                  {{ if .Active }}
+                  <form action="/admin/plugins/deactivate/{{ .Filename }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-ghost-warning">Deactivate</button>
+                  </form>
+                  {{ else }}
+                  <form action="/admin/plugins/activate/{{ .Filename }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-ghost-success">Activate</button>
+                  </form>
+                  {{ end }}
+                  <form action="/admin/plugins/delete/{{ .Filename }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-ghost-danger">Delete</button>
+                  </form>
                 </div>
               </td>
             </tr>
             {{ else }}
             <tr>
-              <td colspan="4" class="text-center text-secondary py-4">No compiled plugins loaded.</td>
+              <td colspan="3" class="text-center text-secondary py-4">No compiled plugins installed yet.</td>
             </tr>
             {{ end }}
           </tbody>
@@ -54,149 +101,356 @@
     </div>
   </div>
 
-  <div class="card mt-4">
-    <form action="/admin/plugins/upload" method="POST" enctype="multipart/form-data" id="pluginUploadForm">
-      <div class="card-header">
-        <h3 class="card-title">Upload New Plugin</h3>
-      </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <label class="form-label required">Plugin Executable Binary</label>
-          <input type="file" class="form-control" name="plugin_binary" id="pluginBinaryInput" required>
-          <small class="form-hint">Upload a compiled HashiCorp go-plugin extension (Linux x86/ARM binary). Uploads flawlessly integrate organically via real-time hot-reloading architecture.</small>
-        </div>
-        <div class="mb-3">
-          <label class="form-label required">Admin Password</label>
-          <input type="password" class="form-control" name="admin_password" placeholder="Verify password to install executable" required>
-        </div>
-        
-        <!-- Progress Bar Container (Hidden by default) -->
-        <div id="uploadProgressContainer" class="mt-3" style="display: none;">
-          <div class="d-flex justify-content-between mb-1">
-            <span class="text-secondary" id="uploadStatusText">Uploading...</span>
-            <span class="text-secondary fw-bold" id="uploadPercentage">0%</span>
-          </div>
-          <div class="progress">
-            <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+  {{/* ══════════════════ SECTION 2: UPLOAD CUSTOM PLUGIN ══════════════════ */}}
+  <div class="col-12">
+    <div class="card">
+      <form action="/admin/plugins/upload" method="POST" enctype="multipart/form-data" id="pluginUploadForm">
+        <div class="card-header">
+          <h3 class="card-title">Upload Custom Plugin Binary</h3>
+          <div class="card-options">
+            <span class="badge bg-yellow-lt">Developers</span>
           </div>
         </div>
-
-      </div>
-      <div class="card-footer text-end">
-        <button type="submit" id="uploadSubmitBtn" class="btn btn-primary">Upload and Install</button>
-      </div>
-    </form>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label required">Plugin Executable Binary</label>
+            <input type="file" class="form-control" name="plugin_binary" id="pluginBinaryInput" required>
+            <small class="form-hint">Upload a compiled HashiCorp go-plugin binary (Linux x86/ARM64). The binary will be installed as inactive — activate it below after upload.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label required">Admin Password</label>
+            <input type="password" class="form-control" name="admin_password" placeholder="Re-enter your password to authorise installation" required>
+          </div>
+          <div id="uploadProgressContainer" class="mt-3" style="display:none;">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-secondary" id="uploadStatusText">Uploading...</span>
+              <span class="text-secondary fw-bold" id="uploadPercentage">0%</span>
+            </div>
+            <div class="progress">
+              <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width:0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer text-end">
+          <button type="submit" id="uploadSubmitBtn" class="btn btn-primary">Upload and Install</button>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <div class="col-12 mt-4">
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">Developer Guide: Building Plugins</h3>
+  {{/* ══════════════════ SECTION 3: PLUGIN STORE ══════════════════════════ */}}
+  <div class="col-12">
+    <div class="store-section-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+      Plugin Store
+    </div>
+
+    {{ if .FetchError }}
+    <div class="alert alert-warning mb-3">
+      <div class="d-flex">
+        <div><svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636-2.87l-8.106-13.536a1.914 1.914 0 0 0-3.274 0z"/><path d="M12 16h.01"/></svg></div>
+        <div>
+          <h4 class="alert-title">Unable to reach the Plugin Store</h4>
+          <div class="text-secondary">Could not connect to <code>binarycms.com</code>. Check your internet connection or <a href="/admin/settings">Core Settings → Plugin Hub URL</a>.</div>
+        </div>
       </div>
-      <div class="card-body">
-        <p>This CMS actively utilizes the enterprise-grade <code>hashicorp/go-plugin</code> structural architecture entirely. Every single plugin is a separate compiled Linux binary executing natively over local RPC memory pipelines securely!</p>
-        <strong>1. Implement the Go Interface:</strong>
-        <pre class="bg-dark text-white p-3 rounded mt-2"><code>package main
+    </div>
+    {{ end }}
 
-import "github.com/ez8/gocms/pkg/plugin"
-
-type MyPlugin struct{}
-
-func (p *MyPlugin) PluginName() string { return "MyTool" }
-func (p *MyPlugin) HookBeforeFrontPageRender(c string) string { return c }
-func (p *MyPlugin) HookAdminMenu() []plugin.MenuItem { return nil }
-func (p *MyPlugin) HookAdminRoute(route string) string { return "&lt;b&gt;Simple Dashboard Route&lt;/b&gt;" }
-func (p *MyPlugin) HookDashboardWidget() string { return "&lt;h1&gt;Widget&lt;/h1&gt;" }
-func (p *MyPlugin) HookAdminTopRightWidget() string { return "" }
-
-func main() {
-	plugin.ServePlugin(&MyPlugin{})
-}</code></pre>
-        <strong>2. Compile & Upload constraint:</strong>
-        <p>Because these are raw <code>sys.Exec</code> binaries gracefully deployed seamlessly internally natively via <strong>hot-reloading structures</strong>, you must specifically dynamically compile them matching the destination server architecture! Example: <code>env GOOS=linux GOARCH=amd64 go build -o awesome_plugin .</code></p>
-        <p class="text-secondary"><small><i class="ti ti-bolt text-warning"></i> <strong>Hot Reloading Active:</strong> Deleting, enabling, or injecting components natively spins interfaces dynamically within 50 milliseconds intrinsically overriding active OS bounds smoothly globally.</small></p>
+    <div class="store-toolbar">
+      <div class="mp-search-bar">
+        <svg class="si" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="form-control" id="mpSearch" placeholder="Search plugins..." oninput="filterPlugins()">
       </div>
+      <div class="mp-filter-tabs">
+        <button class="btn btn-sm btn-outline-secondary active" data-filter="all"       onclick="setFilter(this,'all')">All</button>
+        <button class="btn btn-sm btn-outline-secondary"        data-filter="free"      onclick="setFilter(this,'free')">Free</button>
+        <button class="btn btn-sm btn-outline-secondary"        data-filter="paid"      onclick="setFilter(this,'paid')">Premium</button>
+        <button class="btn btn-sm btn-outline-secondary"        data-filter="installed" onclick="setFilter(this,'installed')">Installed</button>
+      </div>
+    </div>
+
+    <div class="mp-grid" id="mpGrid">
+      {{ range .StoreCatalog }}
+      <div class="mp-card"
+           data-name="{{ .Name }}"
+           data-slug="{{ .Slug }}"
+           data-price="{{ .Price }}"
+           data-installed="{{ if index $.InstalledPlugins .Slug }}true{{ else }}false{{ end }}">
+        <div class="mp-thumb">
+          {{ if .IconURL }}
+            <img src="{{ .IconURL }}" alt="{{ .Name }}">
+          {{ else }}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5l0 14"/><path d="M18 13l-6 6"/><path d="M6 13l6 6"/></svg>
+          {{ end }}
+          {{ if eq .Price 0.0 }}
+            <span class="mp-badge mp-badge-price mp-badge-free">Free</span>
+          {{ else }}
+            <span class="mp-badge mp-badge-price mp-badge-paid">${{ printf "%.2f" .Price }} {{ .Currency }}</span>
+          {{ end }}
+          {{ if index $.InstalledPlugins .Slug }}
+            <span class="mp-badge mp-badge-inst">✓ Installed</span>
+          {{ end }}
+        </div>
+        <div class="mp-body">
+          <h4>{{ .Name }}</h4>
+          <div class="mp-author">by {{ .Author }} &middot; v{{ .Version }}</div>
+          <div class="mp-desc">{{ .Description }}</div>
+        </div>
+        <div class="mp-foot">
+          <div class="mp-dl">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            {{ .Downloads }} installs
+          </div>
+          {{/* ── Action buttons ── */}}
+          {{ if index $.InstalledPlugins .Slug }}
+            {{ if and (gt .Price 0.0) (not (index $.LicenseMap .Slug)) }}
+              <button class="btn btn-sm btn-warning" onclick="openLicenseModal('{{ .Slug }}', '{{ .Name }}', true)">Activate License</button>
+            {{ else }}
+              <span class="badge bg-green-lt">✓ Installed</span>
+            {{ end }}
+          {{ else }}
+            {{ if eq .Price 0.0 }}
+              <button class="btn btn-sm btn-primary" id="install-{{ .Slug }}" onclick="installFree('{{ .Slug }}', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Install Free
+              </button>
+            {{ else }}
+              <div class="d-flex gap-1">
+                {{ if .BuyURL }}
+                  <a href="{{ .BuyURL }}" target="_blank" class="btn btn-sm btn-outline-primary">Buy</a>
+                {{ end }}
+                <button class="btn btn-sm btn-primary" onclick="openLicenseModal('{{ .Slug }}', '{{ .Name }}', false)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Activate
+                </button>
+              </div>
+            {{ end }}
+          {{ end }}
+        </div>
+      </div>
+      {{ else }}
+      {{ if not .FetchError }}
+      <div class="mp-empty" style="grid-column:1/-1;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        <h3>Plugin Store is empty</h3>
+        <p>No plugins have been published to the store yet.<br>Check back soon, or upload a custom plugin binary above.</p>
+      </div>
+      {{ end }}
+      {{ end }}
+    </div>
+  </div>
+
+</div><!-- /row -->
+
+{{/* ══════════════════ LICENSE / INSTALL MODAL ══════════════════════════ */}}
+<div class="mp-overlay" id="licenseModal">
+  <div class="mp-modal">
+    <h4 id="modalTitle">Activate Plugin</h4>
+    <p class="sub" id="modalSub">Enter the license key you received after purchasing this plugin.</p>
+    <input type="hidden" id="modalSlug">
+    <input type="hidden" id="modalAlreadyInstalled">
+    <div class="mb-3">
+      <label class="form-label">License Key</label>
+      <input type="text" class="form-control mp-lic-input" id="licKey" placeholder="BNCMS-XXXX-XXXX-XXXX-XXXX" maxlength="29" oninput="fmtKey(this)">
+    </div>
+    <div class="mp-msg" id="modalMsg"></div>
+    <div class="mp-actions">
+      <button class="btn btn-ghost-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modalBtn" onclick="submitLicense()">
+        <span class="spinner-border spinner-border-sm me-1" id="modalSpinner" style="display:none;"></span>
+        Activate &amp; Install
+      </button>
     </div>
   </div>
 </div>
 
 <script>
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.has('upload') && urlParams.get('upload') === 'success') {
-      window.history.replaceState({}, document.title, window.location.pathname);
-  } else if (urlParams.has('action') && urlParams.get('action') === 'success') {
-      window.history.replaceState({}, document.title, window.location.pathname);
-  } else if (urlParams.has('action') && urlParams.get('action') === 'error') {
-      alert('Operation Failed: ' + urlParams.get('msg'));
-      window.history.replaceState({}, document.title, window.location.pathname);
+// ── Filter & Search ────────────────────────────────────────────────────────
+let currentFilter = 'all';
+function filterPlugins() {
+  const q = document.getElementById('mpSearch').value.toLowerCase();
+  document.querySelectorAll('.mp-card').forEach(c => {
+    const name      = c.dataset.name.toLowerCase();
+    const slug      = c.dataset.slug.toLowerCase();
+    const price     = parseFloat(c.dataset.price);
+    const installed = c.dataset.installed === 'true';
+    let ok = currentFilter === 'all'       ? true
+           : currentFilter === 'free'      ? price === 0
+           : currentFilter === 'paid'      ? price > 0
+           : currentFilter === 'installed' ? installed
+           : true;
+    c.style.display = (ok && (name.includes(q) || slug.includes(q))) ? '' : 'none';
+  });
+}
+function setFilter(btn, filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.mp-filter-tabs .btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterPlugins();
+}
+
+// ── Free Install ───────────────────────────────────────────────────────────
+async function installFree(slug, btn) {
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Installing...';
+  try {
+    const r = await fetch('/admin/plugins/store/install', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({slug})
+    });
+    const d = await r.json();
+    if (d.success) {
+      btn.innerHTML = '✓ Installed';
+      btn.classList.replace('btn-primary', 'btn-success');
+      const card = btn.closest('.mp-card');
+      card.dataset.installed = 'true';
+      const thumb = card.querySelector('.mp-thumb');
+      if (!thumb.querySelector('.mp-badge-inst')) {
+        const b = document.createElement('span');
+        b.className = 'mp-badge mp-badge-inst';
+        b.textContent = '✓ Installed';
+        thumb.appendChild(b);
+      }
+    } else {
+      alert('Install failed: ' + (d.error || 'Unknown error'));
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  } catch (e) {
+    alert('Network error: ' + e.message);
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+// ── License Modal ─────────────────────────────────────────────────────────
+function openLicenseModal(slug, name, alreadyInstalled) {
+  document.getElementById('modalSlug').value = slug;
+  document.getElementById('modalAlreadyInstalled').value = alreadyInstalled ? '1' : '';
+  document.getElementById('modalTitle').textContent = alreadyInstalled
+    ? 'Activate License: ' + name
+    : 'Purchase & Activate: ' + name;
+  document.getElementById('modalSub').textContent = alreadyInstalled
+    ? 'Enter the license key from your purchase email to activate this plugin.'
+    : 'After buying, enter your license key below to download and install the plugin.';
+  document.getElementById('licKey').value = '';
+  document.getElementById('modalMsg').className = 'mp-msg';
+  document.getElementById('modalMsg').textContent = '';
+  document.getElementById('licenseModal').classList.add('show');
+  setTimeout(() => document.getElementById('licKey').focus(), 80);
+}
+function closeModal() {
+  document.getElementById('licenseModal').classList.remove('show');
+}
+document.getElementById('licenseModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+function fmtKey(input) {
+  let v = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  let parts = [];
+  for (let i = 0; i < v.length && parts.length < 5; i += 4) parts.push(v.substr(i, 4));
+  input.value = parts.join('-');
+}
+
+async function submitLicense() {
+  const slug      = document.getElementById('modalSlug').value;
+  const key       = document.getElementById('licKey').value.trim();
+  const installed = document.getElementById('modalAlreadyInstalled').value === '1';
+  const msgEl     = document.getElementById('modalMsg');
+  const spinner   = document.getElementById('modalSpinner');
+  const btn       = document.getElementById('modalBtn');
+
+  if (!key || key.length < 8) {
+    msgEl.className = 'mp-msg err'; msgEl.textContent = 'Please enter a valid license key.'; return;
   }
 
-  // Intercept the upload form to provide a smooth javascript-powered Progress Bar
-  const uploadForm = document.getElementById('pluginUploadForm');
-  const fileInput = document.getElementById('pluginBinaryInput');
-  const progressContainer = document.getElementById('uploadProgressContainer');
-  const progressBar = document.getElementById('uploadProgressBar');
-  const progressText = document.getElementById('uploadPercentage');
-  const statusText = document.getElementById('uploadStatusText');
-  const submitBtn = document.getElementById('uploadSubmitBtn');
+  btn.disabled = true; spinner.style.display = 'inline-block';
+  msgEl.className = 'mp-msg'; msgEl.textContent = '';
 
-  if (uploadForm) {
-      uploadForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          
-          if (!fileInput.files.length) return;
-          
-          progressContainer.style.display = 'block';
-          submitBtn.disabled = true;
-          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Uploading...';
-          
-          const formData = new FormData(uploadForm);
-          const xhr = new XMLHttpRequest();
-          
-          xhr.open('POST', uploadForm.action, true);
-          
-          xhr.upload.onprogress = function(e) {
-              if (e.lengthComputable) {
-                  const percentComplete = Math.round((e.loaded / e.total) * 100);
-                  progressBar.style.width = percentComplete + '%';
-                  progressBar.setAttribute('aria-valuenow', percentComplete);
-                  progressText.textContent = percentComplete + '%';
-                  
-                  if (percentComplete === 100) {
-                      progressBar.classList.remove('progress-bar-animated');
-                      statusText.textContent = 'Processing file structure temporarily on OS...';
-                  }
-              }
-          };
-          
-          xhr.onload = function() {
-              if (xhr.status === 200 && xhr.responseURL.includes('error=')) {
-                  let url = new URL(xhr.responseURL);
-                  statusText.textContent = 'Upload failed! ' + url.searchParams.get('error').replace(/\+/g, ' ');
-                  statusText.classList.add('text-danger');
-                  progressBar.classList.replace('bg-primary', 'bg-danger');
-                  submitBtn.disabled = false;
-                  submitBtn.innerText = 'Retry Network Upload';
-              } else if (xhr.status === 200 || xhr.status === 302) {
-                  window.location.href = '/admin/plugins?upload=success';
-              } else {
-                  statusText.textContent = 'Upload failed! Internal Service Response: HTTP ' + xhr.status;
-                  statusText.classList.add('text-danger');
-                  progressBar.classList.replace('bg-primary', 'bg-danger');
-                  submitBtn.disabled = false;
-                  submitBtn.innerText = 'Retry Network Upload';
-              }
-          };
-          
-          xhr.onerror = function() {
-              statusText.textContent = 'Physical network dropout occurred during streaming operation.';
-              statusText.classList.add('text-danger');
-              progressBar.classList.replace('bg-primary', 'bg-danger');
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Retry Network Upload';
-          };
-          
-          xhr.send(formData);
-      });
+  try {
+    // If already installed on disk: just activate (save license locally)
+    // If not installed: call install with license key (validates + downloads + stores)
+    const endpoint = installed
+      ? '/admin/plugins/store/activate'
+      : '/admin/plugins/store/install';
+    const body = {slug, license_key: key};
+
+    const r = await fetch(endpoint, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+
+    if (d.success) {
+      msgEl.className = 'mp-msg ok'; msgEl.textContent = '✓ ' + d.message;
+      setTimeout(() => window.location.reload(), 1400);
+    } else {
+      msgEl.className = 'mp-msg err'; msgEl.textContent = d.error || 'Activation failed.';
+    }
+  } catch (e) {
+    msgEl.className = 'mp-msg err'; msgEl.textContent = 'Network error: ' + e.message;
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none';
   }
+}
+
+// ── Upload progress bar ────────────────────────────────────────────────────
+const uploadForm      = document.getElementById('pluginUploadForm');
+const fileInput       = document.getElementById('pluginBinaryInput');
+const progressCtr     = document.getElementById('uploadProgressContainer');
+const progressBar     = document.getElementById('uploadProgressBar');
+const progressPct     = document.getElementById('uploadPercentage');
+const statusText      = document.getElementById('uploadStatusText');
+const submitBtn       = document.getElementById('uploadSubmitBtn');
+
+if (uploadForm) {
+  uploadForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!fileInput.files.length) return;
+    progressCtr.style.display = 'block';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', uploadForm.action, true);
+    xhr.upload.onprogress = ev => {
+      if (ev.lengthComputable) {
+        const p = Math.round(ev.loaded / ev.total * 100);
+        progressBar.style.width = p + '%';
+        progressBar.setAttribute('aria-valuenow', p);
+        progressPct.textContent = p + '%';
+        if (p === 100) { progressBar.classList.remove('progress-bar-animated'); statusText.textContent = 'Processing...'; }
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status === 200 || xhr.status === 302) {
+        window.location.href = '/admin/plugins?upload=success';
+      } else {
+        statusText.textContent = 'Upload failed — HTTP ' + xhr.status;
+        statusText.classList.add('text-danger');
+        progressBar.classList.replace('bg-primary','bg-danger');
+        submitBtn.disabled = false; submitBtn.textContent = 'Retry';
+      }
+    };
+    xhr.onerror = () => {
+      statusText.textContent = 'Network error during upload.';
+      statusText.classList.add('text-danger');
+      submitBtn.disabled = false; submitBtn.textContent = 'Retry';
+    };
+    xhr.send(new FormData(uploadForm));
+  });
+}
+
+// ── URL param notices ──────────────────────────────────────────────────────
+const p = new URLSearchParams(window.location.search);
+if (p.get('upload') === 'success' || p.get('action') === 'success') {
+  window.history.replaceState({}, '', window.location.pathname);
+} else if (p.get('action') === 'error') {
+  alert('Operation failed: ' + (p.get('msg') || 'unknown'));
+  window.history.replaceState({}, '', window.location.pathname);
+}
 </script>
