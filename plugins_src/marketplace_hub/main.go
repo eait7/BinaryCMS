@@ -265,13 +265,9 @@ func (m *MarketplaceHub) handleAPIDownload(slug string) string {
 	// Increment download count
 	m.db.Exec("UPDATE marketplace_plugins SET downloads = downloads + 1 WHERE slug = ?", slug)
 
-	// Return raw binary (base64 encoded for JSON transport in go-plugin context)
-	hash := sha256.Sum256(data)
-	hexHash := hex.EncodeToString(hash[:])
-
-	// Note: For the initial implementation, we return the binary path.
-	// The actual binary download should use a dedicated HTTP endpoint outside go-plugin.
-	return fmt.Sprintf(`{"binary_path":"%s","sha256":"%s","size":%d}`, binaryPath, hexHash, len(data))
+	// Return raw binary string directly via RPC. The CMS handler will detect it doesn't
+	// look like JSON (starts with '{' and ends with '}') and will serve it as application/octet-stream.
+	return string(data)
 }
 
 // ---- Admin Dashboard ----
@@ -316,7 +312,7 @@ func (m *MarketplaceHub) renderAdminDashboard() string {
 				<td><form method="POST" action="/admin/plugin/marketplace-hub?action=delete&slug=%s" style="display:inline;" onsubmit="return confirm('Delete this plugin from the catalog?')">
 					<button type="submit" class="btn btn-sm btn-ghost-danger">Remove</button>
 				</form></td>
-			</tr>`, name, buyLabel, slug, version, priceLabel, downloads, slug)
+			</tr>`, name, buyLabel, slug, version, priceLabel, downloads, url.QueryEscape(slug))
 		}
 	}
 
@@ -548,7 +544,12 @@ func parseQueryString(qs string) map[string]string {
 	for _, pair := range strings.Split(qs, "&") {
 		kv := strings.SplitN(pair, "=", 2)
 		if len(kv) == 2 {
-			params[kv[0]] = kv[1]
+			k, _ := url.QueryUnescape(kv[0])
+			v, _ := url.QueryUnescape(kv[1])
+			// Also replace '+' with space manually as QueryUnescape might not handle it in all contexts depending on Go version
+			k = strings.ReplaceAll(k, "+", " ")
+			v = strings.ReplaceAll(v, "+", " ")
+			params[k] = v
 		}
 	}
 	return params
