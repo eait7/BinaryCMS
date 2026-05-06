@@ -108,7 +108,7 @@ func (m *MarketplaceHub) HookAdminRoute(route string) string {
 
 	// Admin panel routes
 	if routePath == "/admin/plugin/marketplace-hub" {
-		return m.renderAdminDashboard()
+		return m.renderAdminDashboard("")
 	}
 
 	// Handle admin form submissions
@@ -272,7 +272,7 @@ func (m *MarketplaceHub) handleAPIDownload(slug string) string {
 
 // ---- Admin Dashboard ----
 
-func (m *MarketplaceHub) renderAdminDashboard() string {
+func (m *MarketplaceHub) renderAdminDashboard(editSlug string) string {
 	// Count plugins
 	var pluginCount int
 	m.db.QueryRow("SELECT COUNT(*) FROM marketplace_plugins").Scan(&pluginCount)
@@ -309,10 +309,17 @@ func (m *MarketplaceHub) renderAdminDashboard() string {
 				<td>v%s</td>
 				<td>%s</td>
 				<td>%d</td>
-				<td><form method="POST" action="/admin/plugin/marketplace-hub?action=delete&slug=%s" style="display:inline;" onsubmit="return confirm('Delete this plugin from the catalog?')">
+				<td><form method="POST" action="/admin/plugin/marketplace-hub" enctype="multipart/form-data" style="display:inline;">
+					<input type="hidden" name="action" value="edit_form">
+					<input type="hidden" name="slug" value="%s">
+					<button type="submit" class="btn btn-sm btn-ghost-primary me-2">Edit</button>
+				</form>
+				<form method="POST" action="/admin/plugin/marketplace-hub" enctype="multipart/form-data" style="display:inline;" onsubmit="return confirm('Delete this plugin from the catalog?')">
+					<input type="hidden" name="action" value="delete">
+					<input type="hidden" name="slug" value="%[1]s">
 					<button type="submit" class="btn btn-sm btn-ghost-danger">Remove</button>
 				</form></td>
-			</tr>`, name, buyLabel, slug, version, priceLabel, downloads, url.QueryEscape(slug))
+			</tr>`, name, buyLabel, slug, version, priceLabel, downloads, slug)
 		}
 	}
 
@@ -350,6 +357,25 @@ func (m *MarketplaceHub) renderAdminDashboard() string {
 		licenseRows = `<tr><td colspan="5" class="text-center text-secondary py-4">No licenses generated yet.</td></tr>`
 	}
 
+	// Handle Edit Mode Data
+	formTitle := "Add Plugin to Catalog"
+	submitBtn := "Add Plugin"
+	actionName := "add"
+	var eSlug, eName, eDesc, eVersion, eBuyUrl string
+	var ePrice float64
+	eVersion = "1.0.0"
+	ePrice = 0
+
+	if editSlug != "" {
+		m.db.QueryRow("SELECT slug, name, description, version, price, buy_url FROM marketplace_plugins WHERE slug = ?", editSlug).
+			Scan(&eSlug, &eName, &eDesc, &eVersion, &ePrice, &eBuyUrl)
+		if eSlug != "" {
+			formTitle = "Edit Plugin: " + eName
+			submitBtn = "Save Changes"
+			actionName = "edit"
+		}
+	}
+
 	return fmt.Sprintf(`
 	<div class="row row-cards">
 		<div class="col-sm-4">
@@ -385,20 +411,25 @@ func (m *MarketplaceHub) renderAdminDashboard() string {
 	</div>
 
 	<div class="card mt-3">
-		<div class="card-header"><h3 class="card-title">Add Plugin to Catalog</h3></div>
+		<div class="card-header d-flex justify-content-between align-items-center">
+			<h3 class="card-title">%s</h3>
+			%s
+		</div>
 		<div class="card-body">
-			<form method="POST" action="/admin/plugin/marketplace-hub?action=add" enctype="multipart/form-data">
+			<form method="POST" action="/admin/plugin/marketplace-hub" enctype="multipart/form-data">
+				<input type="hidden" name="action" value="%s">
+				<input type="hidden" name="original_slug" value="%s">
 				<div class="row g-3">
-					<div class="col-md-3"><input type="text" class="form-control" name="slug" placeholder="Plugin Slug (e.g. seo_optimizer)" required></div>
-					<div class="col-md-3"><input type="text" class="form-control" name="name" placeholder="Display Name" required></div>
-					<div class="col-md-2"><input type="text" class="form-control" name="version" placeholder="Version" value="1.0.0"></div>
-					<div class="col-md-2"><input type="number" step="0.01" class="form-control" name="price" placeholder="Price (0=free)" value="0"></div>
-					<div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Add Plugin</button></div>
+					<div class="col-md-3"><input type="text" class="form-control" name="slug" placeholder="Plugin Slug (e.g. seo_optimizer)" value="%s" required></div>
+					<div class="col-md-3"><input type="text" class="form-control" name="name" placeholder="Display Name" value="%s" required></div>
+					<div class="col-md-2"><input type="text" class="form-control" name="version" placeholder="Version" value="%s"></div>
+					<div class="col-md-2"><input type="number" step="0.01" class="form-control" name="price" placeholder="Price (0=free)" value="%.2f"></div>
+					<div class="col-md-2"><button type="submit" class="btn btn-primary w-100">%s</button></div>
 				</div>
 				<div class="row g-3 mt-1">
-					<div class="col-md-4"><input type="text" class="form-control" name="description" placeholder="Description"></div>
+					<div class="col-md-4"><input type="text" class="form-control" name="description" placeholder="Description" value="%s"></div>
 					<div class="col-md-4"><input type="file" class="form-control" name="plugin_binary" title="Upload compiled plugin binary"></div>
-					<div class="col-md-4"><input type="text" class="form-control" name="buy_url" placeholder="LemonSqueezy Buy URL (optional)"></div>
+					<div class="col-md-4"><input type="text" class="form-control" name="buy_url" placeholder="LemonSqueezy Buy URL (optional)" value="%s"></div>
 				</div>
 			</form>
 		</div>
@@ -455,7 +486,7 @@ func (m *MarketplaceHub) renderAdminDashboard() string {
 			</form>
 		</div>
 	</div>
-	`, pluginCount, licenseCount, activeCount, pluginRows, licenseRows,
+	`, pluginCount, licenseCount, activeCount, formTitle, map[bool]string{true: `<a href="/admin/plugin/marketplace-hub" class="btn btn-sm">Cancel Edit</a>`, false: ""}[actionName == "edit"], actionName, eSlug, eSlug, eName, eVersion, ePrice, submitBtn, eDesc, eBuyUrl, pluginRows, licenseRows,
 		m.getSetting("ls_secret"), m.getSetting("smtp_host"), m.getSetting("smtp_port"), m.getSetting("smtp_user"), m.getSetting("smtp_pass"))
 }
 
@@ -464,14 +495,19 @@ func (m *MarketplaceHub) renderAdminDashboard() string {
 func (m *MarketplaceHub) handleAdminAction(route string) string {
 	parts := strings.SplitN(route, "?", 2)
 	if len(parts) < 2 {
-		return m.renderAdminDashboard()
+		return m.renderAdminDashboard("")
 	}
 
 	params := parseQueryString(parts[1])
 	action := params["action"]
 
+	log.Printf("[Marketplace Hub] Action: %s, Params: %v", action, params)
+
 	switch action {
-	case "add":
+	case "edit_form":
+		return m.renderAdminDashboard(params["slug"])
+
+	case "add", "edit":
 		slug := params["slug"]
 		name := params["name"]
 		version := params["version"]
@@ -494,11 +530,20 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 					// Move the file
 					os.Rename(uploadedFile, finalBinaryPath)
 				}
+			} else if action == "edit" {
+				// Keep existing binary path and hash if not updated
+				m.db.QueryRow("SELECT binary_path, sha256_hash FROM marketplace_plugins WHERE slug = ?", params["original_slug"]).
+					Scan(&finalBinaryPath, &sha)
 			}
 
-			m.db.Exec(`INSERT OR REPLACE INTO marketplace_plugins (slug, name, description, version, price, binary_path, sha256_hash, buy_url, updated_at)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, time.Now().Format("2006-01-02 15:04:05"))
+			if action == "edit" {
+				m.db.Exec(`UPDATE marketplace_plugins SET slug=?, name=?, description=?, version=?, price=?, binary_path=?, sha256_hash=?, buy_url=?, updated_at=? WHERE slug=?`,
+					slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, time.Now().Format("2006-01-02 15:04:05"), params["original_slug"])
+			} else {
+				m.db.Exec(`INSERT OR REPLACE INTO marketplace_plugins (slug, name, description, version, price, binary_path, sha256_hash, buy_url, updated_at)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+					slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, time.Now().Format("2006-01-02 15:04:05"))
+			}
 		}
 
 	case "delete":
@@ -524,7 +569,7 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 		m.setSetting("smtp_pass", params["smtp_pass"])
 	}
 
-	return m.renderAdminDashboard()
+	return m.renderAdminDashboard("")
 }
 
 // ---- Helpers ----
