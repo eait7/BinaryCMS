@@ -146,12 +146,12 @@ func main() {
 			w.Header().Set("Content-Security-Policy",
 				"default-src 'self'; "+
 					"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; "+
-					"style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://rsms.me https://fonts.googleapis.com https://unpkg.com; "+
-					"font-src 'self' https://cdn.jsdelivr.net https://rsms.me https://fonts.gstatic.com data:; "+
+					"style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://rsms.me https://fonts.googleapis.com https://unpkg.com https://maxcdn.bootstrapcdn.com; "+
+					"font-src 'self' https://cdn.jsdelivr.net https://rsms.me https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com data:; "+
 					"img-src * data: blob:; "+
 					"media-src * data: blob:; "+
 					"frame-src *; "+
-					"connect-src 'self' *; "+
+					"connect-src *; "+
 					"frame-ancestors 'none';",
 			)
 			next.ServeHTTP(w, r)
