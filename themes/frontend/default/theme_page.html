@@ -22,7 +22,12 @@
     <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
     {{ end }}
     <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
-    <!-- Tabler CSS inside frontend fallback -->
+    <!-- Preconnect to critical CDN origins -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://rsms.me" crossorigin>
+    <!-- Tabler CSS -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
     <link href="/static/vb-responsive.css" rel="stylesheet"/>
     {{ $fh := "Inter" }}{{ if .Settings.font_heading }}{{ $fh = .Settings.font_heading }}{{ end }}{{ $fb := "Inter" }}{{ if .Settings.font_body }}{{ $fb = .Settings.font_body }}{{ end }}
@@ -111,7 +116,7 @@
       .full-width .article-content { border-radius: 0; max-width: 100%; padding: 0; border: none; background: transparent; box-shadow: none; margin-bottom: 0; }
 
       .premium-footer { background: var(--cms-surface); border-top: 1px solid #e2e8f0; padding-top: var(--cms-spacing); }
-      .footer-title { font-size: 0.875rem; font-weight: 700; font-family: var(--cms-font-heading); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+      .footer-title { font-size: 0.875rem; font-weight: 700; font-family: var(--cms-font-heading); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; margin-top: 0; }
       .footer-link { color: var(--cms-secondary); text-decoration: none; transition: color 0.2s; font-weight: 500; }
       .footer-link:hover { color: var(--cms-primary); }
     </style>
@@ -164,7 +169,7 @@
         </div>
       </nav>
 
-      <div class="page-wrapper {{ if .Page.FullWidth }}full-width{{ end }}">
+      <main class="page-wrapper {{ if .Page.FullWidth }}full-width{{ end }}">
         <div class="{{ if .Page.FullWidth }}container-fluid px-0{{ else }}container-xl{{ end }}" {{ if not .Page.FullWidth }}style="max-width: 800px;"{{ end }}>
           <!-- Breadcrumbs -->
           {{ if not .Page.HideBreadcrumbs }}
@@ -188,6 +193,7 @@
             {{ .Content }}
           </article>
         </div>
+      </main>
 
         <!-- Premium Footer -->
         {{ if ne .Settings.hide_footer "true" }}
@@ -209,7 +215,7 @@
               </div>
               
               <div class="col-6 col-sm-4 col-lg-2 ms-lg-auto">
-                <h6 class="footer-title">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Product{{ end }}</h6>
+                <p class="footer-title">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Product{{ end }}</p>
                 <ul class="list-unstyled mb-0">
                   {{ range .FooterMenu1 }}
                   <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
@@ -218,7 +224,7 @@
               </div>
 
               <div class="col-6 col-sm-4 col-lg-2">
-                <h6 class="footer-title">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
+                <p class="footer-title">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</p>
                 <ul class="list-unstyled mb-0">
                   {{ range .FooterMenu2 }}
                   <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
@@ -227,7 +233,7 @@
               </div>
 
               <div class="col-6 col-sm-4 col-lg-2">
-                <h6 class="footer-title">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
+                <p class="footer-title">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</p>
                 <ul class="list-unstyled mb-0">
                   {{ range .FooterMenu3 }}
                   <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
@@ -250,7 +256,7 @@
         {{ end }}
       </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js" defer></script>
     <script>
       // Scroll-reveal: adds .v to .br elements when they enter the viewport
       (function() {

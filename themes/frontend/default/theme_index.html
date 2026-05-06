@@ -12,6 +12,10 @@
     <link rel="icon" type="image/svg+xml" href="/api/dynamic-favicon.svg">
     {{ end }}
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://rsms.me" crossorigin>
     <link href="/static/vb-responsive.css" rel="stylesheet"/>
     <style>
       @import url('https://rsms.me/inter/inter.css');
@@ -196,7 +200,7 @@
         </div>
       </nav>
 
-      <div class="page-wrapper">
+      <main class="page-wrapper">
         <!-- Dynamic Hero Section -->
         <section class="hero-section text-center">
           <div class="container-xl">
@@ -261,7 +265,7 @@
               </div>
               
               <div class="col-6 col-sm-4 col-lg-2 ms-lg-auto">
-                <h6 class="footer-title">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Product{{ end }}</h6>
+                <p class="footer-title">{{ if .Settings.footer_col1_title }}{{ .Settings.footer_col1_title }}{{ else }}Product{{ end }}</p>
                 <ul class="list-unstyled mb-0">
                   {{ range .FooterMenu1 }}
                   <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
@@ -270,7 +274,7 @@
               </div>
 
               <div class="col-6 col-sm-4 col-lg-2">
-                <h6 class="footer-title">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</h6>
+                <p class="footer-title">{{ if .Settings.footer_col2_title }}{{ .Settings.footer_col2_title }}{{ else }}Resources{{ end }}</p>
                 <ul class="list-unstyled mb-0">
                   {{ range .FooterMenu2 }}
                   <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
@@ -279,7 +283,7 @@
               </div>
 
               <div class="col-6 col-sm-4 col-lg-2">
-                <h6 class="footer-title">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</h6>
+                <p class="footer-title">{{ if .Settings.footer_col3_title }}{{ .Settings.footer_col3_title }}{{ else }}Company{{ end }}</p>
                 <ul class="list-unstyled mb-0">
                   {{ range .FooterMenu3 }}
                   <li class="mb-3"><a href="{{ .URL }}" class="footer-link">{{ .Label }}</a></li>
@@ -300,8 +304,8 @@
           </div>
         </footer>
         {{ end }}
-      </div>
+      </main>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js" defer></script>
   </body>
 </html>
