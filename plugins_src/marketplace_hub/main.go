@@ -62,6 +62,10 @@ func (m *MarketplaceHub) initDB() {
 	// Ensure buy_url column exists for older databases
 	m.db.Exec(`ALTER TABLE marketplace_plugins ADD COLUMN buy_url TEXT DEFAULT ''`)
 
+	// Add new rich fields
+	m.db.Exec(`ALTER TABLE marketplace_plugins ADD COLUMN long_description TEXT DEFAULT ''`)
+	m.db.Exec(`ALTER TABLE marketplace_plugins ADD COLUMN features TEXT DEFAULT ''`)
+
 	m.db.Exec(`CREATE TABLE IF NOT EXISTS marketplace_licenses (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		license_key TEXT NOT NULL UNIQUE,
@@ -106,14 +110,14 @@ func (m *MarketplaceHub) HookAdminRoute(route string) string {
 		routePath = route[:idx]
 	}
 
-	// Admin panel routes
-	if routePath == "/admin/plugin/marketplace-hub" {
-		return m.renderAdminDashboard("")
-	}
-
 	// Handle admin form submissions
 	if strings.HasPrefix(route, "/admin/plugin/marketplace-hub?") {
 		return m.handleAdminAction(route)
+	}
+
+	// Admin panel routes
+	if routePath == "/admin/plugin/marketplace-hub" {
+		return m.renderAdminDashboard("")
 	}
 
 	// Public API: Catalog
@@ -156,7 +160,7 @@ func (m *MarketplaceHub) setSetting(key, val string) {
 
 func (m *MarketplaceHub) handleAPIPlugins() string {
 	rows, err := m.db.Query(`SELECT slug, name, description, version, author, price, currency,
-		icon_url, screenshot_url, downloads, sha256_hash, category, buy_url, min_core_version, updated_at
+		icon_url, screenshot_url, downloads, sha256_hash, category, buy_url, min_core_version, long_description, features, updated_at
 		FROM marketplace_plugins ORDER BY name ASC`)
 	if err != nil {
 		return `{"error":"database error"}`
@@ -164,21 +168,23 @@ func (m *MarketplaceHub) handleAPIPlugins() string {
 	defer rows.Close()
 
 	type PluginEntry struct {
-		Slug          string  `json:"slug"`
-		Name          string  `json:"name"`
-		Description   string  `json:"description"`
-		Version       string  `json:"version"`
-		Author        string  `json:"author"`
-		Price         float64 `json:"price"`
-		Currency      string  `json:"currency"`
-		IconURL       string  `json:"icon_url"`
-		ScreenshotURL string  `json:"screenshot_url"`
-		Downloads     int     `json:"downloads"`
-		SHA256        string  `json:"sha256"`
-		Category      string  `json:"category"`
-		BuyURL        string  `json:"buy_url"`
-		MinCoreVer    string  `json:"min_core_version"`
-		UpdatedAt     string  `json:"updated_at"`
+		Slug             string  `json:"slug"`
+		Name             string  `json:"name"`
+		Description      string  `json:"description"`
+		Version          string  `json:"version"`
+		Author           string  `json:"author"`
+		Price            float64 `json:"price"`
+		Currency         string  `json:"currency"`
+		IconURL          string  `json:"icon_url"`
+		ScreenshotURL    string  `json:"screenshot_url"`
+		Downloads        int     `json:"downloads"`
+		SHA256           string  `json:"sha256"`
+		Category         string  `json:"category"`
+		BuyURL           string  `json:"buy_url"`
+		MinCoreVer       string  `json:"min_core_version"`
+		LongDescription  string  `json:"long_description"`
+		Features         string  `json:"features"`
+		UpdatedAt        string  `json:"updated_at"`
 	}
 
 	var plugins []PluginEntry
@@ -186,7 +192,7 @@ func (m *MarketplaceHub) handleAPIPlugins() string {
 		var p PluginEntry
 		if err := rows.Scan(&p.Slug, &p.Name, &p.Description, &p.Version, &p.Author,
 			&p.Price, &p.Currency, &p.IconURL, &p.ScreenshotURL, &p.Downloads,
-			&p.SHA256, &p.Category, &p.BuyURL, &p.MinCoreVer, &p.UpdatedAt); err == nil {
+			&p.SHA256, &p.Category, &p.BuyURL, &p.MinCoreVer, &p.LongDescription, &p.Features, &p.UpdatedAt); err == nil {
 			plugins = append(plugins, p)
 		}
 	}
@@ -361,14 +367,14 @@ func (m *MarketplaceHub) renderAdminDashboard(editSlug string) string {
 	formTitle := "Add Plugin to Catalog"
 	submitBtn := "Add Plugin"
 	actionName := "add"
-	var eSlug, eName, eDesc, eVersion, eBuyUrl string
+	var eSlug, eName, eDesc, eVersion, eBuyUrl, eLongDesc, eFeatures string
 	var ePrice float64
 	eVersion = "1.0.0"
 	ePrice = 0
 
 	if editSlug != "" {
-		m.db.QueryRow("SELECT slug, name, description, version, price, buy_url FROM marketplace_plugins WHERE slug = ?", editSlug).
-			Scan(&eSlug, &eName, &eDesc, &eVersion, &ePrice, &eBuyUrl)
+		m.db.QueryRow("SELECT slug, name, description, version, price, buy_url, long_description, features FROM marketplace_plugins WHERE slug = ?", editSlug).
+			Scan(&eSlug, &eName, &eDesc, &eVersion, &ePrice, &eBuyUrl, &eLongDesc, &eFeatures)
 		if eSlug != "" {
 			formTitle = "Edit Plugin: " + eName
 			submitBtn = "Save Changes"
@@ -426,10 +432,33 @@ func (m *MarketplaceHub) renderAdminDashboard(editSlug string) string {
 					<div class="col-md-2"><input type="number" step="0.01" class="form-control" name="price" placeholder="Price (0=free)" value="%.2f"></div>
 					<div class="col-md-2"><button type="submit" class="btn btn-primary w-100">%s</button></div>
 				</div>
-				<div class="row g-3 mt-1">
-					<div class="col-md-4"><input type="text" class="form-control" name="description" placeholder="Description" value="%s"></div>
-					<div class="col-md-4"><input type="file" class="form-control" name="plugin_binary" title="Upload compiled plugin binary"></div>
-					<div class="col-md-4"><input type="text" class="form-control" name="buy_url" placeholder="LemonSqueezy Buy URL (optional)" value="%s"></div>
+				<div class="row g-3 mt-2">
+					<div class="col-md-6"><input type="text" class="form-control" name="description" placeholder="Short Description (1 sentence)" value="%s"></div>
+					<div class="col-md-6"><input type="text" class="form-control" name="buy_url" placeholder="LemonSqueezy Buy URL (optional)" value="%s"></div>
+				</div>
+				<div class="row g-3 mt-2">
+					<div class="col-md-4">
+						<label class="form-label">Plugin Icon (Image)</label>
+						<input type="file" class="form-control" name="icon_image" accept="image/*">
+					</div>
+					<div class="col-md-4">
+						<label class="form-label">Screenshot (Image)</label>
+						<input type="file" class="form-control" name="screenshot_image" accept="image/*">
+					</div>
+					<div class="col-md-4">
+						<label class="form-label">Plugin Binary (Executable)</label>
+						<input type="file" class="form-control" name="plugin_binary" title="Upload compiled plugin binary">
+					</div>
+				</div>
+				<div class="row g-3 mt-2">
+					<div class="col-md-6">
+						<label class="form-label">Long Description (Markdown/HTML)</label>
+						<textarea class="form-control" name="long_description" rows="5" placeholder="Detailed description...">%s</textarea>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label">Features (Markdown/HTML)</label>
+						<textarea class="form-control" name="features" rows="5" placeholder="List of features...">%s</textarea>
+					</div>
 				</div>
 			</form>
 		</div>
@@ -486,8 +515,16 @@ func (m *MarketplaceHub) renderAdminDashboard(editSlug string) string {
 			</form>
 		</div>
 	</div>
-	`, pluginCount, licenseCount, activeCount, formTitle, map[bool]string{true: `<a href="/admin/plugin/marketplace-hub" class="btn btn-sm">Cancel Edit</a>`, false: ""}[actionName == "edit"], actionName, eSlug, eSlug, eName, eVersion, ePrice, submitBtn, eDesc, eBuyUrl, pluginRows, licenseRows,
+	`, pluginCount, licenseCount, activeCount, formTitle, map[bool]string{true: `<a href="/admin/plugin/marketplace-hub" class="btn btn-sm">Cancel Edit</a>`, false: ""}[actionName == "edit"], actionName, eSlug, eSlug, eName, eVersion, ePrice, submitBtn, eDesc, eBuyUrl, eLongDesc, eFeatures, pluginRows, licenseRows,
 		m.getSetting("ls_secret"), m.getSetting("smtp_host"), m.getSetting("smtp_port"), m.getSetting("smtp_user"), m.getSetting("smtp_pass"))
+}
+
+// redirectResponse returns a tiny self-redirecting HTML page.
+// This avoids sending the full ~30KB dashboard HTML back over the plugin RPC channel
+// (which caused i/o timeout → 502 Bad Gateway on slow/proxied setups).
+func redirectResponse(dest, message string) string {
+	return fmt.Sprintf(`<div class="alert alert-success">%s</div>
+<script>window.location.href = '%s';</script>`, message, dest)
 }
 
 // ---- Admin Actions ----
@@ -501,56 +538,92 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 	params := parseQueryString(parts[1])
 	action := params["action"]
 
-	log.Printf("[Marketplace Hub] Action: %s, Params: %v", action, params)
-
 	switch action {
 	case "edit_form":
+		// Edit form is a GET-like action — render the full dashboard with edit mode.
+		// This is fine since it comes from a button click, not a file-upload POST.
 		return m.renderAdminDashboard(params["slug"])
 
 	case "add", "edit":
 		slug := params["slug"]
 		name := params["name"]
 		version := params["version"]
-		price := params["price"]
+		price_str := params["price"]
 		desc := params["description"]
 		uploadedFile := params["__file_plugin_binary"]
 		buyUrl := params["buy_url"]
+		longDesc := params["long_description"]
+		features := params["features"]
 
-		if slug != "" && name != "" {
-			// Compute SHA-256 if binary exists, and move it to permanent storage
-			sha := ""
-			finalBinaryPath := ""
-			
-			if uploadedFile != "" {
-				os.MkdirAll("plugins_data/hub_binaries", 0755)
-				finalBinaryPath = "plugins_data/hub_binaries/" + slug
-				if data, err := os.ReadFile(uploadedFile); err == nil {
-					h := sha256.Sum256(data)
-					sha = hex.EncodeToString(h[:])
-					// Move the file
-					os.Rename(uploadedFile, finalBinaryPath)
-				}
-			} else if action == "edit" {
-				// Keep existing binary path and hash if not updated
-				m.db.QueryRow("SELECT binary_path, sha256_hash FROM marketplace_plugins WHERE slug = ?", params["original_slug"]).
-					Scan(&finalBinaryPath, &sha)
-			}
+		var price float64
+		fmt.Sscanf(price_str, "%f", &price)
 
-			if action == "edit" {
-				m.db.Exec(`UPDATE marketplace_plugins SET slug=?, name=?, description=?, version=?, price=?, binary_path=?, sha256_hash=?, buy_url=?, updated_at=? WHERE slug=?`,
-					slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, time.Now().Format("2006-01-02 15:04:05"), params["original_slug"])
-			} else {
-				m.db.Exec(`INSERT OR REPLACE INTO marketplace_plugins (slug, name, description, version, price, binary_path, sha256_hash, buy_url, updated_at)
-					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-					slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, time.Now().Format("2006-01-02 15:04:05"))
+		var finalBinaryPath, sha, iconUrl, screenshotUrl string
+
+		uploadedIcon := params["__file_icon_image"]
+		if uploadedIcon != "" {
+			os.MkdirAll("public/uploads/hub", 0755)
+			iconName := slug + "_icon.png"
+			os.Rename(uploadedIcon, "public/uploads/hub/"+iconName)
+			iconUrl = "/uploads/hub/" + iconName
+		}
+
+		uploadedScreenshot := params["__file_screenshot_image"]
+		if uploadedScreenshot != "" {
+			os.MkdirAll("public/uploads/hub", 0755)
+			ssName := slug + "_screenshot.png"
+			os.Rename(uploadedScreenshot, "public/uploads/hub/"+ssName)
+			screenshotUrl = "/uploads/hub/" + ssName
+		}
+
+		if slug == "" || name == "" {
+			return redirectResponse("/admin/plugin/marketplace-hub", "Error: Slug and Name are required.")
+		}
+
+		if uploadedFile != "" {
+			os.MkdirAll("plugins_data/hub_binaries", 0755)
+			finalBinaryPath = "plugins_data/hub_binaries/" + slug
+			if data, err := os.ReadFile(uploadedFile); err == nil {
+				h := sha256.Sum256(data)
+				sha = hex.EncodeToString(h[:])
+				os.Rename(uploadedFile, finalBinaryPath)
 			}
 		}
+
+		if action == "edit" {
+			var existBin, existSha, existIcon, existSs string
+			m.db.QueryRow("SELECT binary_path, sha256_hash, icon_url, screenshot_url FROM marketplace_plugins WHERE slug = ?", params["original_slug"]).
+				Scan(&existBin, &existSha, &existIcon, &existSs)
+			if finalBinaryPath == "" {
+				finalBinaryPath = existBin
+				sha = existSha
+			}
+			if iconUrl == "" {
+				iconUrl = existIcon
+			}
+			if screenshotUrl == "" {
+				screenshotUrl = existSs
+			}
+			m.db.Exec(`UPDATE marketplace_plugins SET slug=?, name=?, description=?, version=?, price=?, binary_path=?, sha256_hash=?, buy_url=?, icon_url=?, screenshot_url=?, long_description=?, features=?, updated_at=? WHERE slug=?`,
+				slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, iconUrl, screenshotUrl, longDesc, features, time.Now().Format("2006-01-02 15:04:05"), params["original_slug"])
+			log.Printf("[MarketplaceHub] Plugin updated: %s", slug)
+			return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '" + name + "' updated successfully.")
+		}
+
+		// add
+		m.db.Exec(`INSERT OR REPLACE INTO marketplace_plugins (slug, name, description, version, price, binary_path, sha256_hash, buy_url, icon_url, screenshot_url, long_description, features, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, iconUrl, screenshotUrl, longDesc, features, time.Now().Format("2006-01-02 15:04:05"))
+		log.Printf("[MarketplaceHub] Plugin added: %s", slug)
+		return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '" + name + "' added to catalog successfully.")
 
 	case "delete":
 		slug := params["slug"]
 		if slug != "" {
 			m.db.Exec("DELETE FROM marketplace_plugins WHERE slug = ?", slug)
+			log.Printf("[MarketplaceHub] Plugin deleted: %s", slug)
 		}
+		return redirectResponse("/admin/plugin/marketplace-hub", "Plugin removed from catalog.")
 
 	case "generate_license":
 		pluginSlug := params["plugin_slug"]
@@ -559,7 +632,10 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 			key := generateLicenseKey()
 			m.db.Exec("INSERT INTO marketplace_licenses (license_key, plugin_slug, buyer_email, status) VALUES (?, ?, ?, 'unused')",
 				key, pluginSlug, buyerEmail)
+			log.Printf("[MarketplaceHub] License generated for plugin %s, buyer %s", pluginSlug, buyerEmail)
+			return redirectResponse("/admin/plugin/marketplace-hub", "License key generated: <strong>"+key+"</strong>")
 		}
+		return redirectResponse("/admin/plugin/marketplace-hub", "Error: Plugin slug is required to generate a license.")
 
 	case "settings":
 		m.setSetting("ls_secret", params["ls_secret"])
@@ -567,6 +643,7 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 		m.setSetting("smtp_port", params["smtp_port"])
 		m.setSetting("smtp_user", params["smtp_user"])
 		m.setSetting("smtp_pass", params["smtp_pass"])
+		return redirectResponse("/admin/plugin/marketplace-hub", "Settings saved.")
 	}
 
 	return m.renderAdminDashboard("")
