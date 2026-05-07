@@ -36,8 +36,12 @@ RUN mkdir -p /app/uploads /app/data /app/plugins /app/plugins_data \
     && chmod +x /app/entrypoint.sh /app/gocms_server \
     && chown gocms:gocms /app/gocms_server
 
-# Switch to non-root user
-USER gocms
+# Install gosu for privilege dropping in the entrypoint
+RUN apt-get update && apt-get install -y gosu && rm -rf /var/lib/apt/lists/*
+
+# NOTE: Intentionally run as root so the entrypoint can fix volume-mounted
+# directory ownership before dropping to the gocms user.
+# USER gocms  ← removed; entrypoint does: exec gosu gocms /app/gocms_server
 
 EXPOSE 8080
 ENTRYPOINT ["/app/entrypoint.sh"]
