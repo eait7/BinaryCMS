@@ -29,38 +29,46 @@ type MarketplaceHub struct {
 // ---- Database Setup ----
 
 func (m *MarketplaceHub) initDB() {
-	dbPath := "plugins_data/marketplace_hub.db"
-	if err := os.MkdirAll("plugins_data", 0777); err != nil {
-		log.Printf("MarketplaceHub: Failed to create plugins_data dir: %v", err)
-	}
-	// Ensure directory is writable by all (the plugin process may run as a different user than root)
-	os.Chmod("plugins_data", 0777)
+	primaryPath := "plugins_data/marketplace_hub.db"
+	fallbackPath := "data/marketplace_hub.db" // /app/data is always writable (used by self-updater)
 
-	// If the DB file exists, ensure it's writable
-	if _, statErr := os.Stat(dbPath); statErr == nil {
-		if err := os.Chmod(dbPath, 0666); err != nil {
-			log.Printf("MarketplaceHub: Warning — could not chmod DB file: %v", err)
-		}
+	os.MkdirAll("plugins_data", 0777)
+	os.Chmod("plugins_data", 0777)
+	os.MkdirAll("data", 0777)
+
+	// Try to chmod existing DB files (succeeds only if we own them)
+	for _, p := range []string{primaryPath, primaryPath + "-wal", primaryPath + "-shm"} {
+		os.Chmod(p, 0666)
 	}
-	// Also fix WAL/SHM files if they exist
-	os.Chmod(dbPath+"-wal", 0666)
-	os.Chmod(dbPath+"-shm", 0666)
+
+	dbPath := primaryPath
+
+	// Test write access on the primary path
+	if !dbFileWritable(primaryPath) {
+		log.Printf("MarketplaceHub: %s is not writable, falling back to %s", primaryPath, fallbackPath)
+		// Migrate existing data if the fallback doesn't exist yet
+		if _, err := os.Stat(fallbackPath); os.IsNotExist(err) {
+			if src, err := os.ReadFile(primaryPath); err == nil {
+				os.WriteFile(fallbackPath, src, 0666)
+				log.Printf("MarketplaceHub: Migrated existing DB to %s", fallbackPath)
+			}
+		}
+		dbPath = fallbackPath
+	}
+
+	log.Printf("MarketplaceHub: Using DB at %s", dbPath)
 
 	var err error
-	// Open plain file path — do NOT append URI params; modernc.org/sqlite may
-	// treat the entire string as a literal filename otherwise.
 	m.db, err = sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Printf("MarketplaceHub: Failed to open database: %v", err)
 		return
 	}
 
-	// Apply runtime pragmas separately
 	m.db.Exec("PRAGMA journal_mode=WAL")
 	m.db.Exec("PRAGMA busy_timeout=5000")
 	m.db.Exec("PRAGMA synchronous=NORMAL")
 
-	// Verify we can actually write — surface the error early
 	if _, pingErr := m.db.Exec("PRAGMA user_version"); pingErr != nil {
 		log.Printf("MarketplaceHub: DB write check failed: %v", pingErr)
 	}
@@ -109,6 +117,17 @@ func (m *MarketplaceHub) initDB() {
 		value TEXT NOT NULL
 	)`)
 }
+
+// dbFileWritable returns true if the file at path can be opened for writing.
+func dbFileWritable(path string) bool {
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return false
+	}
+	f.Close()
+	return true
+}
+
 
 // ---- Plugin Interface ----
 
