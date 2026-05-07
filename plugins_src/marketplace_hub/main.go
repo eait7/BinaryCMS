@@ -47,12 +47,18 @@ func (m *MarketplaceHub) initDB() {
 	os.Chmod(dbPath+"-shm", 0666)
 
 	var err error
-	// Use WAL mode for better concurrent access; _busy_timeout helps with lock contention
-	m.db, err = sql.Open("sqlite", dbPath+"?_journal=WAL&_timeout=5000")
+	// Open plain file path — do NOT append URI params; modernc.org/sqlite may
+	// treat the entire string as a literal filename otherwise.
+	m.db, err = sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Printf("MarketplaceHub: Failed to open database: %v", err)
 		return
 	}
+
+	// Apply runtime pragmas separately
+	m.db.Exec("PRAGMA journal_mode=WAL")
+	m.db.Exec("PRAGMA busy_timeout=5000")
+	m.db.Exec("PRAGMA synchronous=NORMAL")
 
 	// Verify we can actually write — surface the error early
 	if _, pingErr := m.db.Exec("PRAGMA user_version"); pingErr != nil {
