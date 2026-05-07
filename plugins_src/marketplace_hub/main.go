@@ -162,8 +162,54 @@ func (m *MarketplaceHub) HookAdminRoute(route string) string {
 		return m.handleLemonSqueezyWebhook(route)
 	}
 
+	// Debug route — shows DB state and write test
+	if routePath == "/admin/plugin/marketplace-hub/debug" {
+		return m.handleDebug()
+	}
+
 	return ""
 }
+
+func (m *MarketplaceHub) handleDebug() string {
+	dbPath := "plugins_data/marketplace_hub.db"
+	info, statErr := os.Stat(dbPath)
+	var fileInfo string
+	if statErr != nil {
+		fileInfo = fmt.Sprintf("STAT ERROR: %v", statErr)
+	} else {
+		fileInfo = fmt.Sprintf("Size=%d Mode=%s", info.Size(), info.Mode())
+	}
+	writeErr := ""
+	_, err := m.db.Exec("INSERT OR REPLACE INTO marketplace_settings (key, value) VALUES ('debug_test', ?)", fmt.Sprintf("%d", time.Now().Unix()))
+	if err != nil {
+		writeErr = "WRITE FAILED: " + err.Error()
+	} else {
+		writeErr = "WRITE OK"
+	}
+	rows, _ := m.db.Query("SELECT slug, name FROM marketplace_plugins")
+	var plugins string
+	if rows != nil {
+		defer rows.Close()
+		for rows.Next() {
+			var s, n string
+			rows.Scan(&s, &n)
+			plugins += fmt.Sprintf("<li>%s &mdash; %s</li>", s, n)
+		}
+	}
+	if plugins == "" {
+		plugins = "<li>(none)</li>"
+	}
+	cwd, _ := os.Getwd()
+	return fmt.Sprintf(`<div class="card mt-3"><div class="card-header"><h3 class="card-title">Marketplace Hub Debug</h3></div><div class="card-body">
+<p><strong>CWD:</strong> %s</p>
+<p><strong>DB path:</strong> %s</p>
+<p><strong>DB file:</strong> %s</p>
+<p><strong>Write test:</strong> <code>%s</code></p>
+<h4>Plugins in DB:</h4><ul>%s</ul>
+<p><a href="/admin/plugin/marketplace-hub" class="btn btn-secondary">Back</a></p>
+</div></div>`, cwd, dbPath, fileInfo, writeErr, plugins)
+}
+
 
 // ---- Settings Helpers ----
 
@@ -540,12 +586,16 @@ func (m *MarketplaceHub) renderAdminDashboard(editSlug string) string {
 		m.getSetting("ls_secret"), m.getSetting("smtp_host"), m.getSetting("smtp_port"), m.getSetting("smtp_user"), m.getSetting("smtp_pass"))
 }
 
-// redirectResponse returns a tiny self-redirecting HTML page.
-// This avoids sending the full ~30KB dashboard HTML back over the plugin RPC channel
-// (which caused i/o timeout → 502 Bad Gateway on slow/proxied setups).
+// redirectResponse returns a self-redirecting page for SUCCESSES.
 func redirectResponse(dest, message string) string {
 	return fmt.Sprintf(`<div class="alert alert-success">%s</div>
 <script>window.location.href = '%s';</script>`, message, dest)
+}
+
+// errorResponse returns a permanent error page (no redirect) so the user can read the error.
+func errorResponse(message string) string {
+	return fmt.Sprintf(`<div class="alert alert-danger" style="padding:1rem;margin:1rem 0;"><strong>Error:</strong> %s</div>
+<p><a href="/admin/plugin/marketplace-hub" class="btn btn-secondary">← Back to Marketplace Hub</a></p>`, message)
 }
 
 // ---- Admin Actions ----
@@ -609,7 +659,7 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 
 		if slug == "" || name == "" {
 			log.Printf("[MarketplaceHub] missing slug or name, returning error")
-			return redirectResponse("/admin/plugin/marketplace-hub", "Error: Slug and Name are required. (Got slug=%q name=%q)")
+			return errorResponse(fmt.Sprintf("Slug and Name are required. Received: slug=%q, name=%q. Check that the form fields are not empty and that the CMS is passing multipart form data correctly.", slug, name))
 		}
 
 		if uploadedFile != "" {
@@ -648,7 +698,7 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 				slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, iconUrl, screenshotUrl, longDesc, features, time.Now().Format("2006-01-02 15:04:05"), params["original_slug"])
 			if err != nil {
 				log.Printf("[MarketplaceHub] UPDATE error: %v", err)
-				return redirectResponse("/admin/plugin/marketplace-hub", "DB Error updating plugin: "+err.Error())
+				return errorResponse("DB Error updating plugin: " + err.Error())
 			}
 			log.Printf("[MarketplaceHub] Plugin updated: %s", slug)
 			return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '"+name+"' updated successfully.")
@@ -660,7 +710,7 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 			slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, iconUrl, screenshotUrl, longDesc, features, time.Now().Format("2006-01-02 15:04:05"))
 		if err != nil {
 			log.Printf("[MarketplaceHub] INSERT error: %v", err)
-			return redirectResponse("/admin/plugin/marketplace-hub", "DB Error saving plugin: "+err.Error())
+			return errorResponse("DB Error saving plugin: " + err.Error())
 		}
 		log.Printf("[MarketplaceHub] Plugin added: %s", slug)
 		return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '"+name+"' added to catalog successfully.")
