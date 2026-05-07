@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/smtp"
 	"net/url"
@@ -29,13 +30,33 @@ type MarketplaceHub struct {
 
 func (m *MarketplaceHub) initDB() {
 	dbPath := "plugins_data/marketplace_hub.db"
-	os.MkdirAll("plugins_data", 0755)
+	if err := os.MkdirAll("plugins_data", 0777); err != nil {
+		log.Printf("MarketplaceHub: Failed to create plugins_data dir: %v", err)
+	}
+	// Ensure directory is writable by all (the plugin process may run as a different user than root)
+	os.Chmod("plugins_data", 0777)
+
+	// If the DB file exists, ensure it's writable
+	if _, statErr := os.Stat(dbPath); statErr == nil {
+		if err := os.Chmod(dbPath, 0666); err != nil {
+			log.Printf("MarketplaceHub: Warning — could not chmod DB file: %v", err)
+		}
+	}
+	// Also fix WAL/SHM files if they exist
+	os.Chmod(dbPath+"-wal", 0666)
+	os.Chmod(dbPath+"-shm", 0666)
 
 	var err error
-	m.db, err = sql.Open("sqlite", dbPath)
+	// Use WAL mode for better concurrent access; _busy_timeout helps with lock contention
+	m.db, err = sql.Open("sqlite", dbPath+"?_journal=WAL&_timeout=5000")
 	if err != nil {
 		log.Printf("MarketplaceHub: Failed to open database: %v", err)
 		return
+	}
+
+	// Verify we can actually write — surface the error early
+	if _, pingErr := m.db.Exec("PRAGMA user_version"); pingErr != nil {
+		log.Printf("MarketplaceHub: DB write check failed: %v", pingErr)
 	}
 
 	m.db.Exec(`CREATE TABLE IF NOT EXISTS marketplace_plugins (
@@ -532,11 +553,13 @@ func redirectResponse(dest, message string) string {
 func (m *MarketplaceHub) handleAdminAction(route string) string {
 	parts := strings.SplitN(route, "?", 2)
 	if len(parts) < 2 {
+		log.Printf("[MarketplaceHub] handleAdminAction: no query string in route: %q", route)
 		return m.renderAdminDashboard("")
 	}
 
 	params := parseQueryString(parts[1])
 	action := params["action"]
+	log.Printf("[MarketplaceHub] handleAdminAction: action=%q slug=%q name=%q (route len=%d)", action, params["slug"], params["name"], len(route))
 
 	switch action {
 	case "edit_form":
@@ -555,6 +578,8 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 		longDesc := params["long_description"]
 		features := params["features"]
 
+		log.Printf("[MarketplaceHub] %s: slug=%q name=%q version=%q price=%q uploadedFile=%q", action, slug, name, version, price_str, uploadedFile)
+
 		var price float64
 		fmt.Sscanf(price_str, "%f", &price)
 
@@ -564,20 +589,27 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 		if uploadedIcon != "" {
 			os.MkdirAll("public/uploads/hub", 0755)
 			iconName := slug + "_icon.png"
-			os.Rename(uploadedIcon, "public/uploads/hub/"+iconName)
-			iconUrl = "/uploads/hub/" + iconName
+			if err := moveFile(uploadedIcon, "public/uploads/hub/"+iconName); err != nil {
+				log.Printf("[MarketplaceHub] icon move error: %v", err)
+			} else {
+				iconUrl = "/uploads/hub/" + iconName
+			}
 		}
 
 		uploadedScreenshot := params["__file_screenshot_image"]
 		if uploadedScreenshot != "" {
 			os.MkdirAll("public/uploads/hub", 0755)
 			ssName := slug + "_screenshot.png"
-			os.Rename(uploadedScreenshot, "public/uploads/hub/"+ssName)
-			screenshotUrl = "/uploads/hub/" + ssName
+			if err := moveFile(uploadedScreenshot, "public/uploads/hub/"+ssName); err != nil {
+				log.Printf("[MarketplaceHub] screenshot move error: %v", err)
+			} else {
+				screenshotUrl = "/uploads/hub/" + ssName
+			}
 		}
 
 		if slug == "" || name == "" {
-			return redirectResponse("/admin/plugin/marketplace-hub", "Error: Slug and Name are required.")
+			log.Printf("[MarketplaceHub] missing slug or name, returning error")
+			return redirectResponse("/admin/plugin/marketplace-hub", "Error: Slug and Name are required. (Got slug=%q name=%q)")
 		}
 
 		if uploadedFile != "" {
@@ -586,7 +618,15 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 			if data, err := os.ReadFile(uploadedFile); err == nil {
 				h := sha256.Sum256(data)
 				sha = hex.EncodeToString(h[:])
-				os.Rename(uploadedFile, finalBinaryPath)
+				if err2 := moveFile(uploadedFile, finalBinaryPath); err2 != nil {
+					log.Printf("[MarketplaceHub] binary move error: %v", err2)
+				}
+				if err3 := os.Chmod(finalBinaryPath, 0755); err3 != nil {
+					log.Printf("[MarketplaceHub] chmod error: %v", err3)
+				}
+			} else {
+				log.Printf("[MarketplaceHub] ReadFile error for %q: %v", uploadedFile, err)
+				finalBinaryPath = ""
 			}
 		}
 
@@ -604,18 +644,26 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 			if screenshotUrl == "" {
 				screenshotUrl = existSs
 			}
-			m.db.Exec(`UPDATE marketplace_plugins SET slug=?, name=?, description=?, version=?, price=?, binary_path=?, sha256_hash=?, buy_url=?, icon_url=?, screenshot_url=?, long_description=?, features=?, updated_at=? WHERE slug=?`,
+			_, err := m.db.Exec(`UPDATE marketplace_plugins SET slug=?, name=?, description=?, version=?, price=?, binary_path=?, sha256_hash=?, buy_url=?, icon_url=?, screenshot_url=?, long_description=?, features=?, updated_at=? WHERE slug=?`,
 				slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, iconUrl, screenshotUrl, longDesc, features, time.Now().Format("2006-01-02 15:04:05"), params["original_slug"])
+			if err != nil {
+				log.Printf("[MarketplaceHub] UPDATE error: %v", err)
+				return redirectResponse("/admin/plugin/marketplace-hub", "DB Error updating plugin: "+err.Error())
+			}
 			log.Printf("[MarketplaceHub] Plugin updated: %s", slug)
-			return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '" + name + "' updated successfully.")
+			return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '"+name+"' updated successfully.")
 		}
 
 		// add
-		m.db.Exec(`INSERT OR REPLACE INTO marketplace_plugins (slug, name, description, version, price, binary_path, sha256_hash, buy_url, icon_url, screenshot_url, long_description, features, updated_at)
+		_, err := m.db.Exec(`INSERT OR REPLACE INTO marketplace_plugins (slug, name, description, version, price, binary_path, sha256_hash, buy_url, icon_url, screenshot_url, long_description, features, updated_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			slug, name, desc, version, price, finalBinaryPath, sha, buyUrl, iconUrl, screenshotUrl, longDesc, features, time.Now().Format("2006-01-02 15:04:05"))
+		if err != nil {
+			log.Printf("[MarketplaceHub] INSERT error: %v", err)
+			return redirectResponse("/admin/plugin/marketplace-hub", "DB Error saving plugin: "+err.Error())
+		}
 		log.Printf("[MarketplaceHub] Plugin added: %s", slug)
-		return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '" + name + "' added to catalog successfully.")
+		return redirectResponse("/admin/plugin/marketplace-hub", "Plugin '"+name+"' added to catalog successfully.")
 
 	case "delete":
 		slug := params["slug"]
@@ -650,6 +698,30 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 }
 
 // ---- Helpers ----
+
+// moveFile copies src to dst and removes src. Unlike os.Rename, this works
+// across filesystem boundaries (e.g. /tmp → /app/plugins_data).
+func moveFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("open src %q: %w", src, err)
+	}
+	defer in.Close()
+
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return fmt.Errorf("open dst %q: %w", dst, err)
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return fmt.Errorf("copy: %w", err)
+	}
+	out.Close()
+	in.Close()
+	os.Remove(src) // best-effort cleanup
+	return nil
+}
 
 func generateLicenseKey() string {
 	segments := make([]string, 4)
