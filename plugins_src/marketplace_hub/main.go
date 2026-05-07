@@ -179,7 +179,7 @@ func (m *MarketplaceHub) HookAdminRoute(route string) string {
 	// Public API: Download plugin binary
 	if strings.HasPrefix(routePath, "/api/plugin/marketplace-hub/download/") {
 		slug := strings.TrimPrefix(routePath, "/api/plugin/marketplace-hub/download/")
-		return m.handleAPIDownload(slug)
+		return m.handleAPIDownload(route, slug)
 	}
 
 	// Webhook: LemonSqueezy
@@ -346,12 +346,46 @@ func (m *MarketplaceHub) handleAPIValidate(route string) string {
 	return `{"valid":true,"message":"License validated successfully"}`
 }
 
-func (m *MarketplaceHub) handleAPIDownload(slug string) string {
-	// Look up the binary path for this plugin
+func (m *MarketplaceHub) handleAPIDownload(route string, slug string) string {
+	parts := strings.SplitN(route, "?", 2)
+	var qs string
+	if len(parts) == 2 {
+		qs = parts[1]
+	}
+	params := parseQueryString(qs)
+	licenseKey := params["_license_key"]
+	siteDomain := params["_site_domain"]
+
+	// Look up the binary path and price for this plugin
 	var binaryPath string
-	err := m.db.QueryRow("SELECT binary_path FROM marketplace_plugins WHERE slug = ?", slug).Scan(&binaryPath)
+	var price float64
+	err := m.db.QueryRow("SELECT binary_path, price FROM marketplace_plugins WHERE slug = ?", slug).Scan(&binaryPath, &price)
 	if err != nil || binaryPath == "" {
 		return `{"error":"Plugin not found or binary not available"}`
+	}
+
+	// If it's a paid plugin, validate the license
+	if price > 0 {
+		if licenseKey == "" {
+			return `{"error":"License key is required to download this premium plugin"}`
+		}
+
+		var status, domainLocked, pluginSlug string
+		err := m.db.QueryRow("SELECT status, domain_locked, plugin_slug FROM marketplace_licenses WHERE license_key = ?", licenseKey).
+			Scan(&status, &domainLocked, &pluginSlug)
+
+		if err != nil {
+			return `{"error":"Invalid license key"}`
+		}
+		if pluginSlug != slug {
+			return `{"error":"License key is not valid for this plugin"}`
+		}
+		if status == "revoked" {
+			return `{"error":"This license has been revoked"}`
+		}
+		if domainLocked != "" && domainLocked != siteDomain {
+			return `{"error":"This license is locked to a different domain"}`
+		}
 	}
 
 	// Read the binary file

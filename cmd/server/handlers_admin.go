@@ -747,10 +747,22 @@ func handlePluginPublicRoute(pm *pluginmanager.Manager) http.HandlerFunc {
 		}
 		ua := r.UserAgent()
 
+		// Inject license headers for secure downloads
+		licenseKey := r.Header.Get("X-License-Key")
+		siteDomain := r.Header.Get("X-Site-Domain")
+
+		extraParams := fmt.Sprintf("_client_ip=%s&_user_agent=%s", url.QueryEscape(ip), url.QueryEscape(ua))
+		if licenseKey != "" {
+			extraParams += fmt.Sprintf("&_license_key=%s", url.QueryEscape(licenseKey))
+		}
+		if siteDomain != "" {
+			extraParams += fmt.Sprintf("&_site_domain=%s", url.QueryEscape(siteDomain))
+		}
+
 		if strings.Contains(fullRoute, "?") {
-			fullRoute += fmt.Sprintf("&_client_ip=%s&_user_agent=%s", url.QueryEscape(ip), url.QueryEscape(ua))
+			fullRoute += "&" + extraParams
 		} else {
-			fullRoute += fmt.Sprintf("?_client_ip=%s&_user_agent=%s", url.QueryEscape(ip), url.QueryEscape(ua))
+			fullRoute += "?" + extraParams
 		}
 		html := pm.RenderAdminRoute(fullRoute)
 
