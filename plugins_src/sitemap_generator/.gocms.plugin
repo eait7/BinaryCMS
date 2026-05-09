@@ -1,0 +1,7 @@
+{
+  "name": "Sitemap Generator",
+  "version": "1.0.0",
+  "description": "Dynamic XML sitemap generation with multi-search-engine submission. Supports IndexNow (Bing, Yandex, Naver, Seznam), legacy pings (Baidu, Sogou, Haosou), and guided manual submission for 12+ search engines.",
+  "author": "BinaryCMS",
+  "min_core_version": "1.0.0"
+}

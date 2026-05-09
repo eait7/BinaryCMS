@@ -285,6 +285,15 @@ func (m *MarketplaceHub) handleAPIPlugins() string {
 		if err := rows.Scan(&p.Slug, &p.Name, &p.Description, &p.Version, &p.Author,
 			&p.Price, &p.Currency, &p.IconURL, &p.ScreenshotURL, &p.Downloads,
 			&p.SHA256, &p.Category, &p.BuyURL, &p.MinCoreVer, &p.LongDescription, &p.Features, &p.UpdatedAt); err == nil {
+			
+			// Ensure URLs are absolute so remote CMS clients can load them from the hub
+			if strings.HasPrefix(p.IconURL, "/uploads/hub/") {
+				p.IconURL = "https://binarycms.com" + p.IconURL
+			}
+			if strings.HasPrefix(p.ScreenshotURL, "/uploads/hub/") {
+				p.ScreenshotURL = "https://binarycms.com" + p.ScreenshotURL
+			}
+			
 			plugins = append(plugins, p)
 		}
 	}
@@ -696,9 +705,9 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 
 		uploadedIcon := params["__file_icon_image"]
 		if uploadedIcon != "" {
-			os.MkdirAll("public/uploads/hub", 0755)
+			os.MkdirAll("uploads/hub", 0755)
 			iconName := slug + "_icon.png"
-			if err := moveFile(uploadedIcon, "public/uploads/hub/"+iconName); err != nil {
+			if err := moveFile(uploadedIcon, "uploads/hub/"+iconName); err != nil {
 				log.Printf("[MarketplaceHub] icon move error: %v", err)
 			} else {
 				iconUrl = "/uploads/hub/" + iconName
@@ -707,9 +716,9 @@ func (m *MarketplaceHub) handleAdminAction(route string) string {
 
 		uploadedScreenshot := params["__file_screenshot_image"]
 		if uploadedScreenshot != "" {
-			os.MkdirAll("public/uploads/hub", 0755)
+			os.MkdirAll("uploads/hub", 0755)
 			ssName := slug + "_screenshot.png"
-			if err := moveFile(uploadedScreenshot, "public/uploads/hub/"+ssName); err != nil {
+			if err := moveFile(uploadedScreenshot, "uploads/hub/"+ssName); err != nil {
 				log.Printf("[MarketplaceHub] screenshot move error: %v", err)
 			} else {
 				screenshotUrl = "/uploads/hub/" + ssName
