@@ -10,5 +10,8 @@ server_local
 *.exe
 .DS_Store
 uploads/
-plugins_src/marketplace_hub/marketplace_hub
+plugins_src/marketplace_hub/
 data/
+BinaryCMS_*.tar.gz
+BinaryCMS_*.zip
+gocms_server_*
