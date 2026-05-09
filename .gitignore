@@ -10,7 +10,7 @@ server_local
 *.exe
 .DS_Store
 uploads/
-plugins_src/marketplace_hub/
+plugins_src/
 data/
 BinaryCMS_*.tar.gz
 BinaryCMS_*.zip

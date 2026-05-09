@@ -25,16 +25,8 @@ fi
 echo "🏗  Building core CMS server..."
 go build -o gocms_server ./cmd/server
 
-echo "🔌 Building default plugins..."
+echo "🔌 Creating empty plugins directory..."
 mkdir -p plugins
-
-if [ -d "plugins_src/visit_tracker" ]; then
-    cd plugins_src/visit_tracker && go build -o ../../plugins/visit_tracker && cd ../..
-fi
-
-if [ -d "plugins_src/advanced_analytics" ]; then
-    cd plugins_src/advanced_analytics && go build -o ../../plugins/advanced_analytics && cd ../..
-fi
 
 echo "✅ Build complete!"
 echo ""
