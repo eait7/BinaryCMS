@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/ez8/gocms/internal/models"
@@ -240,17 +239,12 @@ func handleSystemResourcesAPI() http.HandlerFunc {
 		}
 
 		// Disk usage for root filesystem
-		var stat syscall.Statfs_t
-		if err := syscall.Statfs("/", &stat); err == nil {
-			total := stat.Blocks * uint64(stat.Bsize)
-			free := stat.Bfree * uint64(stat.Bsize)
-			used := total - free
+		total, used, free, percent := getDiskSpace()
+		if total > 0 {
 			res.DiskTotal = formatBytes(total)
 			res.DiskUsed = formatBytes(used)
 			res.DiskFree = formatBytes(free)
-			if total > 0 {
-				res.DiskPercent = float64(used) / float64(total) * 100
-			}
+			res.DiskPercent = percent
 		}
 
 		// Load average from /proc/loadavg
