@@ -23,10 +23,14 @@ type CMSPlugin interface {
 	HookDashboardWidget() string
 	HookAdminTopRightWidget() string
 
+	// HookFrontendRoute lets a plugin serve a public frontend URL.
+	// Return the complete HTML response to claim the route, or "" to pass through.
+	HookFrontendRoute(route string) string
+
 	// User management hooks (v2)
-	HookUserProfileTab(userID int) string  // Returns HTML tab for admin user detail page
-	HookUserAccountCard(userID int) string // Returns HTML card for frontend /my-account page
-	HookUserRegistered(userID int) string  // Called after a new user registers
+	HookUserProfileTab(userID int) string
+	HookUserAccountCard(userID int) string
+	HookUserRegistered(userID int) string
 }
 
 // --- RPC Client Implementation ---
@@ -81,6 +85,15 @@ func (g *CMSPluginRPC) HookDashboardWidget() string {
 func (g *CMSPluginRPC) HookAdminTopRightWidget() string {
 	var resp string
 	err := g.client.Call("Plugin.HookAdminTopRightWidget", new(interface{}), &resp)
+	if err != nil {
+		return ""
+	}
+	return resp
+}
+
+func (g *CMSPluginRPC) HookFrontendRoute(route string) string {
+	var resp string
+	err := g.client.Call("Plugin.HookFrontendRoute", route, &resp)
 	if err != nil {
 		return ""
 	}
@@ -147,6 +160,11 @@ func (s *CMSPluginRPCServer) HookDashboardWidget(args interface{}, resp *string)
 
 func (s *CMSPluginRPCServer) HookAdminTopRightWidget(args interface{}, resp *string) error {
 	*resp = s.Impl.HookAdminTopRightWidget()
+	return nil
+}
+
+func (s *CMSPluginRPCServer) HookFrontendRoute(args string, resp *string) error {
+	*resp = s.Impl.HookFrontendRoute(args)
 	return nil
 }
 

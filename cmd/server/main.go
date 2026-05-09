@@ -393,7 +393,7 @@ func main() {
 	r.Get("/tag/{slug}", handleFrontendTag(pm))
 	r.Get("/search", handleFrontendSearch(pm))
 
-	// Fallback: static pages
+	// Fallback: static pages (plugins can intercept via HookFrontendRoute)
 	r.Get("/{slug}", handleFrontendPage(pm))
 
 	// =====================

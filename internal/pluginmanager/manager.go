@@ -118,6 +118,23 @@ func (m *Manager) RenderAdminRoute(route string) string {
 	return "Page not found."
 }
 
+// RenderFrontendRoute lets plugins claim a public frontend URL path.
+// The first plugin that returns a non-empty string wins; the core then
+// writes that HTML directly to the response without any DB page lookup.
+func (m *Manager) RenderFrontendRoute(route string) string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, p := range m.plugins {
+		html := p.HookFrontendRoute(route)
+		if html != "" {
+			return html
+		}
+	}
+	return ""
+}
+
+
 func (m *Manager) GetDashboardWidgets() []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

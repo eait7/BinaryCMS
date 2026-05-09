@@ -351,11 +351,21 @@ func handleFrontendPage(pm *pluginmanager.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
+	// Let plugins intercept frontend routes before the DB lookup.
+	if pm != nil {
+		if html := pm.RenderFrontendRoute(r.URL.Path); html != "" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write([]byte(html))
+			return
+		}
+	}
+
 	page, err := models.GetPageBySlug(slug)
 	if err != nil || page.Status != "published" {
 		http.Error(w, "Page not found", http.StatusNotFound)
 		return
 	}
+
 
 	// Role-based access check
 	if page.RequiredRole != "" {
@@ -410,3 +420,4 @@ func handleFrontendPage(pm *pluginmanager.Manager) http.HandlerFunc {
 	}
 }
 }
+
