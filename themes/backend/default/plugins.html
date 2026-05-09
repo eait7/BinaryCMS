@@ -43,6 +43,15 @@
   .mp-msg.err  { display:block; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
   .mp-msg.ok   { display:block; background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
   .mp-actions  { display:flex; gap:.65rem; justify-content:flex-end; margin-top:1.25rem; }
+
+  /* ── Detail Modal Content ──────────────────────────────────────────────── */
+  .mp-detail-hero { width: 100%; height: 240px; background-size: cover; background-position: center; border-radius: 8px; margin-top: -10px; margin-bottom: 1rem; border: 1px solid var(--tblr-border-color); }
+  .mp-detail-pills { margin-bottom: 1.5rem; border-bottom: 1px solid var(--tblr-border-color); padding-bottom: 1rem; }
+  .mp-detail-section h4 { text-transform: uppercase; letter-spacing: 1px; font-size: .75rem; font-weight: 700; margin-bottom: .75rem; }
+  .mp-detail-desc { line-height: 1.6; font-size: .95rem; }
+  .mp-detail-features { font-size: .95rem; }
+  .mp-detail-features ul { padding-left: 1.2rem; }
+  .mp-detail-features li { margin-bottom: .3rem; }
 </style>
 
 <div class="row row-cards">
@@ -177,7 +186,7 @@
            data-slug="{{ .Slug }}"
            data-price="{{ .Price }}"
            data-installed="{{ if index $.InstalledPlugins .Slug }}true{{ else }}false{{ end }}">
-        <div class="mp-thumb">
+        <div class="mp-thumb" style="cursor:pointer" onclick="openDetailsModal('{{ .Slug }}', '{{ .Name }}', '{{ .IconURL }}')">
           {{ if .IconURL }}
             <img src="{{ .IconURL }}" alt="{{ .Name }}">
           {{ else }}
@@ -192,7 +201,7 @@
             <span class="mp-badge mp-badge-inst">✓ Installed</span>
           {{ end }}
         </div>
-        <div class="mp-body">
+        <div class="mp-body" style="cursor:pointer" onclick="openDetailsModal('{{ .Slug }}', '{{ .Name }}', '{{ .IconURL }}')">
           <h4>{{ .Name }}</h4>
           <div class="mp-author">by {{ .Author }} &middot; v{{ .Version }}</div>
           <div class="mp-desc">{{ .Description }}</div>
@@ -229,6 +238,56 @@
           {{ end }}
         </div>
       </div>
+      
+      {{/* ── Hidden Data for Detail Modal ── */}}
+      <div id="details-{{ .Slug }}" style="display:none">
+        {{ if .ScreenshotURL }}
+        <div class="mp-detail-hero" style="background-image: url('{{ .ScreenshotURL }}');"></div>
+        {{ end }}
+        <div class="mp-detail-pills d-flex flex-wrap gap-2">
+          <span class="badge bg-blue-lt">v{{ .Version }}</span>
+          <span class="badge bg-purple-lt">{{ .Category }}</span>
+          <span class="badge bg-secondary-lt">Updated {{ .UpdatedAt }}</span>
+          <span class="badge bg-secondary-lt">{{ .Downloads }} installs</span>
+        </div>
+        <div class="mp-detail-section mb-4">
+          <h4 class="text-secondary">About</h4>
+          <div class="mp-detail-desc" data-raw="{{ .LongDescription }}"></div>
+        </div>
+        {{ if .Features }}
+        <div class="mp-detail-section">
+          <h4 class="text-secondary">Features</h4>
+          <div class="mp-detail-features" data-raw="{{ .Features }}"></div>
+        </div>
+        {{ end }}
+      </div>
+      <div id="actions-{{ .Slug }}" style="display:none">
+          {{ if index $.InstalledPlugins .Slug }}
+            {{ if and (gt .Price 0.0) (not (index $.LicenseMap .Slug)) }}
+              <button class="btn btn-warning" onclick="openLicenseModal('{{ .Slug }}', '{{ .Name }}', true); bootstrap.Modal.getInstance(document.getElementById('pluginDetailsModal')).hide();">Activate License</button>
+            {{ else }}
+              <span class="badge bg-green-lt">✓ Installed</span>
+            {{ end }}
+          {{ else }}
+            {{ if eq .Price 0.0 }}
+              <button class="btn btn-primary" onclick="installFree('{{ .Slug }}', this); bootstrap.Modal.getInstance(document.getElementById('pluginDetailsModal')).hide();">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Install Free
+              </button>
+            {{ else }}
+              <div class="d-flex gap-2">
+                {{ if .BuyURL }}
+                  <a href="{{ .BuyURL }}" target="_blank" class="btn btn-outline-primary">Buy Plugin</a>
+                {{ end }}
+                <button class="btn btn-primary" onclick="openLicenseModal('{{ .Slug }}', '{{ .Name }}', false); bootstrap.Modal.getInstance(document.getElementById('pluginDetailsModal')).hide();">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Activate License
+                </button>
+              </div>
+            {{ end }}
+          {{ end }}
+      </div>
+
       {{ else }}
       {{ if not .FetchError }}
       <div class="mp-empty" style="grid-column:1/-1;">
@@ -242,6 +301,30 @@
   </div>
 
 </div><!-- /row -->
+
+{{/* ══════════════════ PLUGIN DETAILS MODAL ══════════════════════════ */}}
+<div class="modal modal-blur fade" id="pluginDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center gap-2">
+          <img id="detailModalIcon" src="" style="width:32px;height:32px;border-radius:6px;display:none;">
+          <span id="detailModalTitle">Plugin Details</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="detailModalBody" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Injected via JS -->
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Close</button>
+        <div id="detailModalActions">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 {{/* ══════════════════ LICENSE / INSTALL MODAL ══════════════════════════ */}}
 <div class="mp-overlay" id="licenseModal">
@@ -265,6 +348,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 // ── Filter & Search ────────────────────────────────────────────────────────
 let currentFilter = 'all';
@@ -288,6 +372,38 @@ function setFilter(btn, filter) {
   document.querySelectorAll('.mp-filter-tabs .btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   filterPlugins();
+}
+
+function openDetailsModal(slug, name, iconUrl) {
+  document.getElementById('detailModalTitle').innerText = name;
+  const iconEl = document.getElementById('detailModalIcon');
+  if (iconUrl) {
+    iconEl.src = iconUrl;
+    iconEl.style.display = 'block';
+  } else {
+    iconEl.style.display = 'none';
+  }
+  
+  // Copy details content
+  document.getElementById('detailModalBody').innerHTML = document.getElementById('details-' + slug).innerHTML;
+  
+  // Render markdown for About and Features
+  const modalBody = document.getElementById('detailModalBody');
+  const descEl = modalBody.querySelector('.mp-detail-desc');
+  if (descEl && descEl.getAttribute('data-raw')) {
+    descEl.innerHTML = marked.parse(descEl.getAttribute('data-raw'));
+  }
+  const featEl = modalBody.querySelector('.mp-detail-features');
+  if (featEl && featEl.getAttribute('data-raw')) {
+    featEl.innerHTML = marked.parse(featEl.getAttribute('data-raw'));
+  }
+  
+  // Copy action buttons
+  document.getElementById('detailModalActions').innerHTML = document.getElementById('actions-' + slug).innerHTML;
+  
+  // Show modal using Bootstrap 5 API
+  const modal = new bootstrap.Modal(document.getElementById('pluginDetailsModal'));
+  modal.show();
 }
 
 // ── Free Install ───────────────────────────────────────────────────────────

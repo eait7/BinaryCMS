@@ -13,20 +13,23 @@ import (
 
 // PluginListing represents a single plugin available in the marketplace catalog.
 type PluginListing struct {
-	Slug          string  `json:"slug"`
-	Name          string  `json:"name"`
-	Description   string  `json:"description"`
-	Version       string  `json:"version"`
-	Author        string  `json:"author"`
-	Price         float64 `json:"price"`          // 0 = free
-	Currency      string  `json:"currency"`       // "USD"
-	IconURL       string  `json:"icon_url"`
-	ScreenshotURL string  `json:"screenshot_url"`
-	Downloads     int     `json:"downloads"`
-	SHA256        string  `json:"sha256"`
-	Category      string  `json:"category"`
-	MinCoreVer    string  `json:"min_core_version"`
-	UpdatedAt     string  `json:"updated_at"`
+	Slug            string  `json:"slug"`
+	Name            string  `json:"name"`
+	Description     string  `json:"description"`
+	Version         string  `json:"version"`
+	Author          string  `json:"author"`
+	Price           float64 `json:"price"`          // 0 = free
+	Currency        string  `json:"currency"`       // "USD"
+	IconURL         string  `json:"icon_url"`
+	ScreenshotURL   string  `json:"screenshot_url"`
+	Downloads       int     `json:"downloads"`
+	SHA256          string  `json:"sha256"`
+	Category        string  `json:"category"`
+	BuyURL          string  `json:"buy_url"`
+	MinCoreVer      string  `json:"min_core_version"`
+	LongDescription string  `json:"long_description"`
+	Features        string  `json:"features"`
+	UpdatedAt       string  `json:"updated_at"`
 }
 
 // LicenseResponse is returned by the hub after validating a license key.
