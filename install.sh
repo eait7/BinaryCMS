@@ -15,7 +15,8 @@ fi
 if [ -d "BinaryCMS" ]; then
     echo "⚠️  Directory 'BinaryCMS' already exists. Updating..."
     cd BinaryCMS
-    git pull origin main
+    git fetch origin main
+    git reset --hard origin/main
 else
     echo "📥 Cloning BinaryCMS repository..."
     git clone https://github.com/eait7/BinaryCMS.git
