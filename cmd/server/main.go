@@ -396,6 +396,18 @@ func main() {
 	// Fallback: static pages (plugins can intercept via HookFrontendRoute)
 	r.Get("/{slug}", handleFrontendPage(pm))
 
+	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
+		if pm != nil {
+			if html := pm.RenderFrontendRoute(req.URL.Path); html != "" {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.Write([]byte(html))
+				return
+			}
+		}
+		// If nothing else matches, serve a standard 404 response
+		http.NotFound(w, req)
+	})
+
 	// =====================
 	// Server Setup
 	// =====================

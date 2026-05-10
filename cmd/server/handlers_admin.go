@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ez8/gocms/internal/auth"
 	"github.com/ez8/gocms/internal/handlers"
@@ -456,16 +457,21 @@ func handlePluginAdminRoute(pm *pluginmanager.Manager) http.HandlerFunc {
 			}
 			os.MkdirAll("/tmp/gocms_plugin_uploads", 0755)
 			for k, files := range r.MultipartForm.File {
-				if len(files) > 0 {
-					file, err := files[0].Open()
+				for i, fHeader := range files {
+					file, err := fHeader.Open()
 					if err == nil {
-						// Prefix with random string or timestamp to prevent collisions, but keep filename for extension
-						tmpPath := filepath.Join("/tmp/gocms_plugin_uploads", files[0].Filename)
+						// Prefix with timestamp and index to prevent collisions
+						tmpName := fmt.Sprintf("%d_%d_%s", time.Now().UnixNano(), i, fHeader.Filename)
+						tmpPath := filepath.Join("/tmp/gocms_plugin_uploads", tmpName)
 						dst, err := os.Create(tmpPath)
 						if err == nil {
 							io.Copy(dst, file)
 							dst.Close()
-							q.Set("__file_"+k, tmpPath)
+							if len(files) == 1 {
+								q.Set("__file_"+k, tmpPath)
+							} else {
+								q.Set(fmt.Sprintf("__file_%s[%d]", k, i), tmpPath)
+							}
 						}
 						file.Close()
 					}

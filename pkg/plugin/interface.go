@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"log"
 	"net/rpc"
 
 	"github.com/hashicorp/go-plugin"
@@ -95,6 +96,7 @@ func (g *CMSPluginRPC) HookFrontendRoute(route string) string {
 	var resp string
 	err := g.client.Call("Plugin.HookFrontendRoute", route, &resp)
 	if err != nil {
+		log.Printf("[plugin_rpc] HookFrontendRoute error: %v", err)
 		return ""
 	}
 	return resp
