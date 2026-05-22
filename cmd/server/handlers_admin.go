@@ -485,13 +485,16 @@ func handlePluginAdminRoute(pm *pluginmanager.Manager) http.HandlerFunc {
 		}
 		html := pm.RenderAdminRoute(fullRoute)
 
-		// API routes return raw content
-		if strings.Contains(fullRoute, "/api/") {
-			if strings.HasPrefix(html, "{") && strings.HasSuffix(strings.TrimSpace(html), "}") {
-				w.Header().Set("Content-Type", "application/json")
-			} else {
-				w.Header().Set("Content-Type", "application/octet-stream")
-			}
+		// API and proxy routes return raw content (not wrapped in admin template)
+		if strings.Contains(fullRoute, "/api/") || strings.Contains(fullRoute, "/proxy") {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(html))
+			return
+		}
+		
+		// If raw=true is passed, serve the plugin HTML directly without the desktop wrapper
+		if r.URL.Query().Get("raw") == "true" {
+			w.Header().Set("Content-Type", "text/html")
 			w.Write([]byte(html))
 			return
 		}
@@ -772,11 +775,7 @@ func handlePluginPublicRoute(pm *pluginmanager.Manager) http.HandlerFunc {
 		}
 		html := pm.RenderAdminRoute(fullRoute)
 
-		if strings.HasPrefix(html, "{") && strings.HasSuffix(strings.TrimSpace(html), "}") {
-			w.Header().Set("Content-Type", "application/json")
-		} else {
-			w.Header().Set("Content-Type", "application/octet-stream")
-		}
+		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(html))
 	}
 }

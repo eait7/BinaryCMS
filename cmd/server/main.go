@@ -133,13 +133,14 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
-	r.Use(middleware.Timeout(60 * time.Second))
+	// Timeout handled per-route group; plugins need longer for AI inference
+	// r.Use(middleware.Timeout(60 * time.Second))
 
 	// Security headers
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("X-Content-Type-Options", "nosniff")
-			w.Header().Set("X-Frame-Options", "DENY") // was SAMEORIGIN — admin panels should never be framed
+			w.Header().Set("X-Frame-Options", "SAMEORIGIN") // SAMEORIGIN allows BinaryDesktop to iframe admin pages
 			w.Header().Set("X-XSS-Protection", "1; mode=block")
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 			w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
@@ -152,7 +153,7 @@ func main() {
 					"media-src * data: blob:; "+
 					"frame-src *; "+
 					"connect-src *; "+
-					"frame-ancestors 'none';",
+					"frame-ancestors 'self';",
 			)
 			next.ServeHTTP(w, r)
 		})
@@ -420,7 +421,7 @@ func main() {
 		Addr:              ":" + port,
 		Handler:           r,
 		ReadHeaderTimeout: 15 * time.Second,
-		WriteTimeout:      60 * time.Second,
+		WriteTimeout:      10 * time.Minute,
 		IdleTimeout:       120 * time.Second,
 	}
 

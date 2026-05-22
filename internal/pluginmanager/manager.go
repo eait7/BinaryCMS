@@ -109,6 +109,8 @@ func (m *Manager) RenderAdminRoute(route string) string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+
+
 	for _, p := range m.plugins {
 		html := p.HookAdminRoute(route)
 		if html != "" && html != "Plugin Route Error" && html != "Not implemented" && html != "Invalid route." {

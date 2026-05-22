@@ -786,31 +786,32 @@
       let hiddenEl = document.getElementById('hidden-content');
       let bodyData = window.activeEasymde ? window.activeEasymde.value() : (hiddenEl ? hiddenEl.value : "");
       
+      if (context !== 'body') {
+          let promptStr = "";
+          if (context === 'meta_title') {
+              promptStr = "Generate a single, catchy, highly-optimized SEO Meta Title under 60 characters based on this page content. Respond ONLY with the title, no intro, no outro, no quotes, no formatting.";
+          } else if (context === 'meta') {
+              promptStr = "Generate a single, compelling, highly-optimized SEO Meta Description under 160 characters based on this page content. Respond ONLY with the description, no intro, no outro, no quotes, no formatting.";
+          } else if (context === 'title') {
+              promptStr = "Generate a single, concise, professional page title under 50 characters based on this page content. Respond ONLY with the title, no intro, no outro, no quotes, no formatting.";
+          }
+          document.getElementById('ai-prompt-input').value = promptStr;
+          executeAI();
+          return;
+      }
+      
       document.getElementById('ai-context-badge').innerText = context.toUpperCase();
       document.getElementById('ai-context-preview').innerText = bodyData ? bodyData.substring(0, 250) + "..." : "[Empty Payload]";
       
       const macrosEl = document.getElementById('ai-macros');
       macrosEl.style.display = 'flex';
       
-      if (context === 'body') {
-          macrosEl.innerHTML = `
-           <button class="btn btn-sm btn-outline-info rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Beautify this text natively. Fix all grammatical errors, improve the flow, and utilize professional vocabulary.'">✨ Beautify Text</button>
-           <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Restructure this raw text by cleanly organizing it under properly formatted HTML &lt;h2&gt; and &lt;h3&gt; headers.'">📑 Add H-Headers</button>
-           <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Suggest exactly where high-quality images should go in this text by natively dropping &lt;img src=\\'\\' alt=\\'descriptive text\\'&gt; tags at appropriate breaks.'">🖼 Suggest Images</button>
-           <button class="btn btn-sm btn-outline-warning rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Significantly expand on this content in high detail, adding compelling statistics, deep explanations, and professional insights.'">📝 Expand Content</button>
-          `;
-      } else if (context === 'meta') {
-          macrosEl.innerHTML = `
-           <button class="btn btn-sm btn-outline-info rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Extract a highly compelling, SEO-friendly meta description natively from this context under exactly 160 characters.'">✨ Generate Summary</button>
-           <button class="btn btn-sm btn-outline-warning rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Rewrite my current meta description to be punchier and encourage higher click-through rates.'">🎯 Optimize CTR</button>
-          `;
-      } else if (context === 'title' || context === 'meta_title') {
-          macrosEl.innerHTML = `
-           <button class="btn btn-sm btn-outline-info rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Suggest 3 highly-optimized SEO Title variations based on the current context, strictly under 60 characters.'">✨ SEO Optimize</button>
-           <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Make the title more catchy and viral, yet concise.'">🔥 Make Catchy</button>
-           <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Create a short, punchy title containing strong action verbs.'">⚡ Short & Punchy</button>
-          `;
-      }
+      macrosEl.innerHTML = `
+       <button class="btn btn-sm btn-outline-info rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Beautify this text natively. Fix all grammatical errors, improve the flow, and utilize professional vocabulary.'">✨ Beautify Text</button>
+       <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Restructure this raw text by cleanly organizing it under properly formatted HTML &lt;h2&gt; and &lt;h3&gt; headers.'">📑 Add H-Headers</button>
+       <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Suggest exactly where high-quality images should go in this text by natively dropping &lt;img src=\\'\\' alt=\\'descriptive text\\'&gt; tags at appropriate breaks.'">🖼 Suggest Images</button>
+       <button class="btn btn-sm btn-outline-warning rounded-pill fw-bold" onclick="document.getElementById('ai-prompt-input').value = 'Significantly expand on this content in high detail, adding compelling statistics, deep explanations, and professional insights.'">📝 Expand Content</button>
+      `;
       
       document.getElementById('ai-prompt-input').value = "";
       
@@ -831,7 +832,8 @@
       let hiddenEl = document.getElementById('hidden-content');
       let bodyData = window.activeEasymde ? window.activeEasymde.value() : (hiddenEl ? hiddenEl.value : "");
       
-      const modalInstance = bootstrap.Modal.getInstance(document.getElementById('ai-modal'));
+      const modalEl = document.getElementById('ai-modal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
       if(modalInstance) modalInstance.hide();
       
       const originalText = btn.innerHTML;
@@ -856,7 +858,7 @@
           if (data.error) {
               alert("AI Error: " + data.error);
           } else if (data.text) {
-              let text = data.text.trim().replace(/^["']|["']$/g, '');
+              let text = data.text.replace(/<\|eot_id\|>/g, '').replace(/<\|end_of_text\|>/g, '').replace(/<\|im_end\|>/g, '').trim().replace(/^["']|["']$/g, '');
               if (context === 'title') {
                   const tEl = document.querySelector('input[name="title"]');
                   if(tEl){ tEl.value = text; tEl.dispatchEvent(new Event('input')); }
