@@ -6,10 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
     <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}Go CMS{{ end }} - {{ .Title }}</title>
     <!-- Tabler CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <link rel="stylesheet" href="{{ asset "/static/css/tabler.min.css" }}">
+    <link rel="stylesheet" href="{{ asset "/static/css/easymde.min.css" }}">
     <style>
-      @import url('https://rsms.me/inter/inter.css');
+      @import url('{{ asset "/static/css/inter.css" }}');
       :root {
         --tblr-primary: {{ .BrandColor }};
         --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -96,7 +96,7 @@
   </head>
   <body>
     <!-- Theme Core Runtime Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler-theme.min.js"></script>
+    <script src="{{ asset "/static/js/tabler-theme.min.js" }}"></script>
     <div class="page">
     
       <!-- Module Top Utility Strip -->
@@ -305,9 +305,9 @@
     </div>
     
     <!-- Deferred Initializer Elements Mapping To Tabler Constraints Native Standard Specifications Successfully Automatically Safely Cleanly Cleanly Correctly Elegantly Robustly -->
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <script src="{{ asset "/static/js/tabler.min.js" }}" defer></script>
+    <script src="{{ asset "/static/js/apexcharts.js" }}"></script>
+    <script src="{{ asset "/static/js/easymde.min.js" }}"></script>
 
     <!-- Core Updater Polling -->
     <script>

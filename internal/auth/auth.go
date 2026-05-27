@@ -3,7 +3,6 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -236,7 +235,7 @@ func GetSessionUser(r *http.Request) (models.User, bool) {
 }
 
 func LoginHandlerTemplate(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(theme.GetBackendPath("login.html"))
+	t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath("login.html"))
 	if err != nil {
 		log.Printf("Login template error: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -297,7 +296,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func renderLoginError(w http.ResponseWriter, errMsg string, statusCode int) {
 	w.WriteHeader(statusCode)
-	t, err := template.ParseFiles(theme.GetBackendPath("login.html"))
+	t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath("login.html"))
 	if err != nil {
 		http.Error(w, errMsg, statusCode)
 		return

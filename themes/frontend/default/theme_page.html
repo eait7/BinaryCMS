@@ -28,7 +28,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://rsms.me" crossorigin>
     <!-- Tabler CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link href="{{ asset "/static/css/tabler.min.css" }}" rel="stylesheet"/>
     <link href="/static/vb-responsive.css" rel="stylesheet"/>
     {{ $fh := "Inter" }}{{ if .Settings.font_heading }}{{ $fh = .Settings.font_heading }}{{ end }}{{ $fb := "Inter" }}{{ if .Settings.font_body }}{{ $fb = .Settings.font_body }}{{ end }}
     <span id="cms-font-data" data-fh="{{ $fh }}" data-fb="{{ $fb }}" style="display:none;"></span>
@@ -256,7 +256,7 @@
         {{ end }}
       </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js" defer></script>
+    <script src="{{ asset "/static/js/tabler.min.js" }}" defer></script>
     <script>
       // Scroll-reveal: adds .v to .br elements when they enter the viewport
       (function() {

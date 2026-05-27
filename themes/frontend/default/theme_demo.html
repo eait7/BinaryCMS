@@ -11,7 +11,7 @@
   {{ end }}
   <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ if .Page.MetaTitle }}{{ .Page.MetaTitle }}{{ else }}{{ .Page.Title }}{{ end }}</title>
   <!-- Optional Tailwind CSS if desired, or Tabler core. We've been using Tabler. -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+  <link rel="stylesheet" href="{{ asset "/static/css/tabler.min.css" }}">
   <style>
     :root {
       --tblr-primary: {{ .BrandColor }};

@@ -102,7 +102,7 @@
             pluginsOpts: { 'grapesjs-preset-webpage': {} },
             canvas: { styles: [
               '/static/vb-responsive.css',
-              'https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css',
+              '{{ asset "/static/css/tabler.min.css" }}',
               'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
               {{ if .FrontendStyles }}{{ range .FrontendStyles }}'{{ . }}',{{ end }}{{ end }}
             ] },
