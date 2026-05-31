@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>BinaryCMS - Login</title>
+    <link href="{{ asset "/static/css/tabler.min.css" }}" rel="stylesheet"/>
+    <style>
+      @import url('{{ asset "/static/css/inter.css" }}');
+      :root {
+        --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        font-feature-settings: "cv03", "cv04", "cv11";
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 35%, #312e81 65%, #1e3a5f 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Ambient glow effects */
+      body::before {
+        content: '';
+        position: fixed;
+        top: -20%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      body::after {
+        content: '';
+        position: fixed;
+        bottom: -15%;
+        left: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .login-wrapper {
+        width: 100%;
+        max-width: 420px;
+        padding: 20px;
+        position: relative;
+        z-index: 1;
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .login-logo {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .login-logo img {
+        height: 80px;
+        width: auto;
+        max-width: 200px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+      }
+
+      .login-logo-text {
+        color: white;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+
+      .login-card {
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 36px 32px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      }
+
+      .login-title {
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 28px;
+        letter-spacing: -0.3px;
+      }
+
+      .login-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+      }
+
+      .login-input {
+        width: 100%;
+        padding: 11px 16px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        color: white;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        transition: all 0.2s ease;
+        margin-bottom: 20px;
+      }
+
+      .login-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+      }
+
+      .login-input:focus {
+        border-color: rgba(99, 102, 241, 0.6);
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 15px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        margin-top: 4px;
+      }
+
+      .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+      }
+
+      .login-btn:active {
+        transform: translateY(0);
+      }
+
+      .login-footer {
+        text-align: center;
+        margin-top: 24px;
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 12px;
+      }
+
+      .login-footer a {
+        color: rgba(255, 255, 255, 0.5);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .login-footer a:hover {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-wrapper">
+      <div class="login-logo">
+        <a href="/">
+          <img src="/static/img/binarycms_logo.png" alt="BinaryCMS" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <div class="login-logo-text" style="display:none;">BinaryCMS</div>
+        </a>
+      </div>
+
+      <form class="login-card" action="/login" method="POST" autocomplete="off" novalidate>
+        <h2 class="login-title">Sign in to your account</h2>
+
+        <label class="login-label">Username</label>
+        <input type="text" name="username" class="login-input" placeholder="Enter your username" autocomplete="off">
+
+        <label class="login-label">Password</label>
+        <input type="password" name="password" class="login-input" placeholder="Enter your password" autocomplete="off">
+
+        <button type="submit" class="login-btn">Sign In</button>
+      </form>
+
+      <div class="login-footer">
+        Powered by <a href="https://binarycms.com" target="_blank" rel="noopener">BinaryCMS</a>
+      </div>
+    </div>
+  </body>
+</html>

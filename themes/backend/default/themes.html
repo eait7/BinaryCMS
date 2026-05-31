@@ -269,6 +269,62 @@
   </div>
 </div>
 
+<!-- Backend Admin Themes -->
+<div class="row g-4 mt-3">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="m-0 fw-bold">Backend Admin Themes</h2>
+        <a href="#" class="btn btn-outline-primary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#uploadBackendThemeModal">
+             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-upload" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
+             Upload Backend Theme
+        </a>
+    </div>
+    
+    <div class="row row-cards">
+      {{ $currentBack := .BackendTheme }}
+      {{ range .BackendThemes }}
+      <div class="col-sm-6 col-lg-4">
+        <div class="card card-sm shadow-sm border-0 rounded-4 overflow-hidden h-100 position-relative {{ if eq .ID $currentBack }}border-primary border-2{{ end }}">
+          {{ if eq .ID $currentBack }}
+            <div class="ribbon bg-primary fw-bold px-3">Active</div>
+          {{ end }}
+          
+          <div class="ratio ratio-16x9">
+            <div class="d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #1a1b2e 0%, #2d1b69 50%, #1e3a5f 100%);">
+              <div class="text-center text-white p-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler mb-2" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="rgba(255,255,255,0.7)" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 4m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" /><path d="M9 4v16" /><path d="M13 8h4" /><path d="M13 12h4" /><path d="M13 16h4" /></svg>
+                <div class="fw-bold small opacity-75">{{ if .Name }}{{ .Name }}{{ else }}{{ .ID }}{{ end }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card-body d-flex flex-column">
+            <h3 class="card-title fw-bold text-dark fs-3 mb-1">{{ if .Name }}{{ .Name }}{{ else }}{{ .ID }}{{ end }}</h3>
+            <div class="text-muted small mb-2 text-uppercase fw-semibold tracking-wide">
+                <span>By {{ if .Author }}{{ .Author }}{{ else }}BinaryCMS{{ end }}</span>
+                {{ if .Version }}<span class="ms-2 badge bg-indigo-lt">V{{ .Version }}</span>{{ end }}
+            </div>
+            
+            <p class="text-secondary flex-grow-1 mb-4">{{ if .Description }}{{ .Description }}{{ else }}A backend admin panel theme for BinaryCMS.{{ end }}</p>
+            
+            <div class="mt-auto">
+              <form action="/admin/themes" method="POST">
+                 <input type="hidden" name="backend_theme" value="{{ .ID }}">
+                 {{ if eq .ID $currentBack }}
+                   <button type="button" class="btn btn-outline-secondary w-100 fw-bold shadow-none rounded-3" disabled>Currently Active</button>
+                 {{ else }}
+                   <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm rounded-3">Activate Theme</button>
+                 {{ end }}
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{ end }}
+    </div>
+  </div>
+</div>
+
 <!-- Upload Theme Modal -->
 <div class="modal modal-blur fade" id="uploadThemeModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
@@ -289,6 +345,34 @@
         <div class="modal-footer bg-light rounded-bottom-4">
           <button type="button" class="btn btn-link link-secondary fw-bold" data-bs-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-primary ms-auto rounded-pill px-4 fw-bold shadow-sm">Upload & Extract</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Backend Theme Upload Modal -->
+<div class="modal modal-blur fade" id="uploadBackendThemeModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content rounded-4 border-0 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Upload Backend Admin Theme</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="/admin/themes/upload" method="POST" enctype="multipart/form-data">
+        <div class="modal-body">
+          <input type="hidden" name="theme_type" value="backend">
+          <div class="mb-3">
+            <label class="form-label required fw-bold">Backend Theme Archive (.zip)</label>
+            <input type="file" class="form-control rounded-3" name="theme_zip" accept=".zip" required>
+            <small class="form-hint mt-2">
+                Your ZIP should contain a <code>theme.json</code>, <code>layout.html</code>, and optionally <code>login.html</code> and other template overrides. Templates not included will fall back to the default theme.
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer bg-light rounded-bottom-4">
+          <button type="button" class="btn btn-link link-secondary fw-bold" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary ms-auto rounded-pill px-4 fw-bold shadow-sm">Upload and Install</button>
         </div>
       </form>
     </div>

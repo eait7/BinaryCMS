@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }} - {{ .Title }}</title>
+    <!-- Tabler CSS -->
+    <link rel="stylesheet" href="{{ asset "/static/css/tabler.min.css" }}">
+    <link rel="stylesheet" href="{{ asset "/static/css/easymde.min.css" }}">
+    <style>
+      @import url('{{ asset "/static/css/inter.css" }}');
+
+      /* ═══════════════════════════════════════════════
+         MIDNIGHT MODERN — BinaryCMS Backend Theme
+         ═══════════════════════════════════════════════ */
+
+      :root {
+        --mn-primary: {{ .BrandColor }};
+        --mn-sidebar-width: 264px;
+        --mn-sidebar-collapsed: 72px;
+        --mn-sidebar-bg: linear-gradient(180deg, #0f172a 0%, #1e1b4b 40%, #0f172a 100%);
+        --mn-sidebar-glass: rgba(15, 23, 42, 0.85);
+        --mn-topbar-height: 60px;
+        --mn-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --mn-radius: 12px;
+        --mn-text-primary: #e2e8f0;
+        --mn-text-muted: #94a3b8;
+        --mn-hover-bg: rgba(255, 255, 255, 0.06);
+        --mn-active-bg: rgba(255, 255, 255, 0.1);
+        --mn-border: rgba(255, 255, 255, 0.06);
+        --tblr-primary: {{ .BrandColor }};
+        --tblr-font-sans-serif: 'Inter Var', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        font-feature-settings: "cv03", "cv04", "cv11";
+        letter-spacing: -0.01em;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+
+      /* ── Page Shell ─────────────────────────────── */
+      .mn-app {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* ── Sidebar ────────────────────────────────── */
+      .mn-sidebar {
+        width: var(--mn-sidebar-width);
+        min-height: 100vh;
+        background: var(--mn-sidebar-bg);
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1040;
+        display: flex;
+        flex-direction: column;
+        transition: width var(--mn-transition);
+        overflow: hidden;
+        border-right: 1px solid var(--mn-border);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+
+      .mn-sidebar.collapsed {
+        width: var(--mn-sidebar-collapsed);
+      }
+
+      /* Sidebar Brand */
+      .mn-brand {
+        height: var(--mn-topbar-height);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        border-bottom: 1px solid var(--mn-border);
+        flex-shrink: 0;
+        gap: 12px;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
+      .mn-brand-logo {
+        height: 32px;
+        width: auto;
+        flex-shrink: 0;
+        object-fit: contain;
+      }
+
+      .mn-brand-text {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        opacity: 1;
+        transition: opacity 0.2s ease;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mn-sidebar.collapsed .mn-brand-text {
+        opacity: 0;
+        width: 0;
+      }
+
+      .mn-sidebar.collapsed .mn-brand {
+        justify-content: center;
+        padding: 0 12px;
+      }
+
+      /* Sidebar Navigation */
+      .mn-nav {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 12px 8px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.1) transparent;
+      }
+
+      .mn-nav::-webkit-scrollbar { width: 4px; }
+      .mn-nav::-webkit-scrollbar-track { background: transparent; }
+      .mn-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+      .mn-nav-item {
+        display: block;
+        text-decoration: none;
+        padding: 9px 14px;
+        margin: 1px 0;
+        border-radius: 8px;
+        color: var(--mn-text-muted);
+        font-size: 13.5px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.15s ease;
+        position: relative;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .mn-nav-item:hover {
+        color: var(--mn-text-primary);
+        background: var(--mn-hover-bg);
+        text-decoration: none;
+      }
+
+      .mn-nav-item.active {
+        color: #fff;
+        background: var(--mn-active-bg);
+        font-weight: 600;
+      }
+
+      .mn-nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
+        background: var(--mn-primary);
+        border-radius: 0 3px 3px 0;
+      }
+
+      .mn-nav-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        opacity: 0.7;
+        stroke: currentColor;
+      }
+
+      .mn-nav-item.active .mn-nav-icon,
+      .mn-nav-item:hover .mn-nav-icon {
+        opacity: 1;
+      }
+
+      .mn-nav-label {
+        opacity: 1;
+        transition: opacity 0.2s ease;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mn-sidebar.collapsed .mn-nav-label {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+      }
+
+      .mn-sidebar.collapsed .mn-nav-item {
+        justify-content: center;
+        padding: 10px;
+      }
+
+      .mn-sidebar.collapsed .mn-nav-item::before {
+        left: 0;
+      }
+
+      /* Dropdown Sub-menus */
+      .mn-nav-dropdown-toggle .mn-chevron {
+        margin-left: auto;
+        width: 16px;
+        height: 16px;
+        transition: transform 0.2s ease;
+        flex-shrink: 0;
+        opacity: 0.4;
+      }
+
+      .mn-nav-dropdown-toggle.open .mn-chevron {
+        transform: rotate(90deg);
+      }
+
+      .mn-sidebar.collapsed .mn-chevron {
+        display: none;
+      }
+
+      .mn-submenu {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+        padding-left: 12px;
+      }
+
+      .mn-submenu.open {
+        max-height: 500px;
+      }
+
+      .mn-sidebar.collapsed .mn-submenu {
+        display: none;
+      }
+
+      .mn-submenu .mn-nav-item {
+        font-size: 12.5px;
+        padding: 7px 14px 7px 22px;
+        margin: 0;
+      }
+
+      /* Section Labels */
+      .mn-nav-section {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: rgba(148, 163, 184, 0.5);
+        padding: 16px 14px 6px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .mn-sidebar.collapsed .mn-nav-section {
+        opacity: 0;
+        height: 8px;
+        padding: 4px;
+      }
+
+      /* Sidebar Footer (Collapse Toggle) */
+      .mn-sidebar-footer {
+        border-top: 1px solid var(--mn-border);
+        padding: 12px;
+        flex-shrink: 0;
+      }
+
+      .mn-collapse-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px;
+        border: none;
+        border-radius: 8px;
+        background: var(--mn-hover-bg);
+        color: var(--mn-text-muted);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .mn-collapse-btn:hover {
+        background: var(--mn-active-bg);
+        color: var(--mn-text-primary);
+      }
+
+      .mn-collapse-btn .mn-collapse-text {
+        transition: opacity 0.2s ease;
+      }
+
+      .mn-sidebar.collapsed .mn-collapse-text {
+        opacity: 0;
+        width: 0;
+      }
+
+      .mn-collapse-icon {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        transition: transform 0.3s ease;
+      }
+
+      .mn-sidebar.collapsed .mn-collapse-icon {
+        transform: rotate(180deg);
+      }
+
+      /* ── Main Content Area ──────────────────────── */
+      .mn-main {
+        flex: 1;
+        margin-left: var(--mn-sidebar-width);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        transition: margin-left var(--mn-transition);
+      }
+
+      .mn-sidebar.collapsed ~ .mn-main {
+        margin-left: var(--mn-sidebar-collapsed);
+      }
+
+      /* Top Bar */
+      .mn-topbar {
+        height: var(--mn-topbar-height);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        background: rgba(255,255,255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        gap: 16px;
+      }
+
+      [data-bs-theme="dark"] .mn-topbar {
+        background: rgba(30, 30, 46, 0.85);
+        border-bottom-color: rgba(255,255,255,0.06);
+      }
+
+      .mn-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mn-mobile-toggle {
+        display: none;
+        border: none;
+        background: none;
+        padding: 6px;
+        color: inherit;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+
+      .mn-mobile-toggle:hover {
+        background: rgba(0,0,0,0.05);
+      }
+
+      .mn-topbar-search {
+        flex: 1;
+        max-width: 400px;
+      }
+
+      .mn-topbar-search .form-control {
+        border-radius: 20px;
+        background: rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.06);
+        padding-left: 38px;
+        font-size: 13px;
+        height: 36px;
+      }
+
+      [data-bs-theme="dark"] .mn-topbar-search .form-control {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.08);
+      }
+
+      .mn-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+      }
+
+      .mn-topbar-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: none;
+        border-radius: 10px;
+        color: inherit;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        position: relative;
+        text-decoration: none;
+      }
+
+      .mn-topbar-btn:hover {
+        background: rgba(0,0,0,0.05);
+      }
+
+      [data-bs-theme="dark"] .mn-topbar-btn:hover {
+        background: rgba(255,255,255,0.06);
+      }
+
+      .mn-topbar-badge {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ef4444;
+      }
+
+      .mn-user-dropdown {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 8px 4px 4px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.15s ease;
+        cursor: pointer;
+        margin-left: 8px;
+      }
+
+      .mn-user-dropdown:hover {
+        background: rgba(0,0,0,0.04);
+        text-decoration: none;
+        color: inherit;
+      }
+
+      [data-bs-theme="dark"] .mn-user-dropdown:hover {
+        background: rgba(255,255,255,0.06);
+      }
+
+      .mn-user-name {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .mn-user-role {
+        font-size: 11px;
+        opacity: 0.5;
+        line-height: 1.2;
+      }
+
+      /* ── Page Content ───────────────────────────── */
+      .mn-page-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mn-page-header {
+        padding: 20px 24px 0;
+      }
+
+      .mn-page-body {
+        flex: 1;
+        padding: 16px 24px 32px;
+      }
+
+      .mn-footer {
+        padding: 16px 24px;
+        border-top: 1px solid rgba(0,0,0,0.06);
+        text-align: center;
+      }
+
+      [data-bs-theme="dark"] .mn-footer {
+        border-top-color: rgba(255,255,255,0.06);
+      }
+
+      /* ── Mobile Overlay ─────────────────────────── */
+      .mn-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1039;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .mn-overlay.visible {
+        display: block;
+        opacity: 1;
+      }
+
+      /* ── Card Enhancements ──────────────────────── */
+      .card {
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: var(--mn-radius);
+      }
+
+      .card:hover {
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1) !important;
+      }
+
+      /* Button Gradients */
+      .btn-primary {
+        background: linear-gradient(135deg, var(--tblr-primary) 0%, color-mix(in srgb, var(--tblr-primary) 80%, black) 100%) !important;
+        border: none !important;
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--tblr-primary) 30%, transparent) !important;
+        transition: all 0.2s ease !important;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px color-mix(in srgb, var(--tblr-primary) 40%, transparent) !important;
+      }
+
+      /* Input Enhancements */
+      .form-control, .form-select {
+        transition: all 0.2s ease;
+      }
+
+      .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--tblr-primary) 15%, transparent);
+        border-color: var(--tblr-primary);
+      }
+
+      /* ── Utility Classes ────────────────────────── */
+      .info-callout {
+        background: color-mix(in srgb, var(--tblr-primary) 8%, transparent);
+        border-left: 3px solid var(--tblr-primary);
+        border-radius: 0 8px 8px 0;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-size: 13px;
+      }
+
+      .warning-callout {
+        background: #fef3c7;
+        border-left: 3px solid #f59e0b;
+        border-radius: 0 8px 8px 0;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-size: 13px;
+      }
+
+      [data-bs-theme="dark"] .warning-callout {
+        background: rgba(245, 158, 11, 0.1);
+      }
+
+      .link-card {
+        display: block;
+        padding: 12px 16px;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 10px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s ease;
+      }
+
+      .link-card:hover {
+        border-color: var(--tblr-primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        transform: translateY(-1px);
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background: color-mix(in srgb, var(--tblr-primary) 12%, transparent);
+        color: var(--tblr-primary);
+      }
+
+      .text-gradient {
+        background: linear-gradient(135deg, var(--tblr-primary), color-mix(in srgb, var(--tblr-primary) 70%, #7c3aed));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* ── Responsive ─────────────────────────────── */
+      @media (max-width: 991.98px) {
+        .mn-sidebar {
+          transform: translateX(-100%);
+          width: var(--mn-sidebar-width) !important;
+          box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+        }
+
+        .mn-sidebar.mobile-open {
+          transform: translateX(0);
+        }
+
+        .mn-main {
+          margin-left: 0 !important;
+        }
+
+        .mn-mobile-toggle {
+          display: flex;
+        }
+
+        .mn-topbar-search {
+          display: none;
+        }
+
+        .mn-user-name, .mn-user-role {
+          display: none;
+        }
+
+        .mn-page-header {
+          padding: 16px 16px 0;
+        }
+
+        .mn-page-body {
+          padding: 12px 16px 24px;
+        }
+      }
+
+      @media (max-width: 575.98px) {
+        .mn-topbar {
+          padding: 0 12px;
+        }
+
+        .mn-page-header {
+          padding: 12px 12px 0;
+        }
+
+        .mn-page-body {
+          padding: 8px 12px 20px;
+        }
+      }
+
+      /* ── Page Load Animation ────────────────────── */
+      .mn-page-body {
+        animation: mnFadeIn 0.3s ease;
+      }
+
+      @keyframes mnFadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Dark/Light Theme Button Toggle styling */
+      html[data-bs-theme="dark"] .hide-theme-dark,
+      body[data-bs-theme="dark"] .hide-theme-dark {
+        display: none !important;
+      }
+      html:not([data-bs-theme="dark"]) .hide-theme-light,
+      body:not([data-bs-theme="dark"]) .hide-theme-light {
+        display: none !important;
+      }
+    </style>
+    <!-- Dark/Light Mode Persistence -->
+    <script>
+      let themeStorageKey = "tablerTheme";
+      let selectedTheme = localStorage.getItem(themeStorageKey);
+      let isDark = selectedTheme === 'dark' || (selectedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) {
+        document.documentElement.setAttribute("data-bs-theme", "dark");
+      } else {
+        document.documentElement.setAttribute("data-bs-theme", "light");
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        document.body.setAttribute("data-bs-theme", isDark ? "dark" : "light");
+      });
+    </script>
+  </head>
+  <body>
+    <div class="mn-app">
+
+      <!-- ═══ Sidebar ═══ -->
+      <aside class="mn-sidebar" id="mn-sidebar">
+        <!-- Brand -->
+        <div class="mn-brand">
+          {{ if .Settings.site_logo_url }}
+            <img src="{{ .Settings.site_logo_url }}" class="mn-brand-logo" alt="{{ .Settings.site_title }}">
+          {{ else }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="mn-brand-logo" width="32" height="32" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12l0 9" /><path d="M12 12l-8 -4.5" /></svg>
+          {{ end }}
+          <span class="mn-brand-text">{{ if .Settings.site_title }}{{ .Settings.site_title }}{{ else }}BinaryCMS{{ end }}</span>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="mn-nav" id="mn-nav">
+          {{ range .Menus }}
+          {{ if .Children }}
+          <!-- Dropdown Menu Item -->
+          <div class="mn-nav-group">
+            <a class="mn-nav-item mn-nav-dropdown-toggle" data-url="{{ .URL }}" onclick="toggleSubmenu(this, event)">
+              {{ if .Icon }}<svg class="mn-nav-icon" width="20" height="20"><use href="/static/tabler-sprite.svg#tabler-{{ .Icon }}"/></svg>{{ end }}
+              <span class="mn-nav-label">{{ .Label }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="mn-chevron" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6" /></svg>
+            </a>
+            <div class="mn-submenu">
+              {{ if .URL }}{{ if ne .URL "#" }}
+              <a href="{{ .URL }}" class="mn-nav-item">
+                <span class="mn-nav-label">Overview</span>
+              </a>
+              {{ end }}{{ end }}
+              {{ range .Children }}
+              <a href="{{ .URL }}" class="mn-nav-item">
+                <span class="mn-nav-label">{{ .Label }}</span>
+              </a>
+              {{ end }}
+            </div>
+          </div>
+          {{ else }}
+          <!-- Simple Menu Item -->
+          <a href="{{ .URL }}" class="mn-nav-item" data-url="{{ .URL }}">
+            {{ if .Icon }}<svg class="mn-nav-icon" width="20" height="20"><use href="/static/tabler-sprite.svg#tabler-{{ .Icon }}"/></svg>{{ end }}
+            <span class="mn-nav-label">{{ .Label }}</span>
+          </a>
+          {{ end }}
+          {{ end }}
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="mn-sidebar-footer">
+          <button class="mn-collapse-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mn-collapse-icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 6l-6 6l6 6" /></svg>
+            <span class="mn-collapse-text">Collapse</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Mobile Overlay -->
+      <div class="mn-overlay" id="mn-overlay" onclick="closeMobileSidebar()"></div>
+
+      <!-- ═══ Main Content Area ═══ -->
+      <div class="mn-main">
+        <!-- Top Bar -->
+        <header class="mn-topbar">
+          <div class="mn-topbar-left">
+            <button class="mn-mobile-toggle" onclick="toggleMobileSidebar()" aria-label="Toggle navigation">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 6l16 0" /><path d="M4 12l16 0" /><path d="M4 18l16 0" /></svg>
+            </button>
+          </div>
+
+          <div class="mn-topbar-search">
+            <div class="input-icon">
+              <span class="input-icon-addon" style="left: 12px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+              </span>
+              <input type="text" class="form-control" placeholder="Search..." aria-label="Search">
+            </div>
+          </div>
+
+          <div class="mn-topbar-right">
+            <!-- Dark/Light Toggle -->
+            <a href="#" class="mn-topbar-btn hide-theme-dark" title="Dark mode" onclick="event.preventDefault(); document.documentElement.setAttribute('data-bs-theme', 'dark'); document.body.setAttribute('data-bs-theme', 'dark'); localStorage.setItem('tablerTheme', 'dark');">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+            </a>
+            <a href="#" class="mn-topbar-btn hide-theme-light" title="Light mode" onclick="event.preventDefault(); document.documentElement.setAttribute('data-bs-theme', 'light'); document.body.setAttribute('data-bs-theme', 'light'); localStorage.setItem('tablerTheme', 'light');">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+            </a>
+
+            <!-- Notifications -->
+            <div class="nav-item dropdown">
+              <a href="#" class="mn-topbar-btn" data-bs-toggle="dropdown" aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
+                {{ if .PendingComments }}<span class="mn-topbar-badge"></span>{{ end }}
+              </a>
+              <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card shadow border-0">
+                <div class="card" style="min-width: 280px;">
+                  <div class="card-header border-0"><h3 class="card-title">Notifications</h3></div>
+                  <div class="list-group list-group-flush list-group-hoverable">
+                    <div class="list-group-item">
+                      <div class="row align-items-center">
+                        <div class="col-auto"><span class="status-dot status-dot-animated bg-green d-block"></span></div>
+                        <div class="col text-truncate">
+                          <a href="#" class="text-body d-block">System Online</a>
+                          <div class="d-block text-muted text-truncate mt-n1">All systems operating normally.</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plugin Top Right Widgets -->
+            {{ if .TopRightWidget }}
+              <div class="d-flex align-items-center">
+                {{ .TopRightWidget }}
+              </div>
+            {{ end }}
+
+            <!-- User Menu -->
+            <div class="nav-item dropdown">
+              <a href="#" class="mn-user-dropdown" data-bs-toggle="dropdown" aria-label="User menu">
+                <span class="avatar avatar-sm" style="background-image: url(https://api.dicebear.com/9.x/avataaars/svg?seed={{ .User.Username }})"></span>
+                <div class="d-none d-md-block">
+                  <div class="mn-user-name">{{ if .User.Name }}{{ .User.Name }}{{ else }}{{ .User.Username }}{{ end }}</div>
+                  <div class="mn-user-role">{{ if .User.Email }}{{ .User.Email }}{{ else }}Administrator{{ end }}</div>
+                </div>
+              </a>
+              <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow shadow-sm border-0">
+                <a href="/admin/profile" class="dropdown-item">Profile Settings</a>
+                <a href="/admin/profile?tab=security" class="dropdown-item">Security</a>
+                <div class="dropdown-divider"></div>
+                <a href="/admin/staff" class="dropdown-item fw-bold">Staff Management</a>
+                <a href="/admin/settings" class="dropdown-item">Platform Settings</a>
+                <div class="dropdown-divider"></div>
+                <a href="/admin/restart" class="dropdown-item text-warning fw-bold">Restart Server</a>
+                <a href="/logout" class="dropdown-item text-danger fw-bold">Sign Out</a>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="mn-page-wrapper">
+          <!-- Page Header -->
+          <div class="mn-page-header d-print-none">
+            <div class="container-xl py-3">
+              <div class="row g-2 align-items-center">
+                <div class="col">
+                  <h2 class="page-title fw-bold m-0">{{ .Title }}</h2>
+                </div>
+                <div class="col-auto ms-auto d-print-none d-flex align-items-center">
+                  {{ if .Actions }}
+                    <div class="me-3">{{ .Actions }}</div>
+                  {{ end }}
+                  {{ if .TopRightWidget }}
+                    <div class="me-3">{{ .TopRightWidget }}</div>
+                  {{ end }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Body -->
+          <div class="mn-page-body">
+            <div class="container-xl">
+              {{ .Content }}
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <footer class="mn-footer d-print-none">
+            <ul class="list-inline list-inline-dots mb-0">
+              <li class="list-inline-item text-muted">
+                Powered by <a href="https://binarycms.com" class="link-secondary fw-bold" target="_blank" rel="noopener">BinaryCMS</a>
+              </li>
+            </ul>
+          </footer>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabler JS & Utilities -->
+    <script src="{{ asset "/static/js/tabler-theme.min.js" }}"></script>
+    <script src="{{ asset "/static/js/tabler.min.js" }}" defer></script>
+    <script src="{{ asset "/static/js/apexcharts.js" }}"></script>
+    <script src="{{ asset "/static/js/easymde.min.js" }}"></script>
+
+    <script>
+    (function() {
+      const sidebar = document.getElementById('mn-sidebar');
+      const overlay = document.getElementById('mn-overlay');
+      const STORAGE_KEY = 'mnSidebarCollapsed';
+
+      // ── Restore sidebar state ──
+      if (localStorage.getItem(STORAGE_KEY) === 'true' && window.innerWidth > 991) {
+        sidebar.classList.add('collapsed');
+      }
+
+      // ── Toggle sidebar collapse (desktop) ──
+      window.toggleSidebar = function() {
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem(STORAGE_KEY, sidebar.classList.contains('collapsed'));
+      };
+
+      // ── Mobile sidebar drawer ──
+      window.toggleMobileSidebar = function() {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('visible');
+        document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+      };
+
+      window.closeMobileSidebar = function() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('visible');
+        document.body.style.overflow = '';
+      };
+
+      // ── Submenu toggle ──
+      window.toggleSubmenu = function(el, e) {
+        e.preventDefault();
+        el.classList.toggle('open');
+        const submenu = el.nextElementSibling;
+        if (submenu && submenu.classList.contains('mn-submenu')) {
+          submenu.classList.toggle('open');
+        }
+      };
+
+      // ── Active menu item highlighting ──
+      const currentPath = window.location.pathname;
+      const navItems = document.querySelectorAll('.mn-nav-item[data-url]');
+      let bestMatch = null;
+      let bestLen = 0;
+
+      navItems.forEach(function(item) {
+        const url = item.getAttribute('data-url');
+        if (!url) return;
+
+        // Exact match or starts-with for nested routes
+        if (currentPath === url || (url !== '/admin' && currentPath.startsWith(url + '/'))) {
+          if (url.length > bestLen) {
+            bestLen = url.length;
+            bestMatch = item;
+          }
+        }
+      });
+
+      // Fallback: highlight /admin for the dashboard
+      if (!bestMatch && currentPath === '/admin') {
+        navItems.forEach(function(item) {
+          if (item.getAttribute('data-url') === '/admin') bestMatch = item;
+        });
+      }
+
+      if (bestMatch) {
+        bestMatch.classList.add('active');
+        // If it's inside a submenu, open the parent
+        const group = bestMatch.closest('.mn-submenu');
+        if (group) {
+          group.classList.add('open');
+          const toggle = group.previousElementSibling;
+          if (toggle) toggle.classList.add('open');
+        }
+      }
+
+      // Also check submenu items (those without data-url on the <a>)
+      document.querySelectorAll('.mn-submenu .mn-nav-item').forEach(function(item) {
+        const href = item.getAttribute('href');
+        if (href && (currentPath === href || (href !== '/admin' && currentPath.startsWith(href + '/')))) {
+          item.classList.add('active');
+          const submenu = item.closest('.mn-submenu');
+          if (submenu) {
+            submenu.classList.add('open');
+            const toggle = submenu.previousElementSibling;
+            if (toggle) toggle.classList.add('open');
+          }
+        }
+      });
+
+      // ── Close mobile sidebar on window resize ──
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 991) {
+          closeMobileSidebar();
+        }
+      });
+    })();
+    </script>
+  </body>
+</html>
