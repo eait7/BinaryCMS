@@ -182,17 +182,18 @@ func handleUploadTheme(pm *pluginmanager.Manager) http.HandlerFunc {
 		}
 		defer file.Close()
 
-		if !strings.HasSuffix(handler.Filename, ".zip") {
+		filename := filepath.Base(handler.Filename)
+		if !strings.HasSuffix(filename, ".zip") {
 			http.Error(w, "Only .zip files are supported", http.StatusBadRequest)
 			return
 		}
 
-		themeName := strings.TrimSuffix(handler.Filename, ".zip")
+		themeName := strings.TrimSuffix(filename, ".zip")
 		themeDir := filepath.Join("themes", themeType, themeName)
 		_ = os.MkdirAll(themeDir, 0755)
 
 		// Write to disk first (zip.Reader needs io.ReaderAt)
-		tempZipPath := filepath.Join("themes", themeType, handler.Filename)
+		tempZipPath := filepath.Join("themes", themeType, filename)
 		dst, err := os.OpenFile(tempZipPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
 			http.Error(w, "Failed writing temp zip", http.StatusInternalServerError)

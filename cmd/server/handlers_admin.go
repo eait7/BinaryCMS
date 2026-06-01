@@ -660,7 +660,7 @@ func handleUploadPlugin(pm *pluginmanager.Manager) http.HandlerFunc {
 			os.Mkdir("plugins", 0755)
 		}
 
-		destFilename := handler.Filename
+		destFilename := filepath.Base(handler.Filename)
 		if !strings.HasSuffix(destFilename, ".disabled") {
 			destFilename += ".disabled"
 		}
