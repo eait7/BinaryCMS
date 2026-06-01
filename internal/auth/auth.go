@@ -241,14 +241,14 @@ func LoginHandlerTemplate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	t.Execute(w, nil)
+	t.Execute(w, map[string]interface{}{"CSRFToken": GetCSRFToken(r)})
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	ip := RealClientIP(r)
 	if isLoginRateLimited(ip) {
 		w.Header().Set("Retry-After", "600")
-		renderLoginError(w, "Too many login attempts. Please try again in 10 minutes.", http.StatusTooManyRequests)
+		renderLoginError(w, r, "Too many login attempts. Please try again in 10 minutes.", http.StatusTooManyRequests)
 		return
 	}
 
@@ -257,14 +257,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Basic input validation.
 	if username == "" || password == "" {
-		renderLoginError(w, "Username and password are required", http.StatusBadRequest)
+		renderLoginError(w, r, "Username and password are required", http.StatusBadRequest)
 		return
 	}
 
 	// Sanitize username — only allow alphanumeric, underscore, hyphen, dot.
 	validUsername := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 	if !validUsername.MatchString(username) {
-		renderLoginError(w, "Invalid username format", http.StatusBadRequest)
+		renderLoginError(w, r, "Invalid username format", http.StatusBadRequest)
 		return
 	}
 
@@ -291,17 +291,17 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Record failed attempt.
 	recordLoginAttempt(ip)
-	renderLoginError(w, "Forbidden - Incorrect Username or Password", http.StatusForbidden)
+	renderLoginError(w, r, "Forbidden - Incorrect Username or Password", http.StatusForbidden)
 }
 
-func renderLoginError(w http.ResponseWriter, errMsg string, statusCode int) {
+func renderLoginError(w http.ResponseWriter, r *http.Request, errMsg string, statusCode int) {
 	w.WriteHeader(statusCode)
 	t, err := theme.ParseTemplateWithFuncs(theme.GetBackendPath("login.html"))
 	if err != nil {
 		http.Error(w, errMsg, statusCode)
 		return
 	}
-	t.Execute(w, map[string]interface{}{"Error": errMsg})
+	t.Execute(w, map[string]interface{}{"Error": errMsg, "CSRFToken": GetCSRFToken(r)})
 }
 
 // SetSession creates an authenticated session for a user (used by registration auto-login).
@@ -318,4 +318,62 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session.Values["user_id"] = nil
 	session.Save(r, w)
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+// EnsureCSRF middleware guarantees a CSRF token exists in the session.
+func EnsureCSRF(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "session-name")
+		csrfToken, ok := session.Values["csrf_token"].(string)
+		if !ok || csrfToken == "" {
+			b := make([]byte, 32)
+			if _, err := rand.Read(b); err == nil {
+				csrfToken = hex.EncodeToString(b)
+				session.Values["csrf_token"] = csrfToken
+				session.Save(r, w)
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// GetCSRFToken retrieves the active session CSRF token.
+func GetCSRFToken(r *http.Request) string {
+	session, _ := store.Get(r, "session-name")
+	csrfToken, _ := session.Values["csrf_token"].(string)
+	return csrfToken
+}
+
+// VerifyCSRF middleware enforces CSRF validation on all state-changing endpoints.
+func VerifyCSRF(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" || r.Method == "HEAD" || r.Method == "OPTIONS" || r.Method == "TRACE" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		session, _ := store.Get(r, "session-name")
+		sessionToken, _ := session.Values["csrf_token"].(string)
+		if sessionToken == "" {
+			http.Error(w, "Forbidden - CSRF session token missing", http.StatusForbidden)
+			return
+		}
+
+		submittedToken := r.Header.Get("X-CSRF-Token")
+		if submittedToken == "" {
+			_ = r.ParseMultipartForm(32 << 20)
+			submittedToken = r.FormValue("csrf_token")
+			if submittedToken == "" {
+				submittedToken = r.FormValue("_csrf")
+			}
+		}
+
+		if submittedToken == "" || submittedToken != sessionToken {
+			log.Printf("[SECURITY] CSRF token mismatch! Method: %s Route: %s IP: %s", r.Method, r.URL.Path, r.RemoteAddr)
+			http.Error(w, "Forbidden - CSRF token mismatch or missing", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

@@ -135,6 +135,7 @@ func main() {
 	r.Use(middleware.Compress(5))
 	// Timeout handled per-route group; plugins need longer for AI inference
 	// r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(auth.EnsureCSRF)
 
 	// Security headers
 	r.Use(func(next http.Handler) http.Handler {
@@ -178,6 +179,7 @@ func main() {
 	// =====================
 	r.Route("/admin", func(r chi.Router) {
 		r.Use(auth.RequireAdminRole)
+		r.Use(auth.VerifyCSRF)
 
 		r.Get("/", handleAdminDashboard(pm))
 
@@ -376,6 +378,7 @@ func main() {
 
 	r.Route("/my-account", func(r chi.Router) {
 		r.Use(auth.RequireLogin)
+		r.Use(auth.VerifyCSRF)
 		r.Get("/", handleFrontendMyAccount(pm))
 		r.Post("/update", handleFrontendUpdateProfile(pm))
 		r.Post("/password", handleFrontendChangePassword(pm))

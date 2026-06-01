@@ -81,6 +81,7 @@ func getFrontendData(r *http.Request, data map[string]interface{}) map[string]in
 	data["BrandColor"] = brandColor
 	data["Settings"] = models.GetAllSettingsMap()
 	data["User"] = user
+	data["CSRFToken"] = auth.GetCSRFToken(r)
 	return data
 }
 

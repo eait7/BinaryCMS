@@ -411,5 +411,59 @@
         };
       });
     </script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const csrfToken = "{{ .CSRFToken }}";
+        if (!csrfToken) return;
+
+        const injectForm = (form) => {
+            if (!form.querySelector('input[name="csrf_token"]') && !form.querySelector('input[name="_csrf"]')) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'csrf_token';
+                input.value = csrfToken;
+                form.appendChild(input);
+            }
+        };
+
+        // Inject into all existing forms
+        document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(injectForm);
+
+        // Dynamic submission injection
+        document.addEventListener('submit', (event) => {
+            const form = event.target;
+            if (form && (form.method || '').toLowerCase() === 'post') {
+                injectForm(form);
+            }
+        });
+
+        // Intercept fetch API
+        const originalFetch = window.fetch;
+        if (originalFetch) {
+            window.fetch = function(url, options) {
+                options = options || {};
+                options.headers = options.headers || {};
+                if (options.method && options.method.toUpperCase() !== 'GET' && options.method.toUpperCase() !== 'HEAD') {
+                    if (!options.headers['X-CSRF-Token']) {
+                        options.headers['X-CSRF-Token'] = csrfToken;
+                    }
+                }
+                return originalFetch.call(this, url, options);
+            };
+        }
+
+        // Intercept XMLHttpRequest
+        const originalSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function(body) {
+            try {
+                this.setRequestHeader('X-CSRF-Token', csrfToken);
+            } catch(e) {
+                // Ignore errors if state doesn't allow setting header
+            }
+            return originalSend.apply(this, arguments);
+        };
+    });
+    </script>
   </body>
 </html>

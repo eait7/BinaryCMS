@@ -174,6 +174,7 @@ func renderAdminPage(w http.ResponseWriter, r *http.Request, title string, conte
 		"User":            user,
 		"PendingComments": pendingComments,
 		"CurrentVersion":  handlers.CoreVersion,
+		"CSRFToken":       auth.GetCSRFToken(r),
 	}
 	if err := t.Execute(w, data); err != nil {
 		log.Printf("Layout execute error: %v", err)
